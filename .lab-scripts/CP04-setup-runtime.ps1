@@ -20,15 +20,10 @@ Write-Step "CP04 — Runtime environments (Dev + Test)"
 
 $rid = Initialize-RandomIdentifier
 
-# Step 1: Device-code sign-in (browser-less). Skips if a credential already exists.
-$auth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Select-Object -First 1).id
-if (-not $auth) {
-    Write-Info "Sign in to the training tenant (device code)..."
-    txc config auth login --device-code
-    if ($LASTEXITCODE -ne 0) { Write-Err "Sign-in failed"; exit 1 }
-    $auth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Select-Object -First 1).id
-    Write-Ok "Authenticated as $auth"
-} else { Write-Ok "Already authenticated as $auth" }
+# Step 1: Verify Power Platform sign-in (done in CP01).
+$auth = Get-LabValue 'txcAuth'
+if (-not $auth) { Write-Err "Not signed in — run CP01 first"; exit 1 }
+Write-Ok "Authenticated as $auth"
 
 # Step 2: Create Dev + Test sandbox environments (unique domains via $rid).
 $envs = [ordered]@{ dev = "wm-dev-$rid"; test = "wm-test-$rid" }
