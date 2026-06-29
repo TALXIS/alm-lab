@@ -37,19 +37,37 @@ Write-Ok "Azure: tenant $tenantId"
 
 # Step 2: App registration + service principal.
 $appName = "wm-deploy-$rid"
+Set-LabValue 'appName' $appName
 $appId = Get-LabValue 'appId'
 if (-not $appId) {
-    $appId = az ad app create --display-name $appName --query appId -o tsv
-    az ad sp create --id $appId | Out-Null
-    Set-LabValue 'appId' $appId
-    Write-Ok "App registration: $appName ($appId)"
+    $appId = az ad app list --display-name $appName --query "[0].appId" -o tsv 2>$null
+    if (-not $appId) {
+        $appId = az ad app create --display-name $appName --query appId -o tsv
+        az ad sp create --id $appId | Out-Null
+        Write-Ok "App registration: $appName ($appId)"
+    } else {
+        Write-Ok "App registration already exists: $appName ($appId)"
+    }
 }
+Set-LabValue 'appId' $appId
+$appObjectId = az ad app show --id $appId --query id -o tsv 2>$null
+if ($appObjectId) { Set-LabValue 'appObjectId' $appObjectId }
+$servicePrincipalObjectId = az ad sp show --id $appId --query id -o tsv 2>$null
+if (-not $servicePrincipalObjectId) {
+    az ad sp create --id $appId | Out-Null
+    $servicePrincipalObjectId = az ad sp show --id $appId --query id -o tsv 2>$null
+}
+if ($servicePrincipalObjectId) { Set-LabValue 'servicePrincipalObjectId' $servicePrincipalObjectId }
 
 # Step 3: Federated credential trusting main of this repo.
-$fed = @{ name="github-main"; issuer="https://token.actions.githubusercontent.com";
+$fedCredentialName = "github-main"
+Set-LabValue 'federatedCredentialName' $fedCredentialName
+$fed = @{ name=$fedCredentialName; issuer="https://token.actions.githubusercontent.com";
           subject="repo:$repo`:ref:refs/heads/main"; audiences=@("api://AzureADTokenExchange") } | ConvertTo-Json
 $tmp = New-TemporaryFile; Set-Content $tmp $fed -Encoding UTF8
-az ad app federated-credential create --id $appId --parameters "@$tmp" 2>&1 | Out-Null
+if (-not (az ad app federated-credential list --id $appId --query "[?name=='$fedCredentialName'] | [0].name" -o tsv 2>$null)) {
+    az ad app federated-credential create --id $appId --parameters "@$tmp" 2>&1 | Out-Null
+}
 Remove-Item $tmp; Write-Ok "Federated credential (repo:${repo}:ref:refs/heads/main)"
 
 # Step 4: Add SP as application user with admin in Test env.
@@ -60,6 +78,7 @@ Write-Ok "Service principal added to Test environment as application user"
 gh secret set AZURE_CLIENT_ID    --repo $repo --body $appId
 gh secret set AZURE_TENANT_ID    --repo $repo --body $tenantId
 gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
+Set-LabValue 'dataverseTestUrl' $testUrl
 Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
 
 # Step 6: Enable GitHub Actions on the fork (forks have them disabled by default).

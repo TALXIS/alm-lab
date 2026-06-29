@@ -14,10 +14,17 @@
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 $repo = Get-LabValue 'repo'; if (-not $repo) { $repo = gh repo view --json nameWithOwner -q .nameWithOwner }
+Set-LabValue 'repo' $repo
 
 Write-Step "CP11 — Require build check on PRs"
 
-$id = gh api "repos/$repo/rulesets" -q '.[] | select(.name=="alm-lab-main-protection") | .id'
+$id = Get-LabValue 'mainRulesetId'
+if (-not $id) {
+    $rulesetName = Get-LabValue 'mainRulesetName' 'alm-lab-main-protection'
+    $id = gh api "repos/$repo/rulesets" -q ".[] | select(.name==`"$rulesetName`") | .id"
+    if ($id) { Set-LabValue 'mainRulesetId' $id }
+}
+if (-not $id) { Write-Err "Main ruleset id not found. Run CP03 first."; exit 1 }
 $rules = @(
     @{ type="deletion" }, @{ type="non_fast_forward" },
     @{ type="pull_request"; parameters=@{ required_approving_review_count=0
@@ -29,6 +36,7 @@ $rules = @(
 $tmp = New-TemporaryFile; "{`"rules`":$rules}" | Set-Content $tmp -Encoding UTF8
 gh api -X PUT "repos/$repo/rulesets/$id" --input $tmp 2>&1 | Out-Null
 Remove-Item $tmp
+Set-LabValue 'mainRulesetId' $id
 Write-Ok "Ruleset now requires 'build' to pass"
 
 Save-Checkpoint -Id "cp11" -Message "Require build status checks before merging into main" -Body @'

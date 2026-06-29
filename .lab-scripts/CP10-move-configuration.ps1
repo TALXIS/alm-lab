@@ -19,6 +19,8 @@ $prefix = Get-LabValue 'publisherPrefix' 'almlab'
 Write-Step "CP10 — Configuration data (CMT)"
 $dataDir = Join-Path $LabRoot "src/Packages.Main/Data"
 New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+Set-LabValue 'configDataDirectory'  $dataDir
+Set-LabValue 'configDataSchemaPath' (Join-Path $dataDir "data_schema.xml")
 
 # CMT schema: warehouse locations are reference/config data (plugins disabled on import).
 @"
@@ -40,8 +42,10 @@ if (-not (Test-Path (Join-Path $dataDir "data.xml"))) {
     Write-Warn2 "No config records in Dev yet — add a few Warehouse Locations, then re-run CP10."
     exit 1
 }
+Set-LabValue 'configDataFilePath' (Join-Path $dataDir "data.xml")
 txc data pkg import $dataDir --profile test --allow-production
 if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
+Set-LabValue 'configImportedToUrl' (Get-LabValue 'testEnvUrl')
 Write-Ok "Config exported from Dev and imported to Test"
 
 Save-Checkpoint -Id "cp10" -Message "Add configuration data package for environment promotion" -Body @'

@@ -27,8 +27,9 @@ Set-LabValue 'repo' $repo
 Write-Ok "Repository: $repo"
 
 # Step 2: Create a ruleset requiring pull requests into main (no direct pushes).
+$rulesetName = "alm-lab-main-protection"
 $ruleset = @{
-    name        = "alm-lab-main-protection"
+    name        = $rulesetName
     target      = "branch"
     enforcement = "active"
     conditions  = @{ ref_name = @{ include = @("~DEFAULT_BRANCH"); exclude = @() } }
@@ -47,10 +48,25 @@ $ruleset = @{
 
 $tmp = New-TemporaryFile
 Set-Content -Path $tmp -Value $ruleset -Encoding UTF8
-gh api -X POST "repos/$repo/rulesets" --input $tmp 2>&1 | Out-Null
-if ($LASTEXITCODE -eq 0) { Write-Ok "Ruleset created — main now requires PRs" }
-else { Write-Warn2 "Ruleset may already exist (skipping)" }
+$rulesetRecord = $null
+$existingRuleset = gh api "repos/$repo/rulesets" --jq ".[] | select(.name==`"$rulesetName`")" 2>$null
+if ($LASTEXITCODE -eq 0 -and $existingRuleset) {
+    $rulesetRecord = $existingRuleset | ConvertFrom-Json
+    Write-Ok "Ruleset already exists — main already requires PRs"
+} else {
+    $createdRuleset = gh api -X POST "repos/$repo/rulesets" --input $tmp 2>$null
+    if ($LASTEXITCODE -eq 0 -and $createdRuleset) {
+        $rulesetRecord = $createdRuleset | ConvertFrom-Json
+        Write-Ok "Ruleset created — main now requires PRs"
+    } else {
+        Write-Err "Ruleset creation failed"
+        Remove-Item $tmp -ErrorAction SilentlyContinue
+        exit 1
+    }
+}
 Remove-Item $tmp -ErrorAction SilentlyContinue
+Set-LabValue 'mainRulesetId'   $rulesetRecord.id
+Set-LabValue 'mainRulesetName' $rulesetRecord.name
 
 # Step 3: Demonstrate the loop — create a topic branch for upcoming work.
 Push-Location $LabRoot
