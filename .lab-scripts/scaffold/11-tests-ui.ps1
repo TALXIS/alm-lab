@@ -21,9 +21,7 @@ txc workspace component create pp-test-ui `
     --output "src/Tests.UI"
 
 # Add to solution
-cd "src/Tests.UI"
-dotnet sln ../../ add Tests.UI.csproj
-cd ../..
+dotnet sln add src/Tests.UI/Tests.UI.csproj
 
 Write-Host "  ✓ Tests.UI project created" -ForegroundColor Green
 

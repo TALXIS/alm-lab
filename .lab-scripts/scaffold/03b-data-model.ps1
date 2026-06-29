@@ -20,9 +20,7 @@ txc workspace component create pp-solution `
 Write-Host "  ✓ Solutions.DataModel" -ForegroundColor Green
 
 # Add Solutions.DataModel to the Package Deployer project as a .NET ProjectReference
-cd src/Packages.Main
-dotnet add "./Packages.Main.csproj" reference "../Solutions.DataModel/Solutions.DataModel.csproj"
-cd ../..
+dotnet add "src/Packages.Main/Packages.Main.csproj" reference "src/Solutions.DataModel/Solutions.DataModel.csproj"
 
 Write-Host "  ✓ ProjectReference: DataModel → Packages.Main" -ForegroundColor Green
 

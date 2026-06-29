@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: '10.x'
       - run: dotnet test src/Tests.UI/Tests.UI.csproj --configuration Release
         env:
           TXC_HEADLESS: 'true'
