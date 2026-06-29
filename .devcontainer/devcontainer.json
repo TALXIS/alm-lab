@@ -1,0 +1,16 @@
+{
+  "name": "Power Platform ALM Lab",
+  "image": "ghcr.io/talxis/tools-agentbox/image:latest",
+  "customizations": {
+    "codespaces": {
+      "openFiles": ["README.md"]
+    },
+    "vscode": {
+      "extensions": ["ms-vscode.powershell"]
+    }
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb"
+  }
+}

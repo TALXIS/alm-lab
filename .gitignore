@@ -1,0 +1,22 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+
+# Test output
+TestResults/
+[Tt]est[Rr]esult*/
+
+# NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lab note: .lab-state.json is intentionally committed so progress survives crashes.
