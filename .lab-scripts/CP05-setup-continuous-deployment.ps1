@@ -46,7 +46,7 @@ $fed = @{ name="github-main"; issuer="https://token.actions.githubusercontent.co
           subject="repo:$repo`:ref:refs/heads/main"; audiences=@("api://AzureADTokenExchange") } | ConvertTo-Json
 $tmp = New-TemporaryFile; Set-Content $tmp $fed -Encoding UTF8
 az ad app federated-credential create --id $appId --parameters "@$tmp" 2>&1 | Out-Null
-Remove-Item $tmp; Write-Ok "Federated credential (repo:$repo:ref:refs/heads/main)"
+Remove-Item $tmp; Write-Ok "Federated credential (repo:${repo}:ref:refs/heads/main)"
 
 # Step 4: Add SP as application user with admin in Test env.
 pac admin assign-user --environment $testUrl --user $appId --role "System Administrator" --application-user 2>&1 | Out-Null
