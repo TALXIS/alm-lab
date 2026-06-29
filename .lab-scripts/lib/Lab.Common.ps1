@@ -90,14 +90,16 @@ function Save-Checkpoint {
         git commit -m "$Id`: $Message" --quiet
         git push -u origin $Id --force --quiet 2>&1 | Out-Null
         Start-Sleep 3  # let GitHub settle the ref before opening PR
+        # Always target the fork's origin repo explicitly (avoids gh resolving upstream instead)
+        $forkRepo = (git remote get-url origin) -replace 'https://github.com/',''-replace '\.git$',''
         $prBody = if ([string]::IsNullOrWhiteSpace($Body)) { "## Summary`n$Message" } else { $Body }
-        $url = gh pr create --base main --head $Id --title "$Id`: $Message" --body $prBody 2>&1
+        $url = gh pr create -R $forkRepo --base main --head $Id --title "$Id`: $Message" --body $prBody 2>&1
         if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
         if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
         Write-Info "Waiting for build checks..."
-        gh pr checks $Id --watch
+        gh pr checks $Id -R $forkRepo --watch
         Write-Info "Merging..."
-        gh pr merge $Id --squash --delete-branch --admin 2>&1 | Out-Null
+        gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
         git switch main --quiet; git pull --quiet
         git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
         Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
