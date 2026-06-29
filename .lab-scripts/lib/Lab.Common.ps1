@@ -75,18 +75,22 @@ function Save-Checkpoint {
             git config user.email "$(gh api user -q .id)+$(gh api user -q .login)@users.noreply.github.com"
             git config user.name (gh api user -q .login)
         }
+        Write-Info "Syncing main..."
         git switch main --quiet 2>&1 | Out-Null
         git pull --quiet 2>&1 | Out-Null
         git branch -D $Id 2>&1 | Out-Null
         git switch -c $Id --quiet 2>&1 | Out-Null
         git add --all
         if (-not (git status --porcelain)) { Write-Info "No changes for $Id"; git switch main --quiet; return }
+        Write-Info "Committing changes..."
         git commit -m "$Id`: $Message" --quiet
         git push -u origin $Id --force --quiet 2>&1 | Out-Null
         $url = gh pr create --base main --head $Id --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1
         if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
-        if (-not $env:LAB_AUTO_MERGE) { Read-Host "  Review the PR in your browser, then press Enter to merge" }
-        gh pr checks $Id --watch 2>&1 | Out-Null
+        if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
+        Write-Info "Waiting for build checks..."
+        gh pr checks $Id --watch
+        Write-Info "Merging..."
         gh pr merge $Id --squash --delete-branch --admin 2>&1 | Out-Null
         git switch main --quiet; git pull --quiet
         git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
