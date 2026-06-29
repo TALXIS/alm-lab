@@ -24,6 +24,8 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
+      - name: Install Power Platform CLI
+        uses: microsoft/powerplatform-actions/actions-install@v1
       - name: Deploy Package Deployer package to Test environment
         uses: microsoft/powerplatform-actions/deploy-package@v1
         with:
