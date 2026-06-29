@@ -64,35 +64,25 @@ function Initialize-RandomIdentifier {
 
 # ── Checkpoint via Pull Request ─────────────────────────────────────────────────────────
 # Proper ALM: every checkpoint lands on main through a PR. We branch, commit, push, open a
-# PR, pause so you can review the diff + checks in the browser, then merge. A tag is set on
-# main for clean rollback:  git reset --hard cp03  (then git push --force).
-# Before CI exists (CP01/02) there is no ruleset, so we push straight to main.
+# PR, pause so you can review the diff + checks in the browser, then merge + tag for rollback.
+# Set LAB_AUTO_MERGE=1 to skip the pause (used for unattended testing).
 function Save-Checkpoint {
     param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Message)
     Save-LabState
     Push-Location $LabRoot
     try {
         git add --all
-        $hasChanges = [bool](git status --porcelain)
-        $protected  = (gh api "repos/$(Get-LabValue 'repo')/rulesets" 2>$null | ConvertFrom-Json) `
-                        | Where-Object { $_.name -eq 'alm-lab-main-protection' }
-        if (-not $protected) {
-            if ($hasChanges) { git commit -m "$Id`: $Message" --quiet; Write-Ok "Committed: $Id" }
-            git push -u origin main --quiet 2>&1 | Out-Null
-        } else {
-            $branch = "$Id"
-            git switch -c $branch --quiet 2>&1 | Out-Null
-            if ($hasChanges) { git commit -m "$Id`: $Message" --quiet }
-            git push -u origin $branch --quiet 2>&1 | Out-Null
-            gh pr create --base main --head $branch --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1 | Out-Null
-            $url = gh pr view $branch --json url -q .url
-            Write-Ok "PR opened: $url"
-            if (-not $env:LAB_AUTO_MERGE) { Read-Host "  Review the PR in your browser, then press Enter to merge" }
-            Write-Info "Waiting for build check..."
-            gh pr checks $branch --watch 2>&1 | Out-Null
-            gh pr merge $branch --squash --delete-branch --admin 2>&1 | Out-Null
-            git switch main --quiet; git pull --quiet
-        }
+        $branch = "$Id"
+        git switch -c $branch --quiet 2>&1 | Out-Null
+        if (git status --porcelain) { git commit -m "$Id`: $Message" --quiet }
+        git push -u origin $branch --quiet 2>&1 | Out-Null
+        gh pr create --base main --head $branch --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1 | Out-Null
+        $url = gh pr view $branch --json url -q .url
+        Write-Ok "PR opened: $url"
+        if (-not $env:LAB_AUTO_MERGE) { Read-Host "  Review the PR in your browser, then press Enter to merge" }
+        gh pr checks $branch --watch 2>&1 | Out-Null
+        gh pr merge $branch --squash --delete-branch --admin 2>&1 | Out-Null
+        git switch main --quiet; git pull --quiet
         git tag -f $Id 2>&1 | Out-Null
         git push -f origin $Id --quiet 2>&1 | Out-Null
         Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
