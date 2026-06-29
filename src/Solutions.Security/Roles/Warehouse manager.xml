@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Role id="{7ad7179f-97ef-450e-b0a4-eb1d29ff5c22}" name="Warehouse manager" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <IsCustomizable>1</IsCustomizable>
+  <IsAutoAssigned>0</IsAutoAssigned>
+  <RolePrivileges>
+    <RolePrivilege name="prvAppendalmlab_warehouseitem" level="Global" />
+    <RolePrivilege name="prvAppendalmlab_warehouselocation" level="Global" />
+    <RolePrivilege name="prvAppendalmlab_warehousetransaction" level="Global" />
+    <RolePrivilege name="prvAppendToalmlab_warehouseitem" level="Global" />
+    <RolePrivilege name="prvAppendToalmlab_warehouselocation" level="Global" />
+    <RolePrivilege name="prvAppendToalmlab_warehousetransaction" level="Global" />
+    <RolePrivilege name="prvCreatealmlab_warehouseitem" level="Global" />
+    <RolePrivilege name="prvCreatealmlab_warehouselocation" level="Global" />
+    <RolePrivilege name="prvCreatealmlab_warehousetransaction" level="Global" />
+    <RolePrivilege name="prvDeletealmlab_warehouseitem" level="Global" />
+    <RolePrivilege name="prvDeletealmlab_warehouselocation" level="Global" />
+    <RolePrivilege name="prvDeletealmlab_warehousetransaction" level="Global" />
+    <RolePrivilege name="prvReadalmlab_warehouseitem" level="Global" />
+    <RolePrivilege name="prvReadalmlab_warehouselocation" level="Global" />
+    <RolePrivilege name="prvReadalmlab_warehousetransaction" level="Global" />
+    <RolePrivilege name="prvWritealmlab_warehouseitem" level="Global" />
+    <RolePrivilege name="prvWritealmlab_warehouselocation" level="Global" />
+    <RolePrivilege name="prvWritealmlab_warehousetransaction" level="Global" />
+  </RolePrivileges>
+</Role>
