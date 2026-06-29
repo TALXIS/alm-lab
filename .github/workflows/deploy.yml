@@ -1,0 +1,36 @@
+name: deploy
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+    branches: [main]
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: drop
+          path: ./drop
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install txc
+        run: dotnet tool install --global TALXIS.CLI --prerelease
+
+      - name: Configure txc WIF auth
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          DATAVERSE_TEST_URL: ${{ secrets.DATAVERSE_TEST_URL }}
+        run: |
+          txc config auth add-federated --name ci --tenant $AZURE_TENANT_ID --application-id $AZURE_CLIENT_ID
+          txc config connection create test --provider Dataverse --url $DATAVERSE_TEST_URL
+          txc config profile create --name ci --auth ci --connection test
+
+      - name: Deploy package to Test environment
+        run: txc env pkg import ./drop/Packages.Main.pdpkg.zip --profile ci
