@@ -21,13 +21,14 @@ Write-Step "CP04 — Runtime environments (Dev + Test)"
 $rid = Initialize-RandomIdentifier
 
 # Step 1: Device-code sign-in (browser-less). Skips if a credential already exists.
-if (-not (Get-LabValue 'authenticated')) {
+$auth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Select-Object -First 1).id
+if (-not $auth) {
     Write-Info "Sign in to the training tenant (device code)..."
     txc config auth login --device-code
     if ($LASTEXITCODE -ne 0) { Write-Err "Sign-in failed"; exit 1 }
-    Set-LabValue 'authenticated' $true
-    Write-Ok "Authenticated"
-}
+    $auth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Select-Object -First 1).id
+    Write-Ok "Authenticated as $auth"
+} else { Write-Ok "Already authenticated as $auth" }
 
 # Step 2: Create Dev + Test sandbox environments (unique domains via $rid).
 $envs = [ordered]@{ dev = "wm-dev-$rid"; test = "wm-test-$rid" }
@@ -40,7 +41,10 @@ foreach ($key in $envs.Keys) {
     if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key"; exit 1 }
     $url = "https://$domain.crm4.dynamics.com"
     Set-LabValue "${key}EnvUrl" $url
-    txc config profile create --url $url --name $key --no-select | Out-Null
+    # Bind the existing credential to a connection+profile (no extra sign-in).
+    txc config connection create $key --provider Dataverse --url $url | Out-Null
+    txc config profile create --name $key --auth $auth --connection $key --no-select | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key profile"; exit 1 }
     Write-Ok "$key ready: $url"
 }
 

@@ -46,9 +46,9 @@ if ($missing.Count -gt 0) {
 $rid = Initialize-RandomIdentifier
 Write-Ok "Random identifier for this lab: $rid"
 
-# Ensure TALXIS CLI >= 1.19 (env management). Update the dotnet global tool and prefer it.
+# Ensure TALXIS CLI >= 1.19.1 (env management + fresh-tenant bootstrap). Update + prefer it.
 $txcVer = (txc --version 2>$null) -replace '\+.*',''
-if ([version]($txcVer ? $txcVer : '0.0.0') -lt [version]'1.19.0') {
+if ([version]($txcVer ? $txcVer : '0.0.0') -lt [version]'1.19.1') {
     Write-Info "Updating TALXIS CLI to latest..."
     dotnet tool update --global TALXIS.CLI 2>&1 | Out-Null
     $env:PATH = "$HOME/.dotnet/tools:$env:PATH"
