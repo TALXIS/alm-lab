@@ -42,8 +42,9 @@ foreach ($key in $envs.Keys) {
     $url = "https://$domain.crm4.dynamics.com"
     Set-LabValue "${key}EnvUrl" $url
     # Bind the existing credential to a connection+profile (no extra sign-in).
-    txc config connection create $key --provider Dataverse --url $url | Out-Null
-    txc config profile create --name $key --auth $auth --connection $key --no-select | Out-Null
+    txc config connection create $key --provider Dataverse --url $url 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key connection"; exit 1 }
+    txc config profile create --name $key --auth $auth --connection $key 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key profile"; exit 1 }
     Write-Ok "$key ready: $url"
 }
