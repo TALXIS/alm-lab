@@ -89,6 +89,7 @@ function Save-Checkpoint {
         Write-Info "Committing changes..."
         git commit -m "$Id`: $Message" --quiet
         git push -u origin $Id --force --quiet 2>&1 | Out-Null
+        Start-Sleep 3  # let GitHub settle the ref before opening PR
         $prBody = if ([string]::IsNullOrWhiteSpace($Body)) { "## Summary`n$Message" } else { $Body }
         $url = gh pr create --base main --head $Id --title "$Id`: $Message" --body $prBody 2>&1
         if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
