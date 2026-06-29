@@ -26,10 +26,14 @@ $testUrl = Get-LabValue 'testEnvUrl'
 if (-not $repo) { $originUrl = git -C $LabRoot remote get-url origin 2>$null; if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $repo = $Matches[1] }; Set-LabValue 'repo' $repo }
 if (-not $testUrl) { Write-Err "Run CP04 first (Test environment URL missing)"; exit 1 }
 
-# Step 1: Sign in to Azure (device code) in the training tenant.
-az login --use-device-code --allow-no-subscriptions | Out-Null
-$tenantId = az account show --query tenantId -o tsv
+# Step 1: Sign in to Azure (device code) in the training tenant. Skip if already signed in.
+$tenantId = az account show --query tenantId -o tsv 2>$null
+if (-not $tenantId) {
+    az login --use-device-code --allow-no-subscriptions | Out-Null
+    $tenantId = az account show --query tenantId -o tsv
+}
 Set-LabValue 'tenantId' $tenantId
+Write-Ok "Azure: tenant $tenantId"
 
 # Step 2: App registration + service principal.
 $appName = "wm-deploy-$rid"
