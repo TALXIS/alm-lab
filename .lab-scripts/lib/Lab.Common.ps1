@@ -71,6 +71,10 @@ function Save-Checkpoint {
     Save-LabState
     Push-Location $LabRoot
     try {
+        if (-not (git config user.email)) {
+            git config user.email "$(gh api user -q .id)+$(gh api user -q .login)@users.noreply.github.com"
+            git config user.name (gh api user -q .login)
+        }
         git switch main --quiet 2>&1 | Out-Null
         git pull --quiet 2>&1 | Out-Null
         git branch -D $Id 2>&1 | Out-Null
