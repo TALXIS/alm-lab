@@ -71,19 +71,21 @@ function Save-Checkpoint {
     Save-LabState
     Push-Location $LabRoot
     try {
+        git switch main --quiet 2>&1 | Out-Null
+        git pull --quiet 2>&1 | Out-Null
+        git branch -D $Id 2>&1 | Out-Null
+        git switch -c $Id --quiet 2>&1 | Out-Null
         git add --all
-        $branch = "$Id"
-        git switch -c $branch --quiet 2>&1 | Out-Null
-        if (git status --porcelain) { git commit -m "$Id`: $Message" --quiet }
-        git push -u origin $branch --quiet 2>&1 | Out-Null
-        $url = gh pr create --base main --head $branch --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1
-        Write-Ok "PR opened: $url"
+        if (-not (git status --porcelain)) { Write-Info "No changes for $Id"; git switch main --quiet; return }
+        git commit -m "$Id`: $Message" --quiet
+        git push -u origin $Id --force --quiet 2>&1 | Out-Null
+        $url = gh pr create --base main --head $Id --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1
+        if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
         if (-not $env:LAB_AUTO_MERGE) { Read-Host "  Review the PR in your browser, then press Enter to merge" }
-        gh pr checks $branch --watch 2>&1 | Out-Null
-        gh pr merge $branch --squash --delete-branch --admin 2>&1 | Out-Null
+        gh pr checks $Id --watch 2>&1 | Out-Null
+        gh pr merge $Id --squash --delete-branch --admin 2>&1 | Out-Null
         git switch main --quiet; git pull --quiet
-        git tag -f $Id 2>&1 | Out-Null
-        git push -f origin $Id --quiet 2>&1 | Out-Null
+        git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
         Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
     } finally { Pop-Location }
 }
