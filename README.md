@@ -4,10 +4,11 @@ trunk-based development, PR quality gates and GitHub Actions deployments.
 
 ## Start here
 
-1. **Fork** this repo to your personal GitHub account.
-2. Open your fork in **GitHub Codespaces** (all tools are preinstalled):
+1. **Fork** this repo to your personal GitHub account (top-right **Fork** button).
+2. On **your fork** (`https://github.com/<you>/alm-lab`), click **Code → Codespaces → Create codespace on main**.
+   All tools are preinstalled. The Codespace and free GitHub Actions minutes run on *your* account.
 
-   [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TALXIS/alm-lab?quickstart=1)
+   > ⚠️ Don't use a "one-click" badge that points at `TALXIS/alm-lab` — that starts the Codespace on the parent repo, where you can't push and your free minutes won't apply. Always launch from your own fork.
 
 3. Wait for VS Code to load in the browser. Open a terminal (`Ctrl+\``) — you're in PowerShell.
 4. Work through the **Checkpoints** below in order.
