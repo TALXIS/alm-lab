@@ -55,11 +55,16 @@ Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
 
 # ── 2. GitHub CLI sign-in (workflow + delete_repo scopes needed for the lab) ────────────
 Write-Step "Sign in 1/3 — GitHub"
+# Codespaces commonly injects GITHUB_TOKEN, which blocks interactive `gh auth login`.
+if ($env:GITHUB_TOKEN) {
+    Write-Info "Detected GITHUB_TOKEN in environment; clearing it so GitHub CLI can store login credentials."
+    Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
+}
 $ghScopes = (gh auth status 2>&1 | Select-String 'Token scopes') -replace '.*Token scopes: ',''
 $needsRefresh = (-not $ghScopes) -or ($ghScopes -notmatch 'workflow')
 if ($needsRefresh) {
     Write-Info "Logging in to GitHub (browser or device code)..."
-    gh auth login -h github.com -p https -s workflow,delete_repo -w
+    gh auth login -h github.com -p https -s workflow,delete_repo --web
     if ($LASTEXITCODE -ne 0) { Write-Err "GitHub login failed"; exit 1 }
 }
 gh auth setup-git 2>&1 | Out-Null
