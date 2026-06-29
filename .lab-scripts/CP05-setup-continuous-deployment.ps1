@@ -23,7 +23,7 @@ Write-Step "CP05 — Continuous Deployment (OIDC)"
 $rid     = Initialize-RandomIdentifier
 $repo    = Get-LabValue 'repo'
 $testUrl = Get-LabValue 'testEnvUrl'
-if (-not $repo)    { $repo = gh repo view --json nameWithOwner -q .nameWithOwner; Set-LabValue 'repo' $repo }
+if (-not $repo) { $originUrl = git -C $LabRoot remote get-url origin 2>$null; if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $repo = $Matches[1] }; Set-LabValue 'repo' $repo }
 if (-not $testUrl) { Write-Err "Run CP04 first (Test environment URL missing)"; exit 1 }
 
 # Step 1: Sign in to Azure (device code) in the training tenant.

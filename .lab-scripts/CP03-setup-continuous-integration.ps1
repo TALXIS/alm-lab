@@ -19,9 +19,10 @@ $ErrorActionPreference = "Stop"
 
 Write-Step "CP03 — Continuous Integration (branch protection)"
 
-# Step 1: Resolve the fork (owner/repo) from origin.
-$repo = gh repo view --json nameWithOwner -q .nameWithOwner 2>$null
-if (-not $repo) { Write-Err "Run 'gh auth login' first, then re-run."; exit 1 }
+# Step 1: Resolve the fork (owner/repo) from the origin remote (not the upstream parent).
+$originUrl = git -C $LabRoot remote get-url origin 2>$null
+$repo = if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $Matches[1] } else { $null }
+if (-not $repo) { Write-Err "Could not resolve origin repo. Run 'gh auth login' and ensure origin is your fork."; exit 1 }
 Set-LabValue 'repo' $repo
 Write-Ok "Repository: $repo"
 
