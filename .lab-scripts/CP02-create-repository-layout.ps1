@@ -59,5 +59,14 @@ try {
 }
 finally { Pop-Location }
 
-Save-Checkpoint -Id "cp02" -Message "create monorepo layout (slnx, NuGet.config, src)"
+Save-Checkpoint -Id "cp02" -Message "Create monorepo structure for solution and source assets" -Body @'
+Set up the repository so the warehouse app can be developed as a single Power Platform monorepo. This gives the team a consistent place for solutions, plugins, and deployment packages.
+
+## Changes
+- add WarehouseManagement.slnx to track solution and code projects
+- add NuGet.config for TALXIS DevKit dependencies
+- create the src/ workspace used by later scaffolding steps
+## Testing
+- solution scaffold succeeds and the repo layout is ready for follow-up checkpoints
+'@
 Write-Host "`nNext: .lab-scripts/CP03-setup-continuous-integration.ps1" -ForegroundColor Cyan

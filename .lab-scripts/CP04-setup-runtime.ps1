@@ -48,5 +48,14 @@ foreach ($key in $envs.Keys) {
 txc config profile select dev | Out-Null
 Write-Ok "Active profile: dev"
 
-Save-Checkpoint -Id "cp04" -Message "create Dev + Test environments (rid $rid)"
+Save-Checkpoint -Id "cp04" -Message "Provision Dev and Test Dataverse sandbox environments" -Body @'
+Create dedicated Dev and Test Dataverse sandboxes so the warehouse app can be built and validated in isolated environments. The script also wires local txc profiles to both environments for repeatable deployments.
+
+## Changes
+- provision Dev and Test sandbox environments with unique domains
+- create txc connections and profiles for both environments
+- select the dev profile as the default local deployment target
+## Testing
+- environment provisioning completes and txc can target the dev profile locally
+'@
 Write-Host "`nNext: .lab-scripts/CP05-setup-continuous-deployment.ps1" -ForegroundColor Cyan

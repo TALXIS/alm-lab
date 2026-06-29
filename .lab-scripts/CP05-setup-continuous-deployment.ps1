@@ -77,5 +77,14 @@ Copy-Item "$PSScriptRoot/workflows/build.yml"  $wf -Force
 Copy-Item "$PSScriptRoot/workflows/deploy.yml" $wf -Force
 Write-Ok "Installed build.yml + deploy.yml"
 
-Save-Checkpoint -Id "cp05" -Message "OIDC SP + secrets + CI/CD workflows"
+Save-Checkpoint -Id "cp05" -Message "Configure OIDC deployment identity and GitHub workflows" -Body @'
+Set up GitHub Actions deployment for the warehouse app without long-lived secrets. This adds an Entra application identity, federated trust, and the workflows needed to build and deploy from main.
+
+## Changes
+- create an Entra app registration, service principal, and OIDC credential
+- store deployment settings in GitHub repository secrets
+- install build.yml and deploy.yml under .github/workflows
+## Testing
+- repository secrets are configured and GitHub Actions is enabled for CI/CD runs
+'@
 Write-Host "`nNext: .lab-scripts/CP06-implement-data-model.ps1" -ForegroundColor Cyan

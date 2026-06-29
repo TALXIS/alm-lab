@@ -27,5 +27,14 @@ try {
     dotnet build --nologo --verbosity quiet
 } finally { Pop-Location }
 
-Save-Checkpoint -Id "cp09" -Message "ui: app, sitemap, forms, views, scripts, ribbon"
+Save-Checkpoint -Id "cp09" -Message "Add warehouse model-driven app, views, forms, and ribbon" -Body @'
+Build the model-driven warehouse experience so users can navigate inventory data from a complete Dataverse app. This adds the app shell along with the core forms, views, scripts, and command surface.
+
+## Changes
+- add src/Solutions.UI with the warehouse model-driven application
+- configure sitemap navigation, entity forms, views, and subgrids
+- add form scripts and ribbon commands for warehouse workflows
+## Testing
+- dotnet build --nologo --verbosity quiet passes with the UI solution included
+'@
 Write-Host "`nNext: .lab-scripts/CP10-move-configuration.ps1" -ForegroundColor Cyan

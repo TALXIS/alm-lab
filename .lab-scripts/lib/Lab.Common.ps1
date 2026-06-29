@@ -67,7 +67,11 @@ function Initialize-RandomIdentifier {
 # PR, pause so you can review the diff + checks in the browser, then merge + tag for rollback.
 # Set LAB_AUTO_MERGE=1 to skip the pause (used for unattended testing).
 function Save-Checkpoint {
-    param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Message)
+    param(
+        [Parameter(Mandatory)][string]$Id,
+        [Parameter(Mandatory)][string]$Message,
+        [string]$Body
+    )
     Save-LabState
     Push-Location $LabRoot
     try {
@@ -85,7 +89,8 @@ function Save-Checkpoint {
         Write-Info "Committing changes..."
         git commit -m "$Id`: $Message" --quiet
         git push -u origin $Id --force --quiet 2>&1 | Out-Null
-        $url = gh pr create --base main --head $Id --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1
+        $prBody = if ([string]::IsNullOrWhiteSpace($Body)) { "## Summary`n$Message" } else { $Body }
+        $url = gh pr create --base main --head $Id --title "$Id`: $Message" --body $prBody 2>&1
         if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
         if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
         Write-Info "Waiting for build checks..."

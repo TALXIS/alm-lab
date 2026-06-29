@@ -22,5 +22,14 @@ try {
     dotnet build --nologo --verbosity quiet
 } finally { Pop-Location }
 
-Save-Checkpoint -Id "cp08" -Message "security: 2 roles"
+Save-Checkpoint -Id "cp08" -Message "Add warehouse security roles and entity privileges" -Body @'
+Define security boundaries for the warehouse app so workers and managers get the access they need. This checkpoint adds a dedicated security solution and the role privileges required for day-to-day operations.
+
+## Changes
+- add src/Solutions.Security to package security configuration as code
+- create Warehouse worker and Warehouse manager security roles
+- assign entity privileges for locations, items, and transactions
+## Testing
+- dotnet build --nologo --verbosity quiet passes after adding the security solution
+'@
 Write-Host "`nNext: .lab-scripts/CP09-implement-ui.ps1" -ForegroundColor Cyan

@@ -89,5 +89,14 @@ if (-not $tenantId) {
 Set-LabValue 'tenantId' $tenantId
 Write-Ok "Azure: tenant $tenantId"
 
-Save-Checkpoint -Id "cp01" -Message "verified machine setup, seeded identifier $rid"
+Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab credentials" -Body @'
+Verify the local toolchain and sign in to the services required to build and deploy the warehouse app. This seeds shared lab state so later checkpoints can reuse the same identities and environment metadata.
+
+## Changes
+- verify dotnet, git, gh, pac, txc, and az are available
+- authenticate GitHub CLI, TALXIS CLI, and Azure CLI
+- persist the random identifier, tenant id, and auth profile references
+## Testing
+- tool checks pass; authenticated sessions are ready for subsequent scripts
+'@
 Write-Host "`nNext: .lab-scripts/CP02-create-repository-layout.ps1" -ForegroundColor Cyan

@@ -43,5 +43,14 @@ jobs:
           TXC_HEADLESS: 'true'
 '@ | Set-Content -Path (Join-Path $wf "test.yml") -Encoding UTF8
 
-Save-Checkpoint -Id "cp12" -Message "BDD UI tests + test workflow"
+Save-Checkpoint -Id "cp12" -Message "Add UI BDD test project and PR validation workflow" -Body @'
+Add browser-based regression coverage so key warehouse scenarios can be validated before merge. This introduces the Playwright test project and a pull request workflow that runs the UI suite in automation.
+
+## Changes
+- add src/Tests.UI with Reqnroll and Playwright test assets
+- create a sample warehouse navigation feature and appsettings.json
+- add .github/workflows/test.yml to run UI tests on pull requests
+## Testing
+- dotnet build src/Tests.UI/Tests.UI.csproj passes and the PR workflow is ready to execute
+'@
 Write-Host "`n✓ Lab complete — you built and shipped a Power Platform app from source!" -ForegroundColor Green

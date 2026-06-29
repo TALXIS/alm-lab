@@ -44,5 +44,14 @@ txc data pkg import $dataDir --profile test --allow-production
 if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
 Write-Ok "Config exported from Dev and imported to Test"
 
-Save-Checkpoint -Id "cp10" -Message "configuration migration (CMT) package"
+Save-Checkpoint -Id "cp10" -Message "Add configuration data package for environment promotion" -Body @'
+Package warehouse reference data so environments stay consistent as the app moves through ALM stages. This stores the configuration migration assets beside the deployer and moves the exported data into Test.
+
+## Changes
+- add src/Packages.Main/Data/data_schema.xml for warehouse location config data
+- export configuration data from Dev into the package data folder
+- import the packaged configuration data into the Test environment
+## Testing
+- txc data package export and import complete successfully between Dev and Test
+'@
 Write-Host "`nNext: .lab-scripts/CP11-extend-branch-policies-build-checks.ps1" -ForegroundColor Cyan

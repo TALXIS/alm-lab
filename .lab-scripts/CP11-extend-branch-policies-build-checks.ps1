@@ -31,5 +31,14 @@ gh api -X PUT "repos/$repo/rulesets/$id" --input $tmp 2>&1 | Out-Null
 Remove-Item $tmp
 Write-Ok "Ruleset now requires 'build' to pass"
 
-Save-Checkpoint -Id "cp11" -Message "require build status check on PRs"
+Save-Checkpoint -Id "cp11" -Message "Require build status checks before merging into main" -Body @'
+Tighten the main branch rules so pull requests must pass the build before they can merge. This turns the warehouse solution build into an enforceable quality gate for every change.
+
+## Changes
+- update the main branch ruleset in GitHub
+- require the build status check on pull requests targeting main
+- keep the existing PR-only protection while adding automated validation
+## Testing
+- ruleset update succeeds and the build check is registered as a required status
+'@
 Write-Host "`nNext: .lab-scripts/CP12-automate-testing.ps1" -ForegroundColor Cyan

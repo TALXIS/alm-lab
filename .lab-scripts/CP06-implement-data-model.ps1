@@ -26,5 +26,14 @@ try {
     dotnet build --nologo --verbosity quiet
 } finally { Pop-Location }
 
-Save-Checkpoint -Id "cp06" -Message "data model: package + 3 tables + columns"
+Save-Checkpoint -Id "cp06" -Message "Add warehouse data model schema and column definitions" -Body @'
+Scaffold the core warehouse data model so inventory data can be stored and deployed from source. This introduces the package deployer, the data model solution, and the initial table and column definitions.
+
+## Changes
+- add src/Packages.Main as the package deployer entry point
+- add src/Solutions.DataModel with warehouse location, item, and transaction tables
+- define the initial Dataverse columns and references for the warehouse domain
+## Testing
+- dotnet build --nologo --verbosity quiet passes from the repository root
+'@
 Write-Host "`nNext: .lab-scripts/CP07-implement-backend.ps1" -ForegroundColor Cyan
