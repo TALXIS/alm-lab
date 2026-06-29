@@ -1,8 +1,6 @@
-# Developer ALM Lab — Power Platform on GitHub + GitHub Actions
-
-A hands-on lab for **EPPC26**. You'll role-play building a **Warehouse Management** app in
-Power Platform with modern, source-first ALM: a monorepo, ephemeral Dev/Test environments,
-trunk-based development, PR quality gates and OIDC-secured GitHub Actions deployments.
+# Power Platform Developer ALM Lab
+Power Platform with source-first ALM: a monorepo, ephemeral Dev/Test environments,
+trunk-based development, PR quality gates and GitHub Actions deployments.
 
 ## Start here
 
