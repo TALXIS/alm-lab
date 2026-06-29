@@ -7,5 +7,13 @@
   "tenantId": "957a313a-971b-4add-b513-038b581bc3e7",
   "repo": "ngtraining1-admin/alm-lab",
   "mainRulesetId": 18265983,
-  "mainRulesetName": "alm-lab-main-protection"
+  "mainRulesetName": "alm-lab-main-protection",
+  "devEnvName": "Warehouse dev 4988",
+  "devEnvDomain": "wm-dev-4988",
+  "devEnvUrl": "https://wm-dev-4988.crm4.dynamics.com",
+  "devProfile": "dev",
+  "testEnvName": "Warehouse test 4988",
+  "testEnvDomain": "wm-test-4988",
+  "testEnvUrl": "https://wm-test-4988.crm4.dynamics.com",
+  "testProfile": "test"
 }
