@@ -72,7 +72,6 @@ function Save-Checkpoint {
         [Parameter(Mandatory)][string]$Message,
         [string]$Body
     )
-    Save-LabState
     Push-Location $LabRoot
     try {
         if (-not (git config user.email)) {
@@ -84,6 +83,7 @@ function Save-Checkpoint {
         git pull --quiet 2>&1 | Out-Null
         git branch -D $Id 2>&1 | Out-Null
         git switch -c $Id --quiet 2>&1 | Out-Null
+        Save-LabState  # write state AFTER branch switch so lab-state.json diff is captured
         git add --all
         if (-not (git status --porcelain)) { Write-Info "No changes for $Id"; git switch main --quiet; return }
         Write-Info "Committing changes..."
