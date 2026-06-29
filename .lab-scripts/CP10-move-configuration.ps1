@@ -34,8 +34,14 @@ New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
 "@ | Set-Content -Path (Join-Path $dataDir "data_schema.xml") -Encoding UTF8
 
 # Export from Dev, import to Test.
-txc data pkg export $dataDir --profile dev --allow-production
+# Export from Dev, import to Test. Export needs --schema + --output; import takes the folder.
+txc data pkg export --schema (Join-Path $dataDir "data_schema.xml") --output $dataDir --overwrite --profile dev --allow-production
+if (-not (Test-Path (Join-Path $dataDir "data.xml"))) {
+    Write-Warn2 "No config records in Dev yet — add a few Warehouse Locations, then re-run CP10."
+    exit 1
+}
 txc data pkg import $dataDir --profile test --allow-production
+if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
 Write-Ok "Config exported from Dev and imported to Test"
 
 Save-Checkpoint -Id "cp10" -Message "configuration migration (CMT) package"
