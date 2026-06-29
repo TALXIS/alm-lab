@@ -76,8 +76,7 @@ function Save-Checkpoint {
         git switch -c $branch --quiet 2>&1 | Out-Null
         if (git status --porcelain) { git commit -m "$Id`: $Message" --quiet }
         git push -u origin $branch --quiet 2>&1 | Out-Null
-        gh pr create --base main --head $branch --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1 | Out-Null
-        $url = gh pr view $branch --json url -q .url
+        $url = gh pr create --base main --head $branch --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1
         Write-Ok "PR opened: $url"
         if (-not $env:LAB_AUTO_MERGE) { Read-Host "  Review the PR in your browser, then press Enter to merge" }
         gh pr checks $branch --watch 2>&1 | Out-Null
