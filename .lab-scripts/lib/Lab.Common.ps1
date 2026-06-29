@@ -62,25 +62,40 @@ function Initialize-RandomIdentifier {
     return (Get-LabValue 'randomIdentifier')
 }
 
-# ── Checkpoint commit/push/tag ──────────────────────────────────────────────────────────
-# Commits all changes (including .lab-state.json), pushes main, and tags the checkpoint
-# so attendees can roll back cleanly:  git reset --hard cp03  (then git push --force)
+# ── Checkpoint via Pull Request ─────────────────────────────────────────────────────────
+# Proper ALM: every checkpoint lands on main through a PR. We branch, commit, push, open a
+# PR, pause so you can review the diff + checks in the browser, then merge. A tag is set on
+# main for clean rollback:  git reset --hard cp03  (then git push --force).
+# Before CI exists (CP01/02) there is no ruleset, so we push straight to main.
 function Save-Checkpoint {
     param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Message)
     Save-LabState
     Push-Location $LabRoot
     try {
         git add --all
-        if (git status --porcelain) {
-            git commit -m "$Id`: $Message" --quiet
-            Write-Ok "Committed: $Id`: $Message"
+        $hasChanges = [bool](git status --porcelain)
+        $protected  = (gh api "repos/$(Get-LabValue 'repo')/rulesets" 2>$null | ConvertFrom-Json) `
+                        | Where-Object { $_.name -eq 'alm-lab-main-protection' }
+        if (-not $protected) {
+            if ($hasChanges) { git commit -m "$Id`: $Message" --quiet; Write-Ok "Committed: $Id" }
+            git push -u origin main --quiet 2>&1 | Out-Null
         } else {
-            Write-Info "No changes to commit"
+            $branch = "$Id"
+            git switch -c $branch --quiet 2>&1 | Out-Null
+            if ($hasChanges) { git commit -m "$Id`: $Message" --quiet }
+            git push -u origin $branch --quiet 2>&1 | Out-Null
+            gh pr create --base main --head $branch --title "$Id`: $Message" --body "Checkpoint $Id" 2>&1 | Out-Null
+            $url = gh pr view $branch --json url -q .url
+            Write-Ok "PR opened: $url"
+            if (-not $env:LAB_AUTO_MERGE) { Read-Host "  Review the PR in your browser, then press Enter to merge" }
+            Write-Info "Waiting for build check..."
+            gh pr checks $branch --watch 2>&1 | Out-Null
+            gh pr merge $branch --squash --delete-branch --admin 2>&1 | Out-Null
+            git switch main --quiet; git pull --quiet
         }
-        git push -u origin main --quiet 2>&1 | Out-Null
         git tag -f $Id 2>&1 | Out-Null
         git push -f origin $Id --quiet 2>&1 | Out-Null
-        Write-Ok "Pushed + tagged $Id (rollback: git reset --hard $Id)"
+        Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
     } finally { Pop-Location }
 }
 
