@@ -58,7 +58,11 @@ gh secret set AZURE_TENANT_ID    --repo $repo --body $tenantId
 gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
 Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
 
-# Step 6: Install workflows.
+# Step 6: Install workflows. Pushing files under .github/workflows needs the 'workflow' scope.
+if (-not ((gh auth status 2>&1) -match 'workflow')) {
+    Write-Info "Granting GitHub CLI the 'workflow' scope (needed to push Actions)..."
+    gh auth refresh -h github.com -s workflow
+}
 $wf = Join-Path $LabRoot ".github/workflows"
 New-Item -ItemType Directory -Path $wf -Force | Out-Null
 Copy-Item "$PSScriptRoot/workflows/build.yml"  $wf -Force
