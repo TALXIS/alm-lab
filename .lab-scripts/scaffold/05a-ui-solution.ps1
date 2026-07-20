@@ -33,6 +33,9 @@ Write-Host "  ✓ ProjectReference: UI → Packages.Main" -ForegroundColor Green
 
 Write-Host "`n── Entity References (UI) ──" -ForegroundColor Cyan
 
+# Behavior=Existing creates a reference, not a table: the schema stays owned by
+# Solutions.DataModel; this solution only layers UI (forms, views, ribbon) on top of it.
+
 txc workspace component create pp-entity `
     --output "src/Solutions.UI" `
     --param "Behavior=Existing" `

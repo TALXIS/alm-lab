@@ -48,7 +48,7 @@ if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
 Set-LabValue 'configImportedToUrl' (Get-LabValue 'testEnvUrl')
 Write-Ok "Config exported from Dev and imported to Test"
 
-Save-Checkpoint -Id "cp10" -Message "Add configuration data package for environment promotion" -Body @'
+Save-Checkpoint -Id "cp11" -Message "Add configuration data package for environment promotion" -Body @'
 Package warehouse reference data so environments stay consistent as the app moves through ALM stages. This stores the configuration migration assets beside the deployer and moves the exported data into Test.
 
 ## Changes

@@ -39,7 +39,7 @@ Remove-Item $tmp
 Set-LabValue 'mainRulesetId' $id
 Write-Ok "Ruleset now requires 'build' to pass"
 
-Save-Checkpoint -Id "cp11" -Message "Require build status checks before merging into main" -Body @'
+Save-Checkpoint -Id "cp12" -Message "Require build status checks before merging into main" -Body @'
 Tighten the main branch rules so pull requests must pass the build before they can merge. This turns the warehouse solution build into an enforceable quality gate for every change.
 
 ## Changes

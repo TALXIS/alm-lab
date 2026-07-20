@@ -6,7 +6,20 @@
 #
 # Quality gate: a Reqnroll + Playwright BDD UI test project. We scaffold it and add a manual
 # (workflow_dispatch) test workflow you can inspect — running it live needs a captured auth
-# state, which we cover later. The point here is the test project + workflow exist in source.
+# state (the capture steps are described in scaffold/11-tests-ui.ps1). The point here is
+# the test project + workflow exist in source.
+#
+# BDD discipline in one paragraph: scenarios speak business language - Given sets context,
+# When is one action, Then is an observable outcome, 3-5 steps total - so domain experts
+# can read and challenge them. Selectors and waits belong in step definitions, never in the
+# feature file. Two rules keep UI tests stable: prefer data-*/test-id selectors over
+# display text (which breaks with localization), and never hard-sleep - wait for a
+# specific element instead.
+#
+# UI tests are the top of the pyramid, not the whole pyramid: CP14 adds the fast layers
+# underneath (FakeXrmEasy plugin tests and Jest script tests). See
+# TALXIS/docs-patterns-practices (bdd-agent-v2) for AI agents that plan, bind and heal
+# BDD tests.
 #
 # Run:  .lab-scripts/CP13-automate-testing.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -22,7 +35,8 @@ try {
 } finally { Pop-Location }
 
 # Test workflow is installed for attendees to inspect, but is manual-only for now
-# (workflow_dispatch) — live UI tests need a captured auth state, covered later in the lab.
+# (workflow_dispatch) — live UI tests need a captured auth state; the capture steps are
+# described in scaffold/11-tests-ui.ps1.
 $wf = Join-Path $LabRoot ".github/workflows"
 New-Item -ItemType Directory -Path $wf -Force | Out-Null
 @'
@@ -44,8 +58,8 @@ jobs:
           TXC_HEADLESS: 'true'
 '@ | Set-Content -Path (Join-Path $wf "test.yml") -Encoding UTF8
 
-Save-Checkpoint -Id "cp12" -Message "Add UI BDD test project and PR validation workflow" -Body @'
-Add browser-based regression coverage so key warehouse scenarios can be validated. This introduces the Playwright test project and a manual test workflow; running it live needs a captured auth state, covered later in the lab.
+Save-Checkpoint -Id "cp13" -Message "Add UI BDD test project and PR validation workflow" -Body @'
+Add browser-based regression coverage so key warehouse scenarios can be validated. This introduces the Playwright test project and a manual test workflow; running it live needs a captured Playwright auth state (see the scaffold script comments for the capture steps).
 
 ## Changes
 - add src/Tests.UI with Reqnroll and Playwright test assets
@@ -54,4 +68,4 @@ Add browser-based regression coverage so key warehouse scenarios can be validate
 ## Testing
 - dotnet build src/Tests.UI/Tests.UI.csproj passes and the PR workflow is ready to execute
 '@
-Write-Host "`n✓ Lab complete — you built and shipped a Power Platform app from source!" -ForegroundColor Green
+Write-Host "`nNext: .lab-scripts/CP14-implement-unit-tests.ps1" -ForegroundColor Cyan

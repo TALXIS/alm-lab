@@ -7,6 +7,11 @@
 # The UI solution: a model-driven app, sitemap navigation, forms, views and subgrids, plus
 # form scripts and ribbon buttons. This completes the inner loop — a working app from source.
 #
+# Solutions.UI does not own the tables: it references them (Behavior=Existing) from
+# Solutions.DataModel and only layers forms, views and commands on top. A reference carries
+# just enough metadata to attach UI components without duplicating the schema, which keeps
+# DataModel the single owner of every table definition.
+#
 # Run:  .lab-scripts/CP09-implement-ui.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
