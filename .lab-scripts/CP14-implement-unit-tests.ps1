@@ -33,40 +33,24 @@ Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/14-tests-unit.ps1"
 
-    # ── Run script tests (Jest) — cross-platform, immediate feedback ──
+    # ── Run script tests — dotnet test drives Jest via the csproj's RunJest target ──
     $bundle = "src/Scripts.UI/build/$($PublisherPrefix)_main.js"
     if (-not (Test-Path $bundle)) {
-        Write-Info "Building the Scripts.UI bundle (needed as the web resource under test)..."
-        Push-Location src/Scripts.UI
-        npm install --no-fund --no-audit | Out-Null
-        npm run build | Out-Null
-        Pop-Location
+        Write-Info "Building Scripts.UI (the bundle is the web resource under test)..."
+        dotnet build src/Scripts.UI/Scripts.UI.csproj --nologo --verbosity quiet
+        if ($LASTEXITCODE -ne 0) { Write-Err "Scripts.UI build failed"; exit 1 }
     }
-    if (-not (Test-Path "src/Scripts.Tests/node_modules")) {
-        Push-Location src/Scripts.Tests
-        npm install --no-fund --no-audit | Out-Null
-        Pop-Location
-    }
-    Write-Info "Running script unit tests (Jest)..."
-    Push-Location src/Scripts.Tests
-    $env:JETS_CORE   = Join-Path $LabRoot "src/Scripts.Tests/jest-core"
-    $env:WEBRES_PATH = Join-Path $LabRoot $bundle
-    npx jest --runInBand --ci --env=jsdom
-    $jestExit = $LASTEXITCODE
-    Pop-Location
-    if ($jestExit -ne 0) { Write-Err "Jest tests failed"; exit 1 }
+    Write-Info "Running script unit tests (dotnet test → Jest)..."
+    dotnet test src/Scripts.Tests/Scripts.Tests.csproj --nologo
+    if ($LASTEXITCODE -ne 0) { Write-Err "Script tests failed"; exit 1 }
     Write-Ok "Script unit tests passed"
 
     # ── Run plugin tests (FakeXrmEasy) — net462 executes on Windows only ──
-    if ($IsWindows) {
-        dotnet test src/Plugins.Tests/Plugins.Tests.csproj --nologo
+    dotnet test src/Plugins.Tests/Plugins.Tests.csproj --nologo
         if ($LASTEXITCODE -ne 0) { Write-Err "Plugin tests failed"; exit 1 }
-        Write-Ok "Plugin unit tests passed"
-    } else {
-        dotnet build src/Plugins.Tests/Plugins.Tests.csproj --nologo --verbosity quiet
-        if ($LASTEXITCODE -ne 0) { Write-Err "Plugin test build failed"; exit 1 }
-        Write-Ok "Plugin tests compiled (net462 executes on the CI windows runner)"
-    }
+
+      Write-Ok "Plugin unit tests passed"
+
 
     # ── Install the unit-tests workflow so both suites run on every PR ──
     $wf = Join-Path $LabRoot ".github/workflows"
@@ -91,20 +75,11 @@ jobs:
       - name: Plugin unit tests (FakeXrmEasy)
         run: dotnet test src/Plugins.Tests/Plugins.Tests.csproj --configuration Release
       - name: Build script bundle
-        working-directory: src/Scripts.UI
-        run: |
-          npm install --no-fund --no-audit
-          npm run build
-      - name: Script unit tests (Jest)
-        working-directory: src/Scripts.Tests
-        run: |
-          npm install --no-fund --no-audit
-          $env:JETS_CORE = "$env:GITHUB_WORKSPACE\src\Scripts.Tests\jest-core"
-          $env:WEBRES_PATH = "$env:GITHUB_WORKSPACE\src\Scripts.UI\build\__PREFIX___main.js"
-          npx jest --runInBand --ci --env=jsdom
+        run: dotnet build src/Scripts.UI/Scripts.UI.csproj --configuration Release
+      - name: Script unit tests (Jest via dotnet test)
+        run: dotnet test src/Scripts.Tests/Scripts.Tests.csproj --configuration Release
 '@
-    $unitTestsYml.Replace('__PREFIX__', $PublisherPrefix) |
-        Set-Content -Path (Join-Path $wf "unit-tests.yml") -Encoding UTF8
+    $unitTestsYml | Set-Content -Path (Join-Path $wf "unit-tests.yml") -Encoding UTF8
     Write-Ok "Installed unit-tests.yml (runs on every PR; CP12 shows how to make it required)"
 } finally { Pop-Location }
 
@@ -118,4 +93,4 @@ Add the fast layers of the test pyramid so warehouse logic is verified without a
 ## Testing
 - Jest suite passes locally; plugin suite passes on Windows / the CI windows runner
 '@
-Write-Host "`nNext: .lab-scripts/CP16-implement-code-app.ps1" -ForegroundColor Cyan
+Write-Host "`n✓ Lab complete — you built, tested and shipped a Power Platform app from source!" -ForegroundColor Green
