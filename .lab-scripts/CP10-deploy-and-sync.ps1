@@ -11,6 +11,13 @@
 # and pull them back to source with `txc env solution pull`. This demonstrates the
 # bidirectional inner loop: source ↔ environment.
 #
+# Managed vs unmanaged, the core solution concept: unmanaged solutions are open for editing
+# - the working state of a dev environment. Managed solutions are sealed, layered artifacts
+# for every downstream environment: they merge as diff layers, can be cleanly uninstalled,
+# and managed properties can restrict edits. Rule of thumb: production should never contain
+# unmanaged components. That is why we pull the unmanaged layer from Dev - the place where
+# humans edit - while pipelines only ever ship built packages forward.
+#
 # In auto mode: deploy + pull (no manual changes expected).
 #
 # Run:  .lab-scripts/CP10-deploy-and-sync.ps1
