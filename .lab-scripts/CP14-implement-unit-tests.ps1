@@ -16,9 +16,11 @@
 # The tests are adapted to OUR app: the plugins require a transaction type and treat
 # Inbound (add stock) and Outbound (validate + subtract) differently - tests document that.
 #
-# One honest constraint: the Dataverse plugin SDK targets .NET Framework (net462), which
-# only executes on Windows. In Codespaces (Linux) we compile the plugin tests and run them
-# in CI on a windows runner - the new unit-tests workflow does exactly that on every PR.
+# One honest constraint: the plugin assembly itself must stay net462 - the Dataverse
+# sandbox still runs .NET Framework. The tests don't share that constraint: the template
+# targets modern .NET with FakeXrmEasy 3.x, so the whole suite runs anywhere (Codespaces,
+# the ubuntu CI runner). The scaffold only bridges the net8-to-net462 project reference -
+# see 14-tests-unit.ps1.
 #
 # Run:  .lab-scripts/CP14-implement-unit-tests.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -45,12 +47,10 @@ try {
     if ($LASTEXITCODE -ne 0) { Write-Err "Script tests failed"; exit 1 }
     Write-Ok "Script unit tests passed"
 
-    # ── Run plugin tests (FakeXrmEasy) — net462 executes on Windows only ──
+    # ── Run plugin tests (FakeXrmEasy) ──
     dotnet test src/Plugins.Tests/Plugins.Tests.csproj --nologo
-        if ($LASTEXITCODE -ne 0) { Write-Err "Plugin tests failed"; exit 1 }
-
-      Write-Ok "Plugin unit tests passed"
-
+    if ($LASTEXITCODE -ne 0) { Write-Err "Plugin tests failed"; exit 1 }
+    Write-Ok "Plugin unit tests passed"
 
     # ── Install the unit-tests workflow so both suites run on every PR ──
     $wf = Join-Path $LabRoot ".github/workflows"
@@ -65,8 +65,7 @@ permissions:
   contents: read
 jobs:
   unit-tests:
-    # windows runner: the Dataverse SDK (and FakeXrmEasy) target net462
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -91,6 +90,6 @@ Add the fast layers of the test pyramid so warehouse logic is verified without a
 - add src/Scripts.Tests with Jest tests for form and ribbon scripts
 - add .github/workflows/unit-tests.yml running both suites on every PR
 ## Testing
-- Jest suite passes locally; plugin suite passes on Windows / the CI windows runner
+- both suites pass locally via dotnet test 
 '@
 Write-Host "`n✓ Lab complete — you built, tested and shipped a Power Platform app from source!" -ForegroundColor Green
