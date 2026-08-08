@@ -54,6 +54,7 @@ fork** — say yes.
 | 12 | `CP12-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
 | 13 | `CP13-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |
 | 14 | `CP14-implement-unit-tests.ps1` | Plugin (FakeXrmEasy) + script (Jest) unit tests |
+| 15 | `CP15-implement-grid-control.ps1` | TALXIS Grid PCF on the location form + script customization |
 
 Run a checkpoint:
 

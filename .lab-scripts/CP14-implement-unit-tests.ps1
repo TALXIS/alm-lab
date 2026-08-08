@@ -92,4 +92,4 @@ Add the fast layers of the test pyramid so warehouse logic is verified without a
 ## Testing
 - both suites pass locally via dotnet test 
 '@
-Write-Host "`n✓ Lab complete — you built, tested and shipped a Power Platform app from source!" -ForegroundColor Green
+Write-Host "`nNext: .lab-scripts/CP15-implement-grid-control.ps1" -ForegroundColor Cyan
