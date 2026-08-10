@@ -10,7 +10,7 @@ trunk-based development, PR quality gates and GitHub Actions deployments.
 
    > ⚠️ Don't use a "one-click" badge that points at `TALXIS/alm-lab` — that starts the Codespace on the parent repo, where you can't push and your free minutes won't apply. Always launch from your own fork.
 
-3. Wait for VS Code to load in the browser. Open a terminal (`Ctrl+\``) — you're in PowerShell.
+3. Wait for VS Code to load in the browser. Open a terminal (Ctrl+`) — you're in PowerShell.
 4. Work through the **Checkpoints** below in order, starting with `CP01`.
 
 > 💡 Each checkpoint script is fully commented — open it, read what it does, then run it.
