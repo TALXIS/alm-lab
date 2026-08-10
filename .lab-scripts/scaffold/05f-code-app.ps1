@@ -25,10 +25,7 @@
 
 Write-Host "`n── Code App: Warehouse Picking ──" -ForegroundColor Cyan
 
-# AppName drives the CanvasApp schema name (<prefix>_<appname>), the generated .meta.xml file
-# name and the package folder inside the solution. Pin it explicitly so those names stay
-# predictable instead of being derived from the project folder name (src/Apps.WarehousePicking
-# would otherwise produce the dotted, redundant-looking apps.warehousepicking).
+# Pin AppName so the CanvasApp schema name doesn't depend on the project folder name.
 $appName = "warehousepicking"
 
 txc workspace component create pp-app-code `
