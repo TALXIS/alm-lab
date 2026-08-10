@@ -11,6 +11,13 @@
 # and pull them back to source with `txc env solution pull`. This demonstrates the
 # bidirectional inner loop: source ↔ environment.
 #
+# Managed vs unmanaged, the core solution concept: unmanaged solutions are open for editing
+# - the working state of a dev environment. Managed solutions are sealed, layered artifacts
+# for every downstream environment: they merge as diff layers, can be cleanly uninstalled,
+# and managed properties can restrict edits. Rule of thumb: production should never contain
+# unmanaged components. That is why we pull the unmanaged layer from Dev - the place where
+# humans edit - while pipelines only ever ship built packages forward.
+#
 # In auto mode: deploy + pull (no manual changes expected).
 #
 # Run:  .lab-scripts/CP10-deploy-and-sync.ps1
@@ -23,6 +30,19 @@ Write-Step "CP10 — Deploy to Dev & sync changes back"
 
 $devUrl = Get-LabValue 'devEnvUrl'
 if (-not $devUrl) { Write-Err "Dev environment URL not found in lab state. Run CP04 first."; exit 1 }
+
+# ──────────────────────────────────────────────────────────────────────────────────────────
+# Step 0: Import the TALXIS Grid control package FIRST. The Warehouse Location form
+# references talxis_TALXIS.PCF.Grid (attached in CP09) — importing the app package into an
+# environment that doesn't have the control yet fails on a missing-dependency check.
+# The package comes from nuget.org by name, latest version.
+# ──────────────────────────────────────────────────────────────────────────────────────────
+
+$gridPackage = 'TALXIS.Controls.Grid.Package'
+Write-Info "Importing TALXIS Grid control package ($gridPackage)..."
+
+txc env pkg import $gridPackage
+
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 1: Build the full Package Deployer package and deploy to Dev.

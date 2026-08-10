@@ -82,6 +82,9 @@ Remove-Item $tmp; Write-Ok "Federated credential (repo:${repo}:ref:refs/heads/ma
 # Step 4: Add SP as application user with System Administrator role in Test env.
 # We use the Dataverse OData API directly (pac admin assign-user requires a pac
 # auth profile which is not available in Codespaces; az is already authenticated).
+# NOTE: System Administrator keeps the lab simple but breaks the least-privilege rule we
+# apply to users in CP08. In production, give the deploy principal a custom role scoped to
+# what imports actually need, and never a tenant-level Power Platform admin role.
 $dvToken = (az account get-access-token --resource $testUrl --query accessToken -o tsv 2>$null)
 $dvHeaders = @{ Authorization="Bearer $dvToken"; 'Content-Type'='application/json'; 'OData-Version'='4.0' }
 $dvBase   = $testUrl.TrimEnd('/')
