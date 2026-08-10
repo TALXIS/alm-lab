@@ -16,6 +16,18 @@
 
 Write-Host "`n── Code App: Warehouse Portal ──" -ForegroundColor Cyan
 
+# Vite (this project's build tool) requires Node 20.19+ or 22.12+. CP01 only checks that
+# node is present, not its version — an old Node would otherwise fail much later as a
+# confusing Vite error, so check the actual constraint right where it applies.
+$nodeVersion = [version]((node --version) -replace '^v','')
+$nodeOk = ($nodeVersion.Major -eq 20 -and $nodeVersion -ge [version]"20.19") -or
+          ($nodeVersion.Major -ge 22 -and $nodeVersion -ge [version]"22.12") -or
+          ($nodeVersion.Major -gt 22)
+if (-not $nodeOk) {
+    Write-Host "  ✗ Node $nodeVersion is too old for the code app (Vite needs 20.19+ or 22.12+)" -ForegroundColor Red
+    exit 1
+}
+
 # AppName drives the CanvasApp schema name (<prefix>_<appname>), the generated .meta.xml file
 # name and the package folder inside the solution. Pin it explicitly so those names stay
 # predictable instead of being derived from the project folder name (src/CodeApps.Warehouse

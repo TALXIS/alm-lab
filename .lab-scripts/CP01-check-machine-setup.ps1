@@ -34,7 +34,7 @@ $tools = [ordered]@{
     "pac"    = "pac help"             # Power Platform CLI
     "txc"    = "txc --version"        # TALXIS CLI — scaffolding, env, deploy
     "az"     = "az version"           # Azure CLI — app registration + OIDC
-    "node"   = "node --version"       # Node.js — builds the CP09 code app (Vite) and Scripts.UI
+    "node"   = "node --version"       # Node.js — npm-based builds (Scripts.UI, code apps, PCF)
 }
 
 $missing = @()
@@ -47,19 +47,6 @@ if ($missing.Count -gt 0) {
     Write-Err "Missing tools: $($missing -join ', '). Open this repo in GitHub Codespaces."
     exit 1
 }
-
-# Vite (the CP09 code app's build tool) requires Node 20.19+ or 22.12+ — check this
-# separately from mere presence, since an old Node fails much later with a confusing
-# Vite error instead of a clear message here.
-$nodeVersion = [version]((node --version) -replace '^v','')
-$nodeOk = ($nodeVersion.Major -eq 20 -and $nodeVersion -ge [version]"20.19") -or
-          ($nodeVersion.Major -ge 22 -and $nodeVersion -ge [version]"22.12") -or
-          ($nodeVersion.Major -gt 22)
-if (-not $nodeOk) {
-    Write-Err "Node $nodeVersion is too old for the CP09 code app (Vite needs 20.19+ or 22.12+). Update Node."
-    exit 1
-}
-Write-Ok "Node $nodeVersion meets Vite's minimum version"
 
 # Seed the unique identifier used for all named cloud assets.
 $rid = Initialize-RandomIdentifier
@@ -116,7 +103,7 @@ Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab
 Verify the local toolchain and sign in to the services required to build and deploy the warehouse app. This seeds shared lab state so later checkpoints can reuse the same identities and environment metadata.
 
 ## Changes
-- verify dotnet, git, gh, pac, txc, az, and node (with a minimum version for Vite) are available
+- verify dotnet, git, gh, pac, txc, az, and node are available
 - authenticate GitHub CLI, TALXIS CLI, and Azure CLI
 - persist the random identifier, tenant id, and auth profile references
 ## Testing
