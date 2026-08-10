@@ -4,7 +4,9 @@
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Overlays the TALXIS Grid PCF control on the "Warehouse Items" subgrid of the
-# Warehouse Location form, then customizes it at runtime from our own Scripts.UI
+# Warehouse Location form via `txc workspace control attach` — the CLI reads the
+# parameter schema from the control's own ControlManifest.xml (no per-control
+# template needed) — then customizes the grid at runtime from our own Scripts.UI
 # web resource through the control's Client API bridge:
 #
 #   FormXml:  ClientApiWebresourceName = almlab_main.js
@@ -13,10 +15,11 @@
 #   interceptors (rename a column) and record expressions (paint low-stock cells red).
 #
 # The Grid control itself ships as a public Package Deployer package on nuget.org
-# (TALXIS.Controls.Grid.Package) — we download it here and CP15 imports it into Dev
-# BEFORE the app package, because the patched form now references the control.
+# (TALXIS.Controls.Grid.Package) — we download it here; `control attach` reads the
+# manifest from the same file, and CP15 imports it into Dev BEFORE the app package,
+# because the patched form now references the control.
 #
-# Expects: $PublisherPrefix from parent scope.
+# Expects: $PublisherPrefix from parent scope, TALXIS.CLI with `workspace control attach`.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                       Download the TALXIS Grid control package
@@ -213,93 +216,46 @@ txc workspace component create pp-form-event-handler `
 Write-Host "  ✓ Event handler: warehouselocation form → onLoad" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#                 FormXml: overlay TALXIS Grid on the items subgrid
+#                 Attach TALXIS Grid to the items subgrid (manifest-driven)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── FormXml overlay ──" -ForegroundColor Cyan
+Write-Host "`n── Grid overlay (txc workspace control attach) ──" -ForegroundColor Cyan
 
-# No pp-* template exists for attaching a custom control to a form control yet
-# (pp-control is a placeholder), so we patch the FormXml DOM directly — the same
-# approach 05d uses for view columns. The target shape mirrors production TALXIS
-# solutions: a <controlDescription> for the subgrid's uniqueid with an empty base
-# control block plus one talxis_TALXIS.PCF.Grid block per form factor.
-$formXml = [xml](Get-Content $locationFormFile.FullName -Raw)
-
-if ($formXml.SelectSingleNode("//controlDescriptions")) {
-    Write-Host "  ⚠ controlDescriptions already present — skipping overlay patch" -ForegroundColor Yellow
-} else {
+# Fix the CP09 gap first: an empty RelationshipName means the subgrid shows ALL
+# items; with the relationship set it shows only this location's items. The attach
+# command below copies the subgrid's binding (view + relationship) into the grid.
+if ($relationshipName) {
+    $formXml = [xml](Get-Content $locationFormFile.FullName -Raw)
     $subgridControl = $formXml.SelectSingleNode("//control[@indicationOfSubgrid='true']")
     if (-not $subgridControl) { Write-Host "  ✗ Items subgrid not found on the location form" -ForegroundColor Red; exit 1 }
-    $subgridUniqueId = $subgridControl.GetAttribute('uniqueid')
-    $viewId          = $subgridControl.SelectSingleNode('parameters/ViewId').InnerText
-
-    # Fix the CP09 gap while we're here: an empty RelationshipName means the subgrid
-    # shows ALL items; with the relationship set it shows only this location's items.
-    if ($relationshipName) {
-        $subgridControl.SelectSingleNode('parameters/RelationshipName').InnerText = $relationshipName
-    }
-
-    # Group by category, sum the quantity, keep reorder point available but hidden.
-    $columnsJson = "[ { `"name`": `"${prefix}_category`", `"grouping`": { `"isGrouped`": true } }, { `"name`": `"${prefix}_availablequantity`", `"aggregation`": { `"aggregationFunction`": `"sum`" } }, { `"name`": `"${prefix}_reorderpoint`", `"isHidden`": true } ]"
-
-    $gridParameters = @"
-<parameters>
-  <data-set name="Grid">
-    <ViewId>$viewId</ViewId>
-    <TargetEntityType>${prefix}_warehouseitem</TargetEntityType>
-    <IsUserView>false</IsUserView>
-    <EnableViewPicker>false</EnableViewPicker>
-    <RelationshipName>$relationshipName</RelationshipName>
-    <FilteredViewIds>$viewId</FilteredViewIds>
-  </data-set>
-  <Columns type="Multiple" static="true">$columnsJson</Columns>
-  <RowHeight type="Whole.None" static="true">42</RowHeight>
-  <EnableEditing type="Enum" static="true">false</EnableEditing>
-  <EnablePagination type="Enum" static="true">true</EnablePagination>
-  <EnableFiltering type="Enum" static="true">true</EnableFiltering>
-  <EnableSorting type="Enum" static="true">true</EnableSorting>
-  <EnableNavigation type="Enum" static="true">true</EnableNavigation>
-  <EnableOptionSetColors type="Enum" static="true">true</EnableOptionSetColors>
-  <EnableAggregation type="Enum" static="true">true</EnableAggregation>
-  <EnableAutoSave type="Enum" static="true">false</EnableAutoSave>
-  <SelectableRows type="Enum" static="true">single</SelectableRows>
-  <EnablePageSizeSwitcher type="Enum" static="true">true</EnablePageSizeSwitcher>
-  <EnableGrouping type="Enum" static="true">true</EnableGrouping>
-  <EnableGroupedColumnsPinning type="Enum" static="true">true</EnableGroupedColumnsPinning>
-  <EnableRecordCount type="Enum" static="true">true</EnableRecordCount>
-  <EnableZebra type="Enum" static="true">true</EnableZebra>
-  <DefaultExpandedGroupLevel type="Whole.None" static="true">-1</DefaultExpandedGroupLevel>
-  <GroupingType type="Enum" static="true">nested</GroupingType>
-  <ClientApiWebresourceName type="SingleLine.Text" static="true">${prefix}_main.js</ClientApiWebresourceName>
-  <ClientApiFunctionName type="SingleLine.Text" static="true">WarehouseScripts.GridApi.onDatasetControlInitialized</ClientApiFunctionName>
-</parameters>
-"@
-
-    $controlDescriptionsRaw = @"
-<controlDescriptions>
-  <controlDescription forControl="$subgridUniqueId">
-    <customControl id="{E7A81278-8635-4D9E-8D4D-59480B391C5B}">
-      <parameters />
-    </customControl>
-    <customControl formFactor="0" name="talxis_TALXIS.PCF.Grid">$gridParameters</customControl>
-    <customControl formFactor="1" name="talxis_TALXIS.PCF.Grid">$gridParameters</customControl>
-    <customControl formFactor="2" name="talxis_TALXIS.PCF.Grid">$gridParameters</customControl>
-  </controlDescription>
-</controlDescriptions>
-"@
-
-    $fragment = [xml]$controlDescriptionsRaw
-    $imported = $formXml.ImportNode($fragment.DocumentElement, $true)
-    $formNode = $formXml.SelectSingleNode("//form")
-
-    # Production forms order it: controlDescriptions → DisplayConditions → formLibraries → events
-    $anchor = $formXml.SelectSingleNode("//form/DisplayConditions")
-    if (-not $anchor) { $anchor = $formXml.SelectSingleNode("//form/formLibraries") }
-    if ($anchor) { $formNode.InsertBefore($imported, $anchor) | Out-Null } else { $formNode.AppendChild($imported) | Out-Null }
-
+    $subgridControl.SelectSingleNode('parameters/RelationshipName').InnerText = $relationshipName
     $formXml.Save($locationFormFile.FullName)
-    Write-Host "  ✓ talxis_TALXIS.PCF.Grid overlaid on the Warehouse Items subgrid" -ForegroundColor Green
+    Write-Host "  ✓ Subgrid now filters by $relationshipName" -ForegroundColor Green
 }
+
+# No per-control template needed: the CLI reads the parameter schema straight from
+# ControlManifest.xml inside the downloaded package, validates the values, and writes
+# the controlDescriptions overlay into the form (one customControl block per form
+# factor). Unspecified parameters keep the control's manifest defaults.
+# Columns: group by category, sum the quantity, keep reorder point available but hidden.
+$columnsJson = "[ { `"name`": `"${prefix}_category`", `"grouping`": { `"isGrouped`": true } }, { `"name`": `"${prefix}_availablequantity`", `"aggregation`": { `"aggregationFunction`": `"sum`" } }, { `"name`": `"${prefix}_reorderpoint`", `"isHidden`": true } ]"
+
+txc workspace control attach `
+    --output "src/Solutions.UI" `
+    --entity "${prefix}_warehouselocation" `
+    --form-id $locationFormGuid `
+    --target-control "subgrid" `
+    --manifest $gridNupkg `
+    --param "Columns=$columnsJson" `
+    --param "EnableGrouping=true" `
+    --param "EnableAggregation=true" `
+    --param "EnableOptionSetColors=true" `
+    --param "ClientApiWebresourceName=${prefix}_main.js" `
+    --param "ClientApiFunctionName=WarehouseScripts.GridApi.onDatasetControlInitialized" `
+    --force
+
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control attach failed" -ForegroundColor Red; exit 1 }
+Write-Host "  ✓ talxis_TALXIS.PCF.Grid attached to the Warehouse Items subgrid" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Jest tests for the bridge

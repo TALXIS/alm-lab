@@ -10,8 +10,10 @@
 # control:
 #   1. The control ships as a public Package Deployer package on nuget.org
 #      (TALXIS.Controls.Grid.Package) — no private feed, no manual solution import.
-#   2. The FormXml overlay (controlDescriptions) attaches talxis_TALXIS.PCF.Grid to
-#      the existing Warehouse Items subgrid — groups by category, sums quantities.
+#   2. `txc workspace control attach` overlays talxis_TALXIS.PCF.Grid on the existing
+#      Warehouse Items subgrid — manifest-driven: the CLI reads the parameter schema
+#      from ControlManifest.xml inside the downloaded package, validates our values,
+#      and writes the controlDescriptions overlay. Groups by category, sums quantities.
 #   3. Our own web resource customizes the grid at runtime: the control calls
 #      WarehouseScripts.GridApi.onDatasetControlInitialized (ClientApi parameters in
 #      FormXml), the script registers interceptors and record expressions — column
@@ -76,10 +78,10 @@ try {
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp15" -Message "Add TALXIS Grid control with form script customization" -Body @'
-Swap the stock subgrid on the Warehouse Location form for the TALXIS Grid PCF and customize it from our own script library through the control's Client API. The Grid ships as a public Package Deployer package from nuget.org; the bridge (getDataset / onDatasetControlInitialized) lives in our almlab_main.js web resource, so no private TALXIS feed is needed.
+Swap the stock subgrid on the Warehouse Location form for the TALXIS Grid PCF and customize it from our own script library through the control's Client API. The Grid ships as a public Package Deployer package from nuget.org, and the overlay is applied with `txc workspace control attach` — the CLI reads the parameter schema from the control's own manifest, so no per-control template is needed. The bridge (getDataset / onDatasetControlInitialized) lives in our almlab_main.js web resource, so no private TALXIS feed is needed either.
 
 ## Changes
-- overlay talxis_TALXIS.PCF.Grid on the Warehouse Items subgrid (group by category, sum of quantity)
+- attach talxis_TALXIS.PCF.Grid to the Warehouse Items subgrid via txc workspace control attach (group by category, sum of quantity)
 - wire the location↔item relationship into the subgrid so it shows only related items
 - add GridApi bridge + interceptors + low-stock formatting to src/Scripts.UI, register onLoad on the location form
 - add Jest tests for the bridge in src/Scripts.Tests
