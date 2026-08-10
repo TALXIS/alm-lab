@@ -32,5 +32,8 @@ jobs:
           txc config connection create test --provider Dataverse --url $DATAVERSE_TEST_URL
           txc config profile create --name ci --auth ci --connection test
 
+      - name: Import TALXIS Grid control package
+        run: txc env pkg import TALXIS.Controls.Grid.Package --profile ci
+
       - name: Deploy package to Test environment
         run: txc env pkg import ./drop/Packages.Main.pdpkg.zip --profile ci
