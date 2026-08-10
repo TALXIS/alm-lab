@@ -11,9 +11,11 @@
 #   1. The control ships as a public Package Deployer package on nuget.org
 #      (TALXIS.Controls.Grid.Package) — no private feed, no manual solution import.
 #   2. `txc workspace control attach` overlays talxis_TALXIS.PCF.Grid on the existing
-#      Warehouse Items subgrid — manifest-driven: the CLI reads the parameter schema
-#      from ControlManifest.xml inside the downloaded package, validates our values,
-#      and writes the controlDescriptions overlay. Groups by category, sums quantities.
+#      Warehouse Items subgrid — manifest-driven: the CLI downloads the NuGet package
+#      itself, reads the parameter schema from its ControlManifest.xml, validates our
+#      values, and writes the controlDescriptions overlay. Groups by category, sums
+#      quantities. No file juggling: both attach and the Dev import below take the
+#      plain package name.
 #   3. Our own web resource customizes the grid at runtime: the control calls
 #      WarehouseScripts.GridApi.onDatasetControlInitialized (ClientApi parameters in
 #      FormXml), the script registers interceptors and record expressions — column
@@ -55,7 +57,7 @@ try {
     $devUrl = Get-LabValue 'devEnvUrl'
     if ($devUrl) {
         Write-Info "Importing TALXIS Grid control package to Dev ($devUrl)..."
-        txc env pkg import $gridPdpkgPath --profile dev
+        txc env pkg import $gridPackage --version $gridVersion --profile dev
         if ($LASTEXITCODE -ne 0) { Write-Err "Grid package import failed"; exit 1 }
         Write-Ok "TALXIS Grid control deployed"
 
@@ -73,8 +75,6 @@ try {
         Write-Warn2 "No Dev environment in lab state — skipping deploy (run CP04 + CP10 to see the grid live)"
     }
 
-    # The downloaded package is a deploy-time artifact, not source — keep it out of the PR.
-    Remove-Item (Join-Path $LabRoot ".lab-scripts/.tmp-grid") -Recurse -Force -ErrorAction SilentlyContinue
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp15" -Message "Add TALXIS Grid control with form script customization" -Body @'

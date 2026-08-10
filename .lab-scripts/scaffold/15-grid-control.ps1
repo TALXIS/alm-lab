@@ -15,35 +15,18 @@
 #   interceptors (rename a column) and record expressions (paint low-stock cells red).
 #
 # The Grid control itself ships as a public Package Deployer package on nuget.org
-# (TALXIS.Controls.Grid.Package) — we download it here; `control attach` reads the
-# manifest from the same file, and CP15 imports it into Dev BEFORE the app package,
-# because the patched form now references the control.
+# (TALXIS.Controls.Grid.Package). Nothing is downloaded by hand: `control attach`
+# resolves the manifest from the NuGet package name, and CP15 imports the same
+# package into Dev by name BEFORE the app package, because the patched form now
+# references the control.
 #
 # Expects: $PublisherPrefix from parent scope, TALXIS.CLI with `workspace control attach`.
-#
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                       Download the TALXIS Grid control package
-# ──────────────────────────────────────────────────────────────────────────────────────────
-
-Write-Host "`n── TALXIS Grid package ──" -ForegroundColor Cyan
 
 $prefix = $PublisherPrefix
 
 # Pinned so the webinar/lab never breaks on a newer release renaming parameters.
-$gridVersion  = "0.0.2602.15"
-$tmpGrid      = Join-Path $LabRoot ".lab-scripts/.tmp-grid"
-Remove-Item $tmpGrid -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Path $tmpGrid -Force | Out-Null
-
-$gridNupkg = Join-Path $tmpGrid "grid.nupkg"
-Invoke-WebRequest "https://api.nuget.org/v3-flatcontainer/talxis.controls.grid.package/$gridVersion/talxis.controls.grid.package.$gridVersion.nupkg" -OutFile $gridNupkg
-Expand-Archive $gridNupkg -DestinationPath (Join-Path $tmpGrid "pkg") -Force
-
-# The nupkg wraps a Package Deployer package (pdpkg.zip) with the managed TALXISPCFGrid solution.
-$gridPdpkgPath = (Get-ChildItem (Join-Path $tmpGrid "pkg/contentFiles") -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1).FullName
-if (-not $gridPdpkgPath) { Write-Host "  ✗ pdpkg.zip not found inside the Grid nupkg" -ForegroundColor Red; exit 1 }
-
-Write-Host "  ✓ TALXIS.Controls.Grid.Package $gridVersion downloaded" -ForegroundColor Green
+$gridPackage = "TALXIS.Controls.Grid.Package"
+$gridVersion = "0.0.2602.15"
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                Recover artifacts generated in CP09 (form, view, relationship)
@@ -233,10 +216,11 @@ if ($relationshipName) {
     Write-Host "  ✓ Subgrid now filters by $relationshipName" -ForegroundColor Green
 }
 
-# No per-control template needed: the CLI reads the parameter schema straight from
-# ControlManifest.xml inside the downloaded package, validates the values, and writes
-# the controlDescriptions overlay into the form (one customControl block per form
-# factor). Unspecified parameters keep the control's manifest defaults.
+# No per-control template and no manual download: the CLI pulls the package from
+# nuget.org, reads the parameter schema straight from its ControlManifest.xml,
+# validates the values, and writes the controlDescriptions overlay into the form
+# (one customControl block per form factor). Unspecified parameters keep the
+# control's manifest defaults.
 # Columns: group by category, sum the quantity, keep reorder point available but hidden.
 $columnsJson = "[ { `"name`": `"${prefix}_category`", `"grouping`": { `"isGrouped`": true } }, { `"name`": `"${prefix}_availablequantity`", `"aggregation`": { `"aggregationFunction`": `"sum`" } }, { `"name`": `"${prefix}_reorderpoint`", `"isHidden`": true } ]"
 
@@ -245,7 +229,8 @@ txc workspace control attach `
     --entity "${prefix}_warehouselocation" `
     --form-id $locationFormGuid `
     --target-control "subgrid" `
-    --manifest $gridNupkg `
+    --package $gridPackage `
+    --version $gridVersion `
     --param "Columns=$columnsJson" `
     --param "EnableGrouping=true" `
     --param "EnableAggregation=true" `
