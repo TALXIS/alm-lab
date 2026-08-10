@@ -144,12 +144,14 @@ export class GridApi {
                 ? { ...column, displayName: 'Qty on hand' }
                 : column));
 
-        // Record expression: paint quantity cells red when stock is at or below reorder point
+        // Record expression: paint quantity cells red when stock is at or below reorder point.
+        // Group-header pseudo-records and empty cells have no quantity value — leave them alone.
         dataset.addEventListener('onRecordLoaded', (record: IRecord) => {
             record.expressions?.ui.setCustomFormattingExpression('${prefix}_availablequantity', () => {
-                const quantity = (record.getValue('${prefix}_availablequantity') as number) ?? 0;
+                const quantity = record.getValue('${prefix}_availablequantity');
+                if (quantity == null) return undefined;
                 const reorderPoint = (record.getValue('${prefix}_reorderpoint') as number) ?? LOW_STOCK_FALLBACK;
-                if (quantity > reorderPoint) return undefined;
+                if ((quantity as number) > reorderPoint) return undefined;
                 return { backgroundColor: LOW_STOCK_BACKGROUND };
             });
         });
@@ -324,6 +326,9 @@ test('low-stock rows get custom formatting on the quantity cell', () => {
   expect(formattingExpression()).toEqual({ backgroundColor: expect.any(String) });
 
   values['${prefix}_availablequantity'] = 50;
+  expect(formattingExpression()).toBeUndefined();
+
+  values['${prefix}_availablequantity'] = null;
   expect(formattingExpression()).toBeUndefined();
 });
 "@
