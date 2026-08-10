@@ -22,55 +22,15 @@ jobs:
       - name: Install txc
         run: dotnet tool install --global TALXIS.CLI --prerelease
 
-      # Bootstrap a txc config directory with a WorkloadIdentityFederation credential.
-      # txc auto-detects ACTIONS_ID_TOKEN_REQUEST_URL/TOKEN at token-acquisition time —
-      # no client secret is stored. (A dedicated 'txc config auth add-federated' command
-      # is coming; until then we write the JSON directly.)
-      - name: Bootstrap txc WIF credential
+      - name: Configure txc WIF auth
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           DATAVERSE_TEST_URL: ${{ secrets.DATAVERSE_TEST_URL }}
         run: |
-          mkdir -p "$HOME/.txc"
-          cat > "$HOME/.txc/credentials.json" <<EOF
-          {
-            "credentials": [
-              {
-                "id": "ci",
-                "kind": "workload-identity-federation",
-                "tenantId": "$AZURE_TENANT_ID",
-                "applicationId": "$AZURE_CLIENT_ID",
-                "cloud": "public"
-              }
-            ]
-          }
-          EOF
-          cat > "$HOME/.txc/connections.json" <<EOF
-          {
-            "connections": [
-              {
-                "id": "test",
-                "provider": "dataverse",
-                "environmentUrl": "$DATAVERSE_TEST_URL",
-                "cloud": "public"
-              }
-            ]
-          }
-          EOF
-          cat > "$HOME/.txc/profiles.json" <<EOF
-          {
-            "profiles": [
-              {
-                "id": "ci",
-                "connectionRef": "test",
-                "credentialRef": "ci"
-              }
-            ]
-          }
-          EOF
+          txc config auth add-federated --name ci --tenant $AZURE_TENANT_ID --application-id $AZURE_CLIENT_ID
+          txc config connection create test --provider Dataverse --url $DATAVERSE_TEST_URL
+          txc config profile create --name ci --auth ci --connection test
 
       - name: Deploy package to Test environment
         run: txc env pkg import ./drop/Packages.Main.pdpkg.zip --profile ci
-        env:
-          TXC_PLAINTEXT_FALLBACK: "1"

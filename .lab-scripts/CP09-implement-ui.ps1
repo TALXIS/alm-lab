@@ -37,4 +37,4 @@ Build the model-driven warehouse experience so users can navigate inventory data
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the UI solution included
 '@
-Write-Host "`nNext: .lab-scripts/CP10-move-configuration.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP10-deploy-and-sync.ps1" -ForegroundColor Cyan

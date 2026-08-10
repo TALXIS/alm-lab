@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                       CP10: Move configuration                                         ║
+# ║                       CP11: Move configuration                                         ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Reference data (e.g. warehouse locations) must travel with the app, not be re-keyed per
@@ -9,14 +9,14 @@
 # from Dev, store the package next to the Package Deployer, and import into Test. In CI the
 # package is deployed alongside solutions, keeping config in source control too.
 #
-# Run:  .lab-scripts/CP10-move-configuration.ps1
+# Run:  .lab-scripts/CP11-move-configuration.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 $prefix = Get-LabValue 'publisherPrefix' 'almlab'
 
-Write-Step "CP10 — Configuration data (CMT)"
+Write-Step "CP11 — Configuration data (CMT)"
 $dataDir = Join-Path $LabRoot "src/Packages.Main/Data"
 New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
 Set-LabValue 'configDataDirectory'  $dataDir
@@ -39,7 +39,7 @@ Set-LabValue 'configDataSchemaPath' (Join-Path $dataDir "data_schema.xml")
 # Export from Dev, import to Test. Export needs --schema + --output; import takes the folder.
 txc data pkg export --schema (Join-Path $dataDir "data_schema.xml") --output $dataDir --overwrite --profile dev --allow-production
 if (-not (Test-Path (Join-Path $dataDir "data.xml"))) {
-    Write-Warn2 "No config records in Dev yet — add a few Warehouse Locations, then re-run CP10."
+    Write-Warn2 "No config records in Dev yet — add a few Warehouse Locations, then re-run CP11."
     exit 1
 }
 Set-LabValue 'configDataFilePath' (Join-Path $dataDir "data.xml")
@@ -58,4 +58,4 @@ Package warehouse reference data so environments stay consistent as the app move
 ## Testing
 - txc data package export and import complete successfully between Dev and Test
 '@
-Write-Host "`nNext: .lab-scripts/CP11-extend-branch-policies-build-checks.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP12-extend-branch-policies-build-checks.ps1" -ForegroundColor Cyan

@@ -1,20 +1,20 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                       CP12: Automate testing                                           ║
+# ║                       CP13: Automate testing                                           ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Quality gate: a Reqnroll + Playwright BDD UI test project. We scaffold it and add a manual
 # (workflow_dispatch) test workflow you can inspect — running it live needs a captured auth
 # state, which we cover later. The point here is the test project + workflow exist in source.
 #
-# Run:  .lab-scripts/CP12-automate-testing.ps1
+# Run:  .lab-scripts/CP13-automate-testing.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
-Write-Step "CP12 — Automated BDD testing"
+Write-Step "CP13 — Automated BDD testing"
 Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/11-tests-ui.ps1"

@@ -1,14 +1,14 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║            CP11: Extend branch policies with build checks                              ║
+# ║            CP12: Extend branch policies with build checks                              ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # A PR should only merge if it builds. We extend the main ruleset to require the 'build'
 # status check (dotnet build, which runs TALXIS workspace validation). Now broken solutions
 # can't reach main.
 #
-# Run:  .lab-scripts/CP11-extend-branch-policies-build-checks.ps1
+# Run:  .lab-scripts/CP12-extend-branch-policies-build-checks.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
@@ -16,7 +16,7 @@ $ErrorActionPreference = "Stop"
 $repo = Get-LabValue 'repo'; if (-not $repo) { $repo = gh repo view --json nameWithOwner -q .nameWithOwner }
 Set-LabValue 'repo' $repo
 
-Write-Step "CP11 — Require build check on PRs"
+Write-Step "CP12 — Require build check on PRs"
 
 $id = Get-LabValue 'mainRulesetId'
 if (-not $id) {
@@ -49,4 +49,4 @@ Tighten the main branch rules so pull requests must pass the build before they c
 ## Testing
 - ruleset update succeeds and the build check is registered as a required status
 '@
-Write-Host "`nNext: .lab-scripts/CP12-automate-testing.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP13-automate-testing.ps1" -ForegroundColor Cyan
