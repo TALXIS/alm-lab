@@ -21,7 +21,7 @@
 # TALXIS/docs-patterns-practices (bdd-agent-v2) for AI agents that plan, bind and heal
 # BDD tests.
 #
-# Run:  .lab-scripts/CP13-automate-testing.ps1
+# Run:  .lab-scripts/CP13-automate-ui-testing.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
