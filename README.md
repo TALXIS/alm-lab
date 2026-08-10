@@ -79,7 +79,40 @@ git/PR/CI plumbing **without** forking to GitHub, without GitHub Codespaces, and
 real `gh` login. It runs the same devcontainer image locally via Docker and short-circuits
 every checkpoint's GitHub-specific calls behind `LAB_LOCAL_MODE=1`.
 
-### 1. Build/run the devcontainer locally
+### 1. Install Docker (plain Ubuntu host)
+
+If you're starting from a bare Ubuntu machine (no Docker preinstalled), set up the Docker
+Engine apt repo and install it:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Start the daemon and confirm it's running (on a systemd host `sudo systemctl enable --now
+docker` also works; some containerized/sandboxed hosts have no systemd, so start `dockerd`
+directly instead):
+
+```bash
+sudo systemctl enable --now docker 2>/dev/null || sudo dockerd > /tmp/dockerd.log 2>&1 &
+sleep 3
+docker info
+```
+
+Run `docker` without `sudo` for the rest of this section by adding your user to the `docker`
+group (`sudo usermod -aG docker $USER`, then start a new shell) — or just keep prefixing
+`sudo` on the `docker` commands below.
+
+### 2. Build/run the devcontainer locally
 
 The devcontainer uses `ghcr.io/talxis/tools-agentbox/image:latest` directly (see
 `.devcontainer/devcontainer.json`) — there's no Dockerfile of our own to build. Plain Docker
@@ -103,7 +136,7 @@ devcontainer exec --workspace-folder . pwsh
 
 You should land in a `pwsh` shell with `dotnet`, `git`, `gh`, `pac`, `txc`, and `az` on `PATH`.
 
-### 2. Initialize local-only git state (no GitHub)
+### 3. Initialize local-only git state (no GitHub)
 
 Skip forking entirely. Inside the container/repo checkout:
 
@@ -117,7 +150,7 @@ git branch -M main
 
 Do **not** add a GitHub `origin` remote — `LAB_LOCAL_MODE` never pushes, so none is needed.
 
-### 3. Run checkpoints in local mode
+### 4. Run checkpoints in local mode
 
 ```bash
 export LAB_LOCAL_MODE=1
@@ -142,7 +175,7 @@ Under `LAB_LOCAL_MODE=1`:
   and logged the same way; the `build.yml`/`deploy.yml` workflow files are still copied into
   `.github/workflows/` locally so you can inspect them.
 
-### 4. Where the smoke test stops
+### 5. Where the smoke test stops
 
 `CP04` (provisions real Dataverse Dev/Test environments via `txc`) and the Azure/Dataverse
 portions of `CP05` (Entra app registration, OIDC federated credential, Dataverse
