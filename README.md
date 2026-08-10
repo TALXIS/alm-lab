@@ -72,3 +72,8 @@ git push --force
 
 Your variables persist in `.lab-state.json` (committed), so you can resume on a fresh
 Codespace even if your terminal crashes.
+
+## Developing this lab
+
+See [LOCAL-DRY-RUN.md](LOCAL-DRY-RUN.md) to run the checkpoints locally, without forking to
+GitHub or provisioning real infrastructure.

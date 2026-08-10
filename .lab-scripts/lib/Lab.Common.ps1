@@ -66,6 +66,7 @@ function Initialize-RandomIdentifier {
 # Proper ALM: every checkpoint lands on main through a PR. We branch, commit, push, open a
 # PR, pause so you can review the diff + checks in the browser, then merge + tag for rollback.
 # Set LAB_AUTO_MERGE=1 to skip the pause (used for unattended testing).
+# Set LAB_LOCAL_MODE=1 to skip GitHub entirely — commits merge into main locally, no push/PR.
 function Save-Checkpoint {
     param(
         [Parameter(Mandatory)][string]$Id,
@@ -75,12 +76,17 @@ function Save-Checkpoint {
     Push-Location $LabRoot
     try {
         if (-not (git config user.email)) {
-            git config user.email "$(gh api user -q .id)+$(gh api user -q .login)@users.noreply.github.com"
-            git config user.name (gh api user -q .login)
+            if ($env:LAB_LOCAL_MODE) {
+                git config user.email "agent@local.test"
+                git config user.name  "alm-lab-agent"
+            } else {
+                git config user.email "$(gh api user -q .id)+$(gh api user -q .login)@users.noreply.github.com"
+                git config user.name (gh api user -q .login)
+            }
         }
         Write-Info "Syncing main..."
         git switch main --quiet 2>&1 | Out-Null
-        git pull --quiet 2>&1 | Out-Null
+        if (-not $env:LAB_LOCAL_MODE) { git pull --quiet 2>&1 | Out-Null }
         git branch -D $Id 2>&1 | Out-Null
         git switch -c $Id --quiet 2>&1 | Out-Null
         Save-LabState  # write state AFTER branch switch so lab-state.json diff is captured
@@ -88,6 +94,17 @@ function Save-Checkpoint {
         if (-not (git status --porcelain)) { Write-Info "No changes for $Id"; git switch main --quiet; return }
         Write-Info "Committing changes..."
         git commit -m "$Id`: $Message" --quiet
+
+        if ($env:LAB_LOCAL_MODE) {
+            Write-Info "LAB_LOCAL_MODE: skipping push/PR — merging '$Id' into main locally"
+            git switch main --quiet
+            git merge --no-ff --quiet -m "Merge $Id`: $Message" $Id 2>&1 | Out-Null
+            git branch -D $Id 2>&1 | Out-Null
+            git tag -f $Id 2>&1 | Out-Null
+            Write-Ok "Committed + tagged $Id locally (rollback: git reset --hard $Id) [LAB_LOCAL_MODE]"
+            return
+        }
+
         git push -u origin $Id --force --quiet 2>&1 | Out-Null
         Start-Sleep 3  # let GitHub settle the ref before opening PR
         # Always target the fork's origin repo explicitly (avoids gh resolving upstream instead)

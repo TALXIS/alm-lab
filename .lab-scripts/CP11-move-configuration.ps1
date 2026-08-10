@@ -36,22 +36,29 @@ try {
     Set-LabValue 'configDataSchemaPath' (Join-Path $dataDir "data_schema.xml")
     Set-LabValue 'configDataFilePath'   (Join-Path $dataDir "data.xml")
 
-    # Step 1: Import the seed package into Dev — the app now has data.
-    txc data pkg import $dataDir --profile dev --allow-production
-    if ($LASTEXITCODE -ne 0) { Write-Err "Seed import to Dev failed"; exit 1 }
-    Write-Ok "Seed data imported to Dev"
+    if ($env:LAB_LOCAL_MODE) {
+        Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc data pkg import' to seed Dev,"
+        Write-Info "  'txc data pkg export' to round-trip Dev's data back to source, and"
+        Write-Info "  'txc data pkg import' again to load it into Test. There is no live Dev/"
+        Write-Info "  Test environment, so the seed data.xml scaffolded above is left as-is."
+    } else {
+        # Step 1: Import the seed package into Dev — the app now has data.
+        txc data pkg import $dataDir --profile dev --allow-production
+        if ($LASTEXITCODE -ne 0) { Write-Err "Seed import to Dev failed"; exit 1 }
+        Write-Ok "Seed data imported to Dev"
 
-    # Step 2: Round-trip — export Dev data back into the package. Records added by hand
-    # in the maker portal get captured as source, same idea as the CP10 solution pull.
-    txc data pkg export --schema (Join-Path $dataDir "data_schema.xml") --output $dataDir --overwrite --profile dev --allow-production
-    if ($LASTEXITCODE -ne 0) { Write-Err "Config export from Dev failed"; exit 1 }
-    Write-Ok "Dev data exported back to source"
+        # Step 2: Round-trip — export Dev data back into the package. Records added by hand
+        # in the maker portal get captured as source, same idea as the CP10 solution pull.
+        txc data pkg export --schema (Join-Path $dataDir "data_schema.xml") --output $dataDir --overwrite --profile dev --allow-production
+        if ($LASTEXITCODE -ne 0) { Write-Err "Config export from Dev failed"; exit 1 }
+        Write-Ok "Dev data exported back to source"
 
-    # Step 3: Import into Test — config travels with the app, no re-keying per environment.
-    txc data pkg import $dataDir --profile test --allow-production
-    if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
-    Set-LabValue 'configImportedToUrl' (Get-LabValue 'testEnvUrl')
-    Write-Ok "Config imported to Test"
+        # Step 3: Import into Test — config travels with the app, no re-keying per environment.
+        txc data pkg import $dataDir --profile test --allow-production
+        if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
+        Set-LabValue 'configImportedToUrl' (Get-LabValue 'testEnvUrl')
+        Write-Ok "Config imported to Test"
+    }
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp11" -Message "Add configuration data package for environment promotion" -Body @'

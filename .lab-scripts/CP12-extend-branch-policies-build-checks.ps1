@@ -13,10 +13,15 @@
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
-$repo = Get-LabValue 'repo'; if (-not $repo) { $repo = gh repo view --json nameWithOwner -q .nameWithOwner }
-Set-LabValue 'repo' $repo
 
 Write-Step "CP12 — Require build check on PRs"
+
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would resolve the repo via 'gh repo view' and PUT"
+    Write-Info "  repos/<repo>/rulesets/<id> to add a required_status_checks rule for 'build'."
+} else {
+$repo = Get-LabValue 'repo'; if (-not $repo) { $repo = gh repo view --json nameWithOwner -q .nameWithOwner }
+Set-LabValue 'repo' $repo
 
 $id = Get-LabValue 'mainRulesetId'
 if (-not $id) {
@@ -38,6 +43,8 @@ gh api -X PUT "repos/$repo/rulesets/$id" --input $tmp 2>&1 | Out-Null
 Remove-Item $tmp
 Set-LabValue 'mainRulesetId' $id
 Write-Ok "Ruleset now requires 'build' to pass"
+
+}
 
 Save-Checkpoint -Id "cp12" -Message "Require build status checks before merging into main" -Body @'
 Tighten the main branch rules so pull requests must pass the build before they can merge. This turns the warehouse solution build into an enforceable quality gate for every change.

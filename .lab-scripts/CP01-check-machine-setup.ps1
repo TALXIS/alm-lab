@@ -70,6 +70,15 @@ dotnet tool update --global TALXIS.CLI 2>&1 | Out-Null
 $env:PATH = "$HOME/.dotnet/tools:$env:PATH"
 Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
 
+if ($env:LAB_LOCAL_MODE) {
+    Write-Step "Sign in 1/3 — GitHub"
+    Write-Info "LAB_LOCAL_MODE: skipped sign-in for GitHub"
+    Write-Step "Sign in 2/3 — Power Platform (txc)"
+    Write-Info "LAB_LOCAL_MODE: skipped sign-in for Power Platform"
+    Write-Step "Sign in 3/3 — Azure (az)"
+    Write-Info "LAB_LOCAL_MODE: skipped sign-in for Azure"
+} else {
+
 # ── 2. GitHub CLI sign-in (workflow + delete_repo scopes needed for the lab) ────────────
 Write-Step "Sign in 1/3 — GitHub"
 # Codespaces commonly injects GITHUB_TOKEN, which blocks interactive `gh auth login`.
@@ -110,6 +119,8 @@ if (-not $tenantId) {
 }
 Set-LabValue 'tenantId' $tenantId
 Write-Ok "Azure: tenant $tenantId"
+
+}
 
 Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab credentials" -Body @'
 Verify the local toolchain and sign in to the services required to build and deploy the warehouse app. This seeds shared lab state so later checkpoints can reuse the same identities and environment metadata.

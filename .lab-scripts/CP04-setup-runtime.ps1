@@ -43,6 +43,17 @@ function Get-ConnectionByIdOrUrl {
         Select-Object -First 1
 }
 
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would sign in to Power Platform and provision real"
+    Write-Info "  Dev + Test Dataverse sandbox environments via 'txc env create'. Stubbing"
+    Write-Info "  devEnvUrl/testEnvUrl with unreachable placeholder URLs so later checkpoints"
+    Write-Info "  that only check for their presence can still run."
+    foreach ($key in @('dev', 'test')) {
+        Set-LabValue "${key}EnvUrl" "https://local-$key.stub.invalid"
+        Set-LabValue "${key}Profile" $key
+    }
+} else {
+
 # Step 1: Verify Power Platform sign-in (done in CP01).
 $auth = Get-LabValue 'txcAuth'
 if (-not $auth) { Write-Err "Not signed in — run CP01 first"; exit 1 }
@@ -98,6 +109,8 @@ foreach ($key in $envs.Keys) {
 # Pin the dev profile as default for local deploys.
 txc config profile select dev | Out-Null
 Write-Ok "Active profile: dev"
+
+}
 
 Save-Checkpoint -Id "cp04" -Message "Provision Dev and Test Dataverse sandbox environments" -Body @'
 Create dedicated Dev and Test Dataverse sandboxes so the warehouse app can be built and validated in isolated environments. The script also wires local txc profiles to both environments for repeatable deployments.
