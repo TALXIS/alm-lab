@@ -2,6 +2,11 @@
 Power Platform with source-first ALM: a monorepo, ephemeral Dev/Test environments,
 trunk-based development, PR quality gates and GitHub Actions deployments.
 
+> 🧪 **Developing or testing the lab itself** (not taking it as an attendee)? See
+> [Local dry-run for agents (no GitHub fork)](#local-dry-run-for-agents-no-github-fork) to
+> exercise the checkpoint scripts locally in a container, without forking to GitHub or
+> provisioning any real Power Platform/Azure infrastructure.
+
 ## Start here
 
 1. **Fork** this repo to your personal GitHub account (top-right **Fork** button).
