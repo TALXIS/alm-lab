@@ -72,23 +72,3 @@ git push --force
 
 Your variables persist in `.lab-state.json` (committed), so you can resume on a fresh
 Codespace even if your terminal crashes.
-
-## Beyond the lab
-
-The lab keeps a few things deliberately small. The same practices scale up in real projects:
-
-- **Environments as code** - at scale you don't click (or script) environments one by one;
-  you declare them with Terraform and the `microsoft/power-platform` provider: environment
-  groups per governance tier, Managed Environment guardrails (solution checker, sharing
-  limits) and deny-by-default DLP policies all live in source control too.
-- **Least-privilege pipelines** - the lab's deploy principal gets System Administrator for
-  simplicity; a production pipeline deserves a custom role scoped to what imports need, and
-  UI tests a dedicated low-privilege test user (never a shared admin account).
-- **Reusable solutions as NuGet packages** - a solution consumed by several projects (e.g.
-  a shared data model) can be packed and versioned as a NuGet package instead of living as
-  a ProjectReference in one repo.
-
-All of these are demonstrated with runnable code in
-[TALXIS/docs-patterns-practices](https://github.com/TALXIS/docs-patterns-practices):
-`dev-loops` (the full inner/outer loop on the command line), `iac` (Terraform governance)
-and `bdd-agent-v2` (AI-assisted BDD testing with planner/binder/healer agents).
