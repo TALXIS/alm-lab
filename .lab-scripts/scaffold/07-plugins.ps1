@@ -59,9 +59,9 @@ namespace Plugins.Warehouse
             if (!target.Contains("${prefix}_quantity") || !target.Contains("${prefix}_itemid") || !target.Contains("${prefix}_transactiontype"))
                 return;
 
-            // Only validate outbound transactions (option value 2 = Outbound)
+            // Only validate outbound transactions 
             var transactionType = (OptionSetValue)target["${prefix}_transactiontype"];
-            if (transactionType.Value != 2)
+            if (transactionType.Value != 100000001)
                 return;
 
             try
@@ -142,10 +142,10 @@ namespace Plugins.Warehouse
             var item = service.Retrieve("${prefix}_warehouseitem", itemRef.Id, new ColumnSet("${prefix}_availablequantity"));
             var available = item.Contains("${prefix}_availablequantity") ? (int)item["${prefix}_availablequantity"] : 0;
 
-            // Inbound (1) = add stock, Outbound (2) = subtract stock
-            if (transactionType.Value == 1)
+            // Inbound (100000000) = add stock, Outbound (100000001) = subtract stock
+            if (transactionType.Value == 100000000)
                 item["${prefix}_availablequantity"] = available + quantity;
-            else if (transactionType.Value == 2)
+            else if (transactionType.Value == 100000001)
                 item["${prefix}_availablequantity"] = available - quantity;
             else
                 return;

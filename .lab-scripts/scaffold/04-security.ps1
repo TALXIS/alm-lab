@@ -50,6 +50,10 @@ Write-Host "  ✓ Role: Warehouse manager" -ForegroundColor Green
 
 Write-Host "`n── Security Role Privileges ──" -ForegroundColor Cyan
 
+# Level = how far the privilege reaches: Basic = own records, Local = business unit,
+# Deep = BU + child BUs, Global = organization-wide. Worker gets broad reads but edits
+# only transactions they own (Write: Basic); manager gets full CRUD Global everywhere.
+
 # Warehouse worker — warehouseitem: Read/Write/Create/Append/AppendTo (Global)
 txc workspace component create pp-security-role-privilege `
     --output "src/Solutions.Security" `

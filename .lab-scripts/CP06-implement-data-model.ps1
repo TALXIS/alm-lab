@@ -9,6 +9,15 @@
 # via the TALXIS DevKit CLI. The package references solutions so a single artifact deploys
 # everything. Projects join the .slnx so 'dotnet build' orchestrates the whole monorepo.
 #
+# Packages.Main builds to a .pdpkg.zip - the single deployment artifact. It bundles every
+# referenced solution plus ImportConfig.xml, which drives the import order (derived from
+# the ProjectReferences, so dependencies always install first) and can run custom .NET
+# import logic such as data import, validation or post-deploy steps.
+#
+# DataModel is also the first slice of a deliberate layering: one solution per concern
+# (DataModel now, then Logic, Security and UI in CP07-09). Small single-purpose solutions
+# keep ownership clear and reviews focused - schema changes never hide inside UI diffs.
+#
 # Run:  .lab-scripts/CP06-implement-data-model.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 

@@ -14,6 +14,10 @@
 #   2. TALXIS CLI (txc)    — Power Platform environments and deploy
 #   3. Azure CLI (az)      — Entra app registrations and OIDC federation
 #
+# Auth hygiene: stale credentials are how deployments end up in the wrong tenant or the
+# wrong environment. That is why we clear the injected GITHUB_TOKEN below and keep exactly
+# one explicit auth profile per CLI - when in doubt, sign out everywhere and start clean.
+#
 # Run:  .lab-scripts/CP01-check-machine-setup.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 

@@ -8,6 +8,13 @@
 # ephemeral. We create two Dataverse sandbox environments — Dev and Test — using txc.
 # Their domains include your random identifier so they won't clash in the shared tenant.
 #
+# Why two? Dev is your personal build-and-break space; Test is the stable target the CD
+# pipeline deploys to, where the packaged app is validated before real users see it. Never
+# share a Dev environment between developers - parallel unmanaged edits overwrite each
+# other and ownership of changes gets lost. Because everything lives in source, an
+# environment is cheap to recreate; larger teams even keep a queue of pre-provisioned
+# environments with the latest CI build that developers claim when they need one.
+#
 # Sign-in uses device code: a code is shown, you open https://aka.ms/devicelogin and paste it.
 #
 # Run:  .lab-scripts/CP04-setup-runtime.ps1

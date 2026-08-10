@@ -68,6 +68,7 @@ Write-Host "  ✓ Plugin assembly registered" -ForegroundColor Green
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 # PreValidation step — ValidateWarehouseTransactionPlugin
+# Runs before the DB transaction starts: the cheapest place to reject invalid input.
 txc workspace component create pp-plugin-assembly-step `
     --output "src/Solutions.Logic" `
     --param "PrimaryEntity=${PublisherPrefix}_warehousetransaction" `
@@ -80,6 +81,8 @@ txc workspace component create pp-plugin-assembly-step `
 Write-Host "  ✓ Step: ValidateWarehouseTransactionPlugin (Pre-validation, Create)" -ForegroundColor Green
 
 # PostOperation step — SubtractQuantityPlugin
+# Runs after the record is written, still inside the transaction: the stock update and
+# the transaction record commit or roll back together.
 txc workspace component create pp-plugin-assembly-step `
     --output "src/Solutions.Logic" `
     --param "PrimaryEntity=${PublisherPrefix}_warehousetransaction" `
