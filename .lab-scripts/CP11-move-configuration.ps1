@@ -35,6 +35,13 @@ Set-LabValue 'configDataSchemaPath' (Join-Path $dataDir "data_schema.xml")
 </entities>
 "@ | Set-Content -Path (Join-Path $dataDir "data_schema.xml") -Encoding UTF8
 
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc data pkg export' against the Dev"
+    Write-Info "  environment to produce data.xml from data_schema.xml, then 'txc data pkg"
+    Write-Info "  import' to load it into Test. There is no live Dev environment to export"
+    Write-Info "  records from, so no data.xml is created."
+} else {
+
 # Export from Dev, import to Test.
 # Export from Dev, import to Test. Export needs --schema + --output; import takes the folder.
 txc data pkg export --schema (Join-Path $dataDir "data_schema.xml") --output $dataDir --overwrite --profile dev --allow-production
@@ -47,6 +54,8 @@ txc data pkg import $dataDir --profile test --allow-production
 if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
 Set-LabValue 'configImportedToUrl' (Get-LabValue 'testEnvUrl')
 Write-Ok "Config exported from Dev and imported to Test"
+
+}
 
 Save-Checkpoint -Id "cp10" -Message "Add configuration data package for environment promotion" -Body @'
 Package warehouse reference data so environments stay consistent as the app moves through ALM stages. This stores the configuration migration assets beside the deployer and moves the exported data into Test.

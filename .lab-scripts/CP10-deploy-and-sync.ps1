@@ -43,6 +43,13 @@ if (-not $pdpkg) { Write-Err "Packages.Main.pdpkg.zip not found after publish"; 
 Copy-Item $pdpkg.FullName (Join-Path $publishDir "Packages.Main.pdpkg.zip") -Force
 Write-Ok "Package built: $($pdpkg.Name)"
 
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env pkg import' to deploy the built"
+    Write-Info "  package to Dev ($devUrl), then 'txc env solution pull' to sync manual"
+    Write-Info "  environment changes back to src/Solutions.Security."
+    Remove-Item $publishDir -Recurse -Force -ErrorAction SilentlyContinue
+} else {
+
 Write-Info "Deploying package to Dev environment ($devUrl)..."
 txc env pkg import (Join-Path $publishDir "Packages.Main.pdpkg.zip") --profile dev
 if ($LASTEXITCODE -ne 0) { Write-Err "Package import to Dev failed"; exit 1 }
@@ -96,6 +103,8 @@ if ($changes) {
     Write-Host $changes
 } else {
     Write-Info "No environment changes detected (expected in auto mode)."
+}
+
 }
 
 Save-Checkpoint -Id "cp10" -Message "Deploy package to Dev and sync environment changes" -Body @'

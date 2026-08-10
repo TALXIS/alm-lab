@@ -26,6 +26,15 @@ $testUrl = Get-LabValue 'testEnvUrl'
 if (-not $repo -and -not $env:LAB_LOCAL_MODE) { $originUrl = git -C $LabRoot remote get-url origin 2>$null; if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $repo = $Matches[1] }; Set-LabValue 'repo' $repo }
 if (-not $testUrl) { Write-Err "Run CP04 first (Test environment URL missing)"; exit 1 }
 
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would verify Azure sign-in, create an Entra app"
+    Write-Info "  registration + service principal, add a federated credential trusting"
+    Write-Info "  this repo's main branch, and add the SP as a System Administrator"
+    Write-Info "  application user in the Test environment via the Dataverse OData API."
+    $tenantId = Get-LabValue 'tenantId'; if (-not $tenantId) { $tenantId = "00000000-0000-0000-0000-000000000000"; Set-LabValue 'tenantId' $tenantId }
+    $appId = Get-LabValue 'appId'; if (-not $appId) { $appId = "00000000-0000-0000-0000-000000000000"; Set-LabValue 'appId' $appId }
+} else {
+
 # Step 1: Verify Azure sign-in and tenant (done in CP01).
 $tenantId = Get-LabValue 'tenantId'
 if (-not $tenantId) {
@@ -96,6 +105,8 @@ if (-not $alreadyAssigned) {
     Invoke-RestMethod "$dvBase/api/data/v9.2/systemusers($userId)/systemuserroles_association/`$ref" -Method Post -Headers $dvHeaders -Body $ref | Out-Null
 }
 Write-Ok "Service principal added to Test environment as application user (System Administrator)"
+
+}
 
 # Step 5: GitHub secrets.
 if ($env:LAB_LOCAL_MODE) {
