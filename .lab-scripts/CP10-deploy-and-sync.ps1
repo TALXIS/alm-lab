@@ -39,9 +39,15 @@ if (-not $devUrl) { Write-Err "Dev environment URL not found in lab state. Run C
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $gridPackage = 'TALXIS.Controls.Grid.Package'
-Write-Info "Importing TALXIS Grid control package ($gridPackage)..."
 
-txc env pkg import $gridPackage
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env pkg import $gridPackage' to"
+    Write-Info "  import the TALXIS Grid control package into Dev ($devUrl)."
+} else {
+    Write-Info "Importing TALXIS Grid control package ($gridPackage)..."
+    txc env pkg import $gridPackage
+    if ($LASTEXITCODE -ne 0) { Write-Err "Grid control package import failed"; exit 1 }
+}
 
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
