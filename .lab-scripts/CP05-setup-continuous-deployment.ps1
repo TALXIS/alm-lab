@@ -23,7 +23,7 @@ Write-Step "CP05 — Continuous Deployment (OIDC)"
 $rid     = Initialize-RandomIdentifier
 $repo    = Get-LabValue 'repo'
 $testUrl = Get-LabValue 'testEnvUrl'
-if (-not $repo) { $originUrl = git -C $LabRoot remote get-url origin 2>$null; if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $repo = $Matches[1] }; Set-LabValue 'repo' $repo }
+if (-not $repo -and -not $env:LAB_LOCAL_MODE) { $originUrl = git -C $LabRoot remote get-url origin 2>$null; if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $repo = $Matches[1] }; Set-LabValue 'repo' $repo }
 if (-not $testUrl) { Write-Err "Run CP04 first (Test environment URL missing)"; exit 1 }
 
 # Step 1: Verify Azure sign-in and tenant (done in CP01).
@@ -98,18 +98,26 @@ if (-not $alreadyAssigned) {
 Write-Ok "Service principal added to Test environment as application user (System Administrator)"
 
 # Step 5: GitHub secrets.
-gh secret set AZURE_CLIENT_ID    --repo $repo --body $appId
-gh secret set AZURE_TENANT_ID    --repo $repo --body $tenantId
-gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'gh secret set AZURE_CLIENT_ID/AZURE_TENANT_ID/DATAVERSE_TEST_URL'"
+} else {
+    gh secret set AZURE_CLIENT_ID    --repo $repo --body $appId
+    gh secret set AZURE_TENANT_ID    --repo $repo --body $tenantId
+    gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
+    Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
+}
 Set-LabValue 'dataverseTestUrl' $testUrl
-Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
 
 # Step 6: Enable GitHub Actions on the fork (forks have them disabled by default).
-gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1 | Out-Null
-Write-Ok "GitHub Actions enabled on the fork"
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'gh api -X PUT repos/<repo>/actions/permissions'"
+} else {
+    gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1 | Out-Null
+    Write-Ok "GitHub Actions enabled on the fork"
+}
 
 # Step 7: Install workflows. Pushing files under .github/workflows needs the 'workflow' scope.
-if (-not ((gh auth status 2>&1) -match 'workflow')) {
+if (-not $env:LAB_LOCAL_MODE -and -not ((gh auth status 2>&1) -match 'workflow')) {
     Write-Info "Granting GitHub CLI the 'workflow' scope (needed to push Actions)..."
     gh auth refresh -h github.com -s workflow
 }

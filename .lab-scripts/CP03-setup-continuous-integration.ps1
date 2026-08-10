@@ -19,6 +19,12 @@ $ErrorActionPreference = "Stop"
 
 Write-Step "CP03 — Continuous Integration (branch protection)"
 
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would resolve the origin repo and create the"
+    Write-Info "  'alm-lab-main-protection' ruleset (deletion/non_fast_forward/pull_request rules)"
+    Write-Info "  via 'gh api repos/<owner>/<repo>/rulesets'."
+} else {
+
 # Step 1: Resolve the fork (owner/repo) from the origin remote (not the upstream parent).
 $originUrl = git -C $LabRoot remote get-url origin 2>$null
 $repo = if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $Matches[1] } else { $null }
@@ -67,6 +73,8 @@ if ($LASTEXITCODE -eq 0 -and $existingRuleset) {
 Remove-Item $tmp -ErrorAction SilentlyContinue
 Set-LabValue 'mainRulesetId'   $rulesetRecord.id
 Set-LabValue 'mainRulesetName' $rulesetRecord.name
+
+}
 
 # Step 3: Demonstrate the loop — create a topic branch for upcoming work.
 Push-Location $LabRoot

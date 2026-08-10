@@ -71,3 +71,87 @@ git push --force
 
 Your variables persist in `.lab-state.json` (committed), so you can resume on a fresh
 Codespace even if your terminal crashes.
+
+## Local dry-run for agents (no GitHub fork)
+
+This section is for an AI coding agent (or a developer) that wants to exercise the lab's
+git/PR/CI plumbing **without** forking to GitHub, without GitHub Codespaces, and without a
+real `gh` login. It runs the same devcontainer image locally via Docker and short-circuits
+every checkpoint's GitHub-specific calls behind `LAB_LOCAL_MODE=1`.
+
+### 1. Build/run the devcontainer locally
+
+The devcontainer uses `ghcr.io/talxis/tools-agentbox/image:latest` directly (see
+`.devcontainer/devcontainer.json`) — there's no Dockerfile of our own to build. Plain Docker
+is the simplest path:
+
+```bash
+docker run -it --rm \
+  -v "$(pwd)":/workspaces/alm-lab \
+  -w /workspaces/alm-lab \
+  ghcr.io/talxis/tools-agentbox/image:latest \
+  pwsh
+```
+
+Or, for closer parity with Codespaces (features/mounts honored), use the devcontainer CLI:
+
+```bash
+npm install -g @devcontainers/cli
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . pwsh
+```
+
+You should land in a `pwsh` shell with `dotnet`, `git`, `gh`, `pac`, `txc`, and `az` on `PATH`.
+
+### 2. Initialize local-only git state (no GitHub)
+
+Skip forking entirely. Inside the container/repo checkout:
+
+```bash
+git init   # if not already a repo
+git config user.email "agent@local.test"
+git config user.name  "alm-lab-agent"
+git add -A && git commit -m "initial" --allow-empty
+git branch -M main
+```
+
+Do **not** add a GitHub `origin` remote — `LAB_LOCAL_MODE` never pushes, so none is needed.
+
+### 3. Run checkpoints in local mode
+
+```bash
+export LAB_LOCAL_MODE=1
+export LAB_AUTO_MERGE=1   # belt-and-suspenders: also skip any interactive pause
+pwsh ./.lab-scripts/CP01-check-machine-setup.ps1
+pwsh ./.lab-scripts/CP02-create-repository-layout.ps1
+pwsh ./.lab-scripts/CP03-setup-continuous-integration.ps1
+```
+
+Under `LAB_LOCAL_MODE=1`:
+
+- `Save-Checkpoint` commits to a local `cpNN` branch, merges it into `main` with
+  `git merge --no-ff`, and tags it — no push, no PR, no `gh pr` calls. Rollback still works
+  exactly as documented above (`git reset --hard cpNN`).
+- CP01 still verifies `dotnet`/`git`/`gh`/`pac`/`txc`/`az` are installed (they are, in the
+  agentbox image), but skips the three interactive sign-ins to GitHub, Power Platform, and
+  Azure.
+- CP03's branch-protection ruleset and CP12's build-check requirement are **not** created
+  against a real GitHub repo — each logs a `LAB_LOCAL_MODE: skipped — would...` line describing
+  what it would have done, then continues.
+- CP05's GitHub-only steps (`gh secret set`, enabling Actions, `gh auth refresh`) are skipped
+  and logged the same way; the `build.yml`/`deploy.yml` workflow files are still copied into
+  `.github/workflows/` locally so you can inspect them.
+
+### 4. Where the smoke test stops
+
+`CP04` (provisions real Dataverse Dev/Test environments via `txc`) and the Azure/Dataverse
+portions of `CP05` (Entra app registration, OIDC federated credential, Dataverse
+application-user assignment) call real cloud APIs with no local emulator — there is no way to
+fake these. Treat failures there as expected: the goal of this dry run is to validate
+CP01–CP03 and CP05's GitHub-shaped steps (secrets/workflow-file logic), not to complete a real
+deployment. Stop once you've confirmed:
+
+- CP01–CP03 run to completion and each leaves a `cpNN` tag,
+- `.lab-state.json` accumulates the expected keys after each checkpoint,
+- CP05's workflow files land in `.github/workflows/` and its "skipped" log lines appear where
+  GitHub calls would have happened.
