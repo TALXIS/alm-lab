@@ -155,12 +155,12 @@ Do **not** add a GitHub `origin` remote — `LAB_LOCAL_MODE` never pushes, so no
 ```bash
 export LAB_LOCAL_MODE=1
 export LAB_AUTO_MERGE=1   # belt-and-suspenders: also skip any interactive pause
-pwsh ./.lab-scripts/CP01-check-machine-setup.ps1
-pwsh ./.lab-scripts/CP02-create-repository-layout.ps1
-pwsh ./.lab-scripts/CP03-setup-continuous-integration.ps1
+export LAB_AUTO=1         # skip CP10's "make manual changes" pause
+for cp in .lab-scripts/CP*.ps1; do pwsh "$cp"; done
 ```
 
-Under `LAB_LOCAL_MODE=1`:
+`LAB_LOCAL_MODE=1` runs the **entire CP01–CP13 chain to completion without provisioning any
+real infrastructure** — no GitHub fork, no Power Platform tenant, no Azure subscription:
 
 - `Save-Checkpoint` commits to a local `cpNN` branch, merges it into `main` with
   `git merge --no-ff`, and tags it — no push, no PR, no `gh pr` calls. Rollback still works
@@ -168,23 +168,60 @@ Under `LAB_LOCAL_MODE=1`:
 - CP01 still verifies `dotnet`/`git`/`gh`/`pac`/`txc`/`az` are installed (they are, in the
   agentbox image), but skips the three interactive sign-ins to GitHub, Power Platform, and
   Azure.
-- CP03's branch-protection ruleset and CP12's build-check requirement are **not** created
-  against a real GitHub repo — each logs a `LAB_LOCAL_MODE: skipped — would...` line describing
-  what it would have done, then continues.
-- CP05's GitHub-only steps (`gh secret set`, enabling Actions, `gh auth refresh`) are skipped
-  and logged the same way; the `build.yml`/`deploy.yml` workflow files are still copied into
-  `.github/workflows/` locally so you can inspect them.
+- CP03's branch-protection ruleset, CP05's GitHub-only steps (`gh secret set`, enabling
+  Actions, `gh auth refresh`), and CP12's build-check requirement are **not** created against
+  a real GitHub repo — each logs a `LAB_LOCAL_MODE: skipped — would...` line describing what
+  it would have done, then continues. The `build.yml`/`deploy.yml`/`test.yml` workflow files
+  are still written to `.github/workflows/` locally so you can inspect them.
+- CP04 doesn't provision real Dataverse Dev/Test environments — it stubs `devEnvUrl`/
+  `testEnvUrl` with unreachable `*.stub.invalid` placeholders so every later checkpoint that
+  only checks for their *presence* keeps working.
+- CP05's Azure/Dataverse steps (Entra app registration, OIDC federated credential, adding the
+  SP as a Dataverse application user) are skipped and logged the same way, using stub
+  `tenantId`/`appId` values.
+- CP06–CP09 (data model, backend, security, UI) are **real** — they scaffold actual source
+  files via the TALXIS DevKit CLI and run `dotnet build`; nothing about them is Dataverse- or
+  GitHub-dependent, so they work identically to a real run.
+- CP10 still runs the **real** `dotnet publish` to build the deployment package (this needs no
+  live environment), but skips `txc env pkg import` (deploy to the stub Dev URL) and
+  `txc env solution pull`.
+- CP11 still writes the **real** `data_schema.xml` CMT schema file, but skips `txc data pkg
+  export`/`import` — there's no live Dev environment to export records from, so no `data.xml`
+  is produced.
+- CP13's BDD test project scaffolds and builds for real; only the Playwright browser download
+  can fail if this host's outbound HTTPS is intercepted by a TLS-inspecting proxy whose CA
+  Node.js doesn't trust (see note below) — the script logs this as a non-fatal warning and
+  still completes the checkpoint.
 
-### 5. Where the smoke test stops
+### 5. A note on corporate/sandboxed network proxies
 
-`CP04` (provisions real Dataverse Dev/Test environments via `txc`) and the Azure/Dataverse
-portions of `CP05` (Entra app registration, OIDC federated credential, Dataverse
-application-user assignment) call real cloud APIs with no local emulator — there is no way to
-fake these. Treat failures there as expected: the goal of this dry run is to validate
-CP01–CP03 and CP05's GitHub-shaped steps (secrets/workflow-file logic), not to complete a real
-deployment. Stop once you've confirmed:
+If your host intercepts outbound HTTPS (common in corporate networks or nested sandboxes),
+`dotnet restore`/`publish` and the Playwright browser download can fail with
+`SELF_SIGNED_CERT_IN_CHAIN` even though the rest of the chain works. Trust that proxy's CA
+inside the container before running the checkpoints:
 
-- CP01–CP03 run to completion and each leaves a `cpNN` tag,
-- `.lab-state.json` accumulates the expected keys after each checkpoint,
-- CP05's workflow files land in `.github/workflows/` and its "skipped" log lines appear where
-  GitHub calls would have happened.
+```bash
+docker run --rm \
+  -v "$(pwd)":/workspaces/alm-lab \
+  -v /path/to/your-proxy-ca.crt:/usr/local/share/ca-certificates/proxy-ca.crt:ro \
+  -w /workspaces/alm-lab \
+  -e LAB_LOCAL_MODE=1 -e LAB_AUTO_MERGE=1 -e LAB_AUTO=1 \
+  ghcr.io/talxis/tools-agentbox/image:latest \
+  bash -c "update-ca-certificates && pwsh -c 'for (\$cp in Get-ChildItem .lab-scripts/CP*.ps1) { & \$cp.FullName }'"
+```
+
+On a plain internet-connected host (no intercepting proxy) this step isn't needed at all.
+
+### 6. Verifying it worked
+
+After a full run, confirm:
+
+- `git tag` lists a `cpNN` tag for every checkpoint that produced a real change,
+- `.lab-state.json` has `devEnvUrl`/`testEnvUrl` set to `*.stub.invalid` placeholders (not real
+  Dataverse URLs) and `tenantId`/`appId` set to zeroed placeholder GUIDs,
+- `src/` contains the full scaffolded monorepo (`Solutions.DataModel`, `Solutions.Logic`,
+  `Solutions.Security`, `Solutions.UI`, `Plugins.Warehouse`, `Packages.Main`, `Scripts.UI`,
+  `Tests.UI`),
+- `.github/workflows/` contains `build.yml`, `deploy.yml`, and `test.yml`,
+- every checkpoint's console output shows only `LAB_LOCAL_MODE: skipped — would...` lines for
+  the parts that would touch real infrastructure — no unexpected errors.
