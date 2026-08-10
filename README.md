@@ -48,7 +48,7 @@ fork** — say yes.
 | 06 | `CP06-implement-data-model.ps1` | Warehouse tables and columns |
 | 07 | `CP07-implement-backend.ps1` | Plugins + logic solution |
 | 08 | `CP08-implement-security.ps1` | Security roles |
-| 09 | `CP09-implement-ui.ps1` | Model-driven app, sitemap, forms, views, grid PCF, code app |
+| 09 | `CP09-implement-ui.ps1` | Model-driven app, sitemap, forms, views, grid PCF, warehouse picking code app |
 | 10 | `CP10-deploy-and-sync.ps1` | Deploy to Dev & pull changes back |
 | 11 | `CP11-move-configuration.ps1` | Configuration data migration (CMT) |
 | 12 | `CP12-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
