@@ -41,6 +41,7 @@ $locationFormGuid = $locationFormFile.BaseName.Trim('{}')
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $itemViewFile = Get-ChildItem "src/Solutions.UI/Entities/${prefix}_warehouseitem/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (-not $itemViewFile) { Write-Host "  ✗ Warehouse Item view not found — run CP09 first" -ForegroundColor Red; exit 1 }
 $itemViewXml  = [xml](Get-Content $itemViewFile.FullName -Raw)
 if (-not $itemViewXml.SelectSingleNode("//cell[@name='${prefix}_reorderpoint']")) {
     $cell = $itemViewXml.CreateElement("cell")
@@ -70,6 +71,7 @@ npm pkg set "devDependencies.@talxis/client-libraries=^1.2606.5" `
             "devDependencies.@types/powerapps-component-framework=^1.3.15" `
             "devDependencies.@microsoft/microsoft-graph-types=^2.40.0"
 npm install --no-audit --no-fund | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Host "  ⚠ npm install had issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow }
 cd ../..
 Write-Host "  ✓ @talxis/client-libraries typings (devDependency)" -ForegroundColor Green
 
