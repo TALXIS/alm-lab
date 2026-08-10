@@ -27,24 +27,36 @@ $ErrorActionPreference = "Stop"
 Write-Step "CP01 — Machine setup + sign-in"
 
 # ── 1. Tool check ────────────────────────────────────────────────────────────────────────
+# MinVersion is optional — set it when a tool's version, not just its presence, matters for
+# the lab's npm-based builds (Scripts.UI, code apps, PCF).
 $tools = [ordered]@{
-    "dotnet" = "dotnet --version"     # .NET SDK — builds solutions, plugins, packages
-    "git"    = "git --version"        # version control
-    "gh"     = "gh --version"         # GitHub CLI — repo, PRs, secrets, workflows
-    "pac"    = "pac help"             # Power Platform CLI
-    "txc"    = "txc --version"        # TALXIS CLI — scaffolding, env, deploy
-    "az"     = "az version"           # Azure CLI — app registration + OIDC
-    "node"   = "node --version"       # Node.js — npm-based builds (Scripts.UI, code apps, PCF)
+    "dotnet" = @{ Cmd = "dotnet --version" }     # .NET SDK — builds solutions, plugins, packages
+    "git"    = @{ Cmd = "git --version" }        # version control
+    "gh"     = @{ Cmd = "gh --version" }         # GitHub CLI — repo, PRs, secrets, workflows
+    "pac"    = @{ Cmd = "pac help" }             # Power Platform CLI
+    "txc"    = @{ Cmd = "txc --version" }        # TALXIS CLI — scaffolding, env, deploy
+    "az"     = @{ Cmd = "az version" }           # Azure CLI — app registration + OIDC
+    "node"   = @{ Cmd = "node --version"; MinVersion = "22.12" }  # Node.js — npm-based builds
 }
 
 $missing = @()
 foreach ($name in $tools.Keys) {
-    $cmd = $tools[$name].Split(' ')[0]
-    if (Get-Command $cmd -ErrorAction SilentlyContinue) { Write-Ok "$name available" }
-    else { Write-Err "$name NOT found"; $missing += $name }
+    $tool = $tools[$name]
+    $cmd = $tool.Cmd.Split(' ')[0]
+    if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+        Write-Err "$name NOT found"; $missing += $name; continue
+    }
+    if (-not $tool.MinVersion) { Write-Ok "$name available"; continue }
+
+    $rawVersion = (Invoke-Expression $tool.Cmd 2>$null | Select-String -Pattern '\d+\.\d+\.\d+' | Select-Object -First 1).Matches.Value
+    if ($rawVersion -and [version]$rawVersion -ge [version]$tool.MinVersion) {
+        Write-Ok "$name $rawVersion (>= $($tool.MinVersion))"
+    } else {
+        Write-Err "$name $rawVersion is older than the required $($tool.MinVersion)"; $missing += $name
+    }
 }
 if ($missing.Count -gt 0) {
-    Write-Err "Missing tools: $($missing -join ', '). Open this repo in GitHub Codespaces."
+    Write-Err "Missing or outdated tools: $($missing -join ', '). Open this repo in GitHub Codespaces."
     exit 1
 }
 
