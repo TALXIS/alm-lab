@@ -38,22 +38,6 @@ $locationFormFile = Get-ChildItem "src/Solutions.UI/Entities/${prefix}_warehouse
 if (-not $locationFormFile) { Write-Host "  ✗ Warehouse Location form not found — run CP09 first" -ForegroundColor Red; exit 1 }
 $locationFormGuid = $locationFormFile.BaseName.Trim('{}')
 
-# The 1:N relationship behind the location lookup (CP06). Wiring it into the subgrid
-# makes the grid show only THIS location's items — CP09 left it empty (unfiltered).
-$relationshipName = ""
-$relationshipFile = "src/Solutions.DataModel/Other/Relationships/${prefix}_warehouselocation.xml"
-if (Test-Path $relationshipFile) {
-    $relationshipXml  = [xml](Get-Content $relationshipFile -Raw)
-    $relationshipName = ($relationshipXml.EntityRelationships.EntityRelationship |
-        Where-Object { $_.ReferencingAttributeName -eq "${prefix}_locationid" } |
-        Select-Object -First 1).Name
-}
-if ($relationshipName) {
-    Write-Host "  ✓ Relationship: $relationshipName" -ForegroundColor Green
-} else {
-    Write-Host "  ⚠ Location↔item relationship not found — grid will show all items" -ForegroundColor Yellow
-}
-
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #            Add Reorder Point to the item view (data for the low-stock rule)
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -206,18 +190,8 @@ Write-Host "  ✓ Event handler: warehouselocation form → onLoad" -ForegroundC
 
 Write-Host "`n── Grid overlay (txc workspace control attach) ──" -ForegroundColor Cyan
 
-# Fix the CP09 gap first: an empty RelationshipName means the subgrid shows ALL
-# items; with the relationship set it shows only this location's items. The attach
-# command below copies the subgrid's binding (view + relationship) into the grid.
-if ($relationshipName) {
-    $formXml = [xml](Get-Content $locationFormFile.FullName -Raw)
-    $subgridControl = $formXml.SelectSingleNode("//control[@indicationOfSubgrid='true']")
-    if (-not $subgridControl) { Write-Host "  ✗ Items subgrid not found on the location form" -ForegroundColor Red; exit 1 }
-    $subgridControl.SelectSingleNode('parameters/RelationshipName').InnerText = $relationshipName
-    $formXml.Save($locationFormFile.FullName)
-    Write-Host "  ✓ Subgrid now filters by $relationshipName" -ForegroundColor Green
-}
-
+# The attach command copies the subgrid's binding (view + RelationshipName, set by
+# pp-form-subgrid in 05d) into the grid — nothing is patched by hand here.
 # No per-control template and no manual download: the CLI pulls the package from
 # nuget.org, reads the parameter schema straight from its ControlManifest.xml,
 # validates the values, and writes the controlDescriptions overlay into the form
