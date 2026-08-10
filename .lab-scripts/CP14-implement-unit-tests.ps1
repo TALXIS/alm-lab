@@ -87,9 +87,9 @@ Add the fast layers of the test pyramid so warehouse logic is verified without a
 
 ## Changes
 - add src/Plugins.Tests with FakeXrmEasy tests for both warehouse plugins
-- add src/Scripts.Tests with Jest tests for form and ribbon scripts
+- add src/Scripts.Tests with Jest tests for form, ribbon, and grid bridge scripts
 - add .github/workflows/unit-tests.yml running both suites on every PR
 ## Testing
 - both suites pass locally via dotnet test 
 '@
-Write-Host "`nNext: .lab-scripts/CP15-implement-grid-control.ps1" -ForegroundColor Cyan
+Write-Host "`n✓ Lab complete — you built, tested and shipped a Power Platform app from source!" -ForegroundColor Green

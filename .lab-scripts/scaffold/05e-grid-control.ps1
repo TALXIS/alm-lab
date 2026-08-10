@@ -1,6 +1,6 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║             15: TALXIS Grid — PCF overlay + Script Library customization               ║
+# ║             05e: TALXIS Grid — PCF overlay + Script Library customization              ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Overlays the TALXIS Grid PCF control on the "Warehouse Items" subgrid of the
@@ -15,24 +15,22 @@
 #   interceptors (rename a column) and record expressions (paint low-stock cells red).
 #
 # The Grid control itself ships as a public Package Deployer package on nuget.org
-# (TALXIS.Controls.Grid.Package). Nothing is downloaded by hand: `control attach`
-# resolves the manifest from the NuGet package name, and CP15 imports the same
-# package into Dev by name BEFORE the app package, because the patched form now
-# references the control.
+# (TALXIS.Controls.Grid.Package). Nothing is downloaded by hand and no version is
+# pinned: `control attach` resolves the latest version of the NuGet package itself,
+# and CP10 imports the same package into Dev by name BEFORE the app package, because
+# the patched form now references the control.
 #
-# Expects: $PublisherPrefix from parent scope, TALXIS.CLI with `workspace control attach`.
+# Expects: $PublisherPrefix from parent scope (after 05a–05d and 09-form-scripts),
+#          TALXIS.CLI with `workspace control attach`.
 
 $prefix = $PublisherPrefix
-
-# Pinned so the webinar/lab never breaks on a newer release renaming parameters.
 $gridPackage = "TALXIS.Controls.Grid.Package"
-$gridVersion = "0.0.2602.15"
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#                Recover artifacts generated in CP09 (form, view, relationship)
+#                     Recover generated artifacts (form, view)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-# Form GUIDs are generated fresh in CP09 and not persisted — recover them from the
+# Form GUIDs are generated fresh in 05c and not persisted — recover them from the
 # FormXml file names, the same way 05d recovers view GUIDs.
 $locationFormFile = Get-ChildItem "src/Solutions.UI/Entities/${prefix}_warehouselocation/FormXml/main/*.xml" | Select-Object -First 1
 if (-not $locationFormFile) { Write-Host "  ✗ Warehouse Location form not found — run CP09 first" -ForegroundColor Red; exit 1 }
@@ -206,7 +204,6 @@ txc workspace control attach `
     --form-id $locationFormGuid `
     --target-control "subgrid" `
     --package $gridPackage `
-    --version $gridVersion `
     --param "Columns=$columnsJson" `
     --param "EnableGrouping=true" `
     --param "EnableAggregation=true" `
@@ -218,94 +215,3 @@ txc workspace control attach `
 if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control attach failed" -ForegroundColor Red; exit 1 }
 Write-Host "  ✓ talxis_TALXIS.PCF.Grid attached to the Warehouse Items subgrid" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                              Jest tests for the bridge
-# ──────────────────────────────────────────────────────────────────────────────────────────
-
-Write-Host "`n── Scripts.Tests: gridApi ──" -ForegroundColor Cyan
-
-$gridTests = @"
-const core = require(process.env.JETS_CORE);
-
-const { loadWebResource } = require('./utils/loadWebRes');
-
-beforeAll(() => core.setupXrm());
-
-beforeEach(() => core.resetXrmMocks());
-
-const makeDataset = () => ({
-  setInterceptor: jest.fn(),
-  addEventListener: jest.fn(),
-});
-
-test('getDataset resolves once the grid initializes', async () => {
-  const { WarehouseScripts } = loadWebResource(process.env.WEBRES_PATH);
-  const dataset = makeDataset();
-
-  const promise = WarehouseScripts.GridApi.getDataset('subgrid');
-  WarehouseScripts.GridApi.onDatasetControlInitialized({ controlId: 'subgrid', dataset });
-
-  await expect(promise).resolves.toBe(dataset);
-});
-
-test('getDataset resolves immediately when the grid is already initialized', async () => {
-  const { WarehouseScripts } = loadWebResource(process.env.WEBRES_PATH);
-  const dataset = makeDataset();
-
-  WarehouseScripts.GridApi.onDatasetControlInitialized({ controlId: 'subgrid', dataset });
-
-  await expect(WarehouseScripts.GridApi.getDataset('subgrid')).resolves.toBe(dataset);
-});
-
-test('getDataset without controlId resolves with the only grid on the form', async () => {
-  const { WarehouseScripts } = loadWebResource(process.env.WEBRES_PATH);
-  const dataset = makeDataset();
-
-  const promise = WarehouseScripts.GridApi.getDataset();
-  WarehouseScripts.GridApi.onDatasetControlInitialized({ controlId: 'subgrid', dataset });
-
-  await expect(promise).resolves.toBe(dataset);
-});
-
-test('columns interceptor renames the quantity column', () => {
-  const { WarehouseScripts } = loadWebResource(process.env.WEBRES_PATH);
-  const dataset = makeDataset();
-
-  WarehouseScripts.GridApi.onDatasetControlInitialized({ controlId: 'subgrid', dataset });
-
-  const [event, interceptor] = dataset.setInterceptor.mock.calls[0];
-  expect(event).toBe('columns');
-
-  const columns = interceptor([
-    { name: '${prefix}_availablequantity', displayName: 'Available Quantity' },
-    { name: '${prefix}_sku', displayName: 'SKU' }
-  ]);
-  expect(columns[0].displayName).toBe('Qty on hand');
-  expect(columns[1].displayName).toBe('SKU');
-});
-
-test('low-stock rows get custom formatting on the quantity cell', () => {
-  const { WarehouseScripts } = loadWebResource(process.env.WEBRES_PATH);
-  const dataset = makeDataset();
-
-  WarehouseScripts.GridApi.onDatasetControlInitialized({ controlId: 'subgrid', dataset });
-
-  const onRecordLoaded = dataset.addEventListener.mock.calls.find(c => c[0] === 'onRecordLoaded')[1];
-  const expressions = { ui: { setCustomFormattingExpression: jest.fn() } };
-  const values = { '${prefix}_availablequantity': 5, '${prefix}_reorderpoint': 10 };
-  onRecordLoaded({ getValue: (name) => values[name], expressions });
-
-  const [column, formattingExpression] = expressions.ui.setCustomFormattingExpression.mock.calls[0];
-  expect(column).toBe('${prefix}_availablequantity');
-  expect(formattingExpression()).toEqual({ backgroundColor: expect.any(String) });
-
-  values['${prefix}_availablequantity'] = 50;
-  expect(formattingExpression()).toBeUndefined();
-
-  values['${prefix}_availablequantity'] = null;
-  expect(formattingExpression()).toBeUndefined();
-});
-"@
-
-Set-Content -Path "src/Scripts.Tests/tests/gridApi.test.js" -Value $gridTests -Encoding UTF8
-Write-Host "  ✓ tests/gridApi.test.js" -ForegroundColor Green
