@@ -16,12 +16,20 @@
 
 Write-Host "`n── Code App: Warehouse Portal ──" -ForegroundColor Cyan
 
+# AppName drives the CanvasApp schema name (<prefix>_<appname>), the generated .meta.xml file
+# name and the package folder inside the solution. Pin it explicitly so those names stay
+# predictable instead of being derived from the project folder name (src/CodeApps.Warehouse
+# would otherwise produce the dotted, redundant-looking codeapps.warehouse).
+$appName = "warehouseportal"
+
 txc workspace component create pp-app-code `
     --output "src/CodeApps.Warehouse" `
-    --param "DisplayName=Warehouse Portal"
+    --param "DisplayName=Warehouse Portal" `
+    --param "AppName=$appName"
 if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ CodeApps.Warehouse scaffold failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "  ✓ CodeApps.Warehouse project created" -ForegroundColor Green
+Write-Host "  ℹ CanvasApp schema name: ${PublisherPrefix}_$appName" -ForegroundColor DarkGray
 
 # Add the code app project to the Visual Studio solution file (run from repo root)
 dotnet sln add src/CodeApps.Warehouse
@@ -32,42 +40,6 @@ dotnet add "src/Solutions.CodeApp/Solutions.CodeApp.csproj" reference "src/CodeA
 if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ ProjectReference CodeApps.Warehouse → Solutions.CodeApp failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "  ✓ ProjectReference: CodeApps.Warehouse → Solutions.CodeApp" -ForegroundColor Green
-
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                              Project File Adjustments
-# ──────────────────────────────────────────────────────────────────────────────────────────
-
-$csprojFile = Get-ChildItem "src/CodeApps.Warehouse/*.csproj" | Select-Object -First 1
-if (-not $csprojFile) { throw "No .csproj found in src/CodeApps.Warehouse — scaffold may have failed" }
-$csprojPath = $csprojFile.FullName
-
-$csprojXml = [xml](Get-Content $csprojPath -Raw)
-$propertyGroup = $csprojXml.Project.PropertyGroup | Where-Object { $_.AppName } | Select-Object -First 1
-if (-not $propertyGroup) { throw "No <AppName> property found in $($csprojFile.Name)" }
-
-# AppName drives the CanvasApp schema name (<prefix>_<appname>), the generated .meta.xml file
-# name and the package folder inside the solution. Pin it so those names stay predictable
-# instead of being derived from the project folder name.
-$appName = "warehouseportal"
-$propertyGroup.AppName = $appName
-
-Write-Host "  ℹ CanvasApp schema name: ${PublisherPrefix}_$appName" -ForegroundColor DarkGray
-
-# The project targets net462, so CoreCompile needs .NET Framework reference assemblies.
-# Solution projects skip this (their build defines an empty CoreCompile) and plugin projects
-# get the assemblies from their DevKit package — a code app project gets neither, so building
-# on Linux or macOS fails with MSB3644 unless we add them explicitly.
-$itemGroup = $csprojXml.CreateElement("ItemGroup")
-$packageReference = $csprojXml.CreateElement("PackageReference")
-$packageReference.SetAttribute("Include", "Microsoft.NETFramework.ReferenceAssemblies")
-$packageReference.SetAttribute("Version", "1.0.3")
-$packageReference.SetAttribute("PrivateAssets", "all")
-$itemGroup.AppendChild($packageReference) | Out-Null
-$csprojXml.Project.AppendChild($itemGroup) | Out-Null
-
-$csprojXml.Save($csprojPath)
-
-Write-Host "  ✓ $($csprojFile.Name) patched (AppName, reference assemblies)" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                                     Data Sources
