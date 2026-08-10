@@ -19,14 +19,17 @@ Write-Host "`n── Code App: Warehouse Portal ──" -ForegroundColor Cyan
 txc workspace component create pp-app-code `
     --output "src/CodeApps.Warehouse" `
     --param "DisplayName=Warehouse Portal"
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ CodeApps.Warehouse scaffold failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "  ✓ CodeApps.Warehouse project created" -ForegroundColor Green
 
 # Add the code app project to the Visual Studio solution file (run from repo root)
 dotnet sln add src/CodeApps.Warehouse
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ dotnet sln add CodeApps.Warehouse failed" -ForegroundColor Red; exit 1 }
 
 # Link the code app to its solution — this is what makes the solution pack the built SPA
 dotnet add "src/Solutions.CodeApp/Solutions.CodeApp.csproj" reference "src/CodeApps.Warehouse/CodeApps.Warehouse.csproj"
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ ProjectReference CodeApps.Warehouse → Solutions.CodeApp failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "  ✓ ProjectReference: CodeApps.Warehouse → Solutions.CodeApp" -ForegroundColor Green
 
@@ -85,7 +88,8 @@ foreach ($table in @("warehouselocation", "warehouseitem", "warehousetransaction
     txc workspace component create pp-app-code-data `
         --output "src/CodeApps.Warehouse" `
         --param "EntityLogicalName=$logicalName" `
-        --param "ModelSolutionPath=../Solutions.DataModel" `
+        --param "ModelSolutionPath=../Solutions.DataModel"
+    if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source $logicalName failed" -ForegroundColor Red; exit 1 }
 
     Write-Host "  ✓ Data source: $logicalName" -ForegroundColor Green
 }
