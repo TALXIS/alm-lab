@@ -19,7 +19,7 @@
 # One honest constraint: the plugin assembly itself must stay net462 - the Dataverse
 # sandbox still runs .NET Framework. The tests don't share that constraint: the template
 # targets modern .NET with FakeXrmEasy 3.x, so the whole suite runs anywhere (Codespaces,
-# the ubuntu CI runner). The scaffold only bridges the net8-to-net462 project reference -
+# the ubuntu CI runner). The scaffold only bridges the net10-to-net462 project reference -
 # see 14-tests-unit.ps1.
 #
 # Run:  .lab-scripts/CP14-implement-unit-tests.ps1
