@@ -70,7 +70,7 @@ Write-Host "  ✓ SubtractQuantityPluginTests.cs" -ForegroundColor Green
 Set-LabValue 'pluginsTestsScaffolded' $true
 
 } else {
-    Write-Host "  ✓ Plugins.Tests (exists)" -ForegroundColor Green
+    Write-Host "  ✓ Tests.Plugins (exists)" -ForegroundColor Green
 }
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -111,5 +111,5 @@ Write-Host "  ✓ tests/ribbonActions.test.js" -ForegroundColor Green
 Set-LabValue 'scriptsTestsScaffolded' $true
 
 } else {
-    Write-Host "  ✓ Scripts.Tests (exists)" -ForegroundColor Green
+    Write-Host "  ✓ Tests.Scripts (exists)" -ForegroundColor Green
 }
