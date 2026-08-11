@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries>
+  <savedquery>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{3de5a5eb-ea12-4ec6-9f15-5eef0ed3d13e}</savedqueryid>
+    <queryapi>
+    </queryapi>
+    <layoutxml>
+      <grid name="resultset" jump="almlab_name" select="1" preview="1" icon="1">
+        <row name="result" id="almlab_warehousetransactionid">
+          <cell name="almlab_name" width="200" />
+          <cell name="almlab_transactiontype" width="125" />
+          <cell name="almlab_itemid" width="125" />
+          <cell name="almlab_quantity" width="125" />
+          <cell name="almlab_transactiondate" width="125" />
+          <cell name="almlab_totalvalue" width="125" />
+          <cell name="createdon" width="125" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="almlab_warehousetransaction">
+          <attribute name="almlab_name" />
+          <order attribute="almlab_name" descending="false" />
+          <attribute name="almlab_transactiontype" />
+          <attribute name="almlab_itemid" />
+          <attribute name="almlab_quantity" />
+          <attribute name="almlab_transactiondate" />
+          <attribute name="almlab_totalvalue" />
+          <attribute name="createdon" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Warehouse Transactions" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

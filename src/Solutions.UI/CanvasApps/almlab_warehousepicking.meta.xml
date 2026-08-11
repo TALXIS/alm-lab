@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>almlab_warehousepicking</Name>
-  <AppVersion>2026-08-11T13:45:54Z</AppVersion>
+  <AppVersion>2026-08-11T13:56:56Z</AppVersion>
   <Status>Ready</Status>
   <CreatedByClientVersion>0.0.0.0</CreatedByClientVersion>
   <MinClientVersion>0.0.0.0</MinClientVersion>
@@ -30,7 +30,7 @@
     <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/power-apps.svg_ContentType_image/svg+xml</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/index.html_ContentType_text/html</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/react-CHdo91hT.svg_ContentType_image/svg+xml</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/index-BnC7jmEV.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/index-Dew8Dnzr.css_ContentType_text/css</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/index-Bm8VlztE.js_ContentType_application/javascript</CodeAppPackageUri>
   </CodeAppPackageUris>
 </CanvasApp>
