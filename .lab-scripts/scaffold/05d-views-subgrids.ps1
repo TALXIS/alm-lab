@@ -103,6 +103,12 @@ function Add-DefaultViewColumns {
     $xml.SelectSingleNode("//querytype").InnerText = "0"
     $xml.SelectSingleNode("//isdefault").InnerText = "1"
 
+    # pp-entity-view always appends " Lookup View" to whatever DisplayName is
+    # passed, regardless of querytype — fix the label so it doesn't misname
+    # what is now the entity's actual default/public view.
+    $localizedName = $xml.SelectSingleNode("//LocalizedName")
+    if ($localizedName) { $localizedName.SetAttribute("description", $DisplayName) }
+
     $xml.Save($viewFile.FullName)
 }
 
