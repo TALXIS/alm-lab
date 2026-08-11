@@ -17,6 +17,8 @@ Write-Host "`n── Tests.UI ──" -ForegroundColor Cyan
 #                              Scaffold Test Project
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
+if (-not (Test-Path "src/Tests.UI/Tests.UI.csproj")) {
+
 txc workspace component create pp-test-ui `
     --output "src/Tests.UI"
 
@@ -123,5 +125,9 @@ if (Test-Path $playwrightScript) {
     }
 } else {
     Write-Host "  ⚠ playwright.ps1 not found at $playwrightScript — run dotnet build first" -ForegroundColor Yellow
+}
+
+} else {
+    Write-Host "  ✓ Tests.UI (exists)" -ForegroundColor Green
 }
 

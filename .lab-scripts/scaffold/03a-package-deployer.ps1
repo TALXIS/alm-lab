@@ -10,10 +10,14 @@
 
 Write-Host "`n── Package Deployer ──" -ForegroundColor Cyan
 
-txc workspace component create pp-package `
-    --output "src/Packages.Main"
+if (-not (Test-Path "src/Packages.Main/Packages.Main.csproj")) {
+    txc workspace component create pp-package `
+        --output "src/Packages.Main"
 
-# Add the package project to the Visual Studio solution file (run from repo root)
-dotnet sln add src/Packages.Main/Packages.Main.csproj
+    # Add the package project to the Visual Studio solution file (run from repo root)
+    dotnet sln add src/Packages.Main/Packages.Main.csproj
 
-Write-Host "  ✓ Packages.Main" -ForegroundColor Green
+    Write-Host "  ✓ Packages.Main" -ForegroundColor Green
+} else {
+    Write-Host "  ✓ Packages.Main (exists)" -ForegroundColor Green
+}

@@ -13,6 +13,8 @@
 
 Write-Host "`n── Solutions.Logic ──" -ForegroundColor Cyan
 
+if (-not (Test-Path "src/Solutions.Logic/Solutions.Logic.csproj")) {
+
 txc workspace component create pp-solution `
     --output "src/Solutions.Logic" `
     --param "PublisherName=$PublisherName" `
@@ -93,3 +95,7 @@ txc workspace component create pp-plugin-assembly-step `
 
 
 Write-Host "  ✓ Step: SubtractQuantityPlugin (Post-operation, Create)" -ForegroundColor Green
+
+} else {
+    Write-Host "  ✓ Solutions.Logic (exists)" -ForegroundColor Green
+}

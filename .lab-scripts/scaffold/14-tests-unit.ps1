@@ -15,6 +15,8 @@ Write-Host "`n── Plugins.Tests ──" -ForegroundColor Cyan
 
 $prefix = $PublisherPrefix
 
+if (-not (Test-Path "src/Plugins.Tests/Plugins.Tests.csproj")) {
+
 # The pp-plugin-test template's Cleanup post-action expects .template.temp to exist and
 # fails (rolling everything back) when it doesn't - pre-create it as a workaround.
 New-Item -ItemType Directory -Path "src/Plugins.Tests/.template.temp" -Force | Out-Null
@@ -201,11 +203,17 @@ namespace Plugins.Tests
 Set-Content -Path "src/Plugins.Tests/SubtractQuantityPluginTests.cs" -Value $subtractTests -Encoding UTF8
 Write-Host "  ✓ SubtractQuantityPluginTests.cs" -ForegroundColor Green
 
+} else {
+    Write-Host "  ✓ Plugins.Tests (exists)" -ForegroundColor Green
+}
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                                    Scripts.Tests
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Host "`n── Scripts.Tests ──" -ForegroundColor Cyan
+
+if (-not (Test-Path "src/Scripts.Tests")) {
 
 # ScriptLibraryPath points at the rollup bundle Scripts.UI builds - the same file that
 # ships as the web resource is the file under test.
@@ -330,3 +338,7 @@ test('checkStockLevels reports healthy stock above reorder point', async () => {
 
 Set-Content -Path "src/Scripts.Tests/tests/ribbonActions.test.js" -Value $ribbonTests -Encoding UTF8
 Write-Host "  ✓ tests/ribbonActions.test.js" -ForegroundColor Green
+
+} else {
+    Write-Host "  ✓ Scripts.Tests (exists)" -ForegroundColor Green
+}

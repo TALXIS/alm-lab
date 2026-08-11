@@ -13,6 +13,8 @@
 #                              Plugin Project
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
+if (-not (Test-Path "src/Plugins.Warehouse/Plugins.Warehouse.csproj")) {
+
 txc workspace component create pp-plugin `
     --output "src/Plugins.Warehouse" `
     --param "PublisherName=$PublisherName" `
@@ -179,3 +181,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "  ⚠ Plugin publish had issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
 }
 cd ../..
+
+} else {
+    Write-Host "  ✓ Plugins.Warehouse (exists)" -ForegroundColor Green
+}

@@ -13,92 +13,96 @@
 
 Write-Host "`n── Solutions.UI ──" -ForegroundColor Cyan
 
-txc workspace component create pp-solution `
-    --output "src/Solutions.UI" `
-    --param "PublisherName=$PublisherName" `
-    --param "PublisherPrefix=$PublisherPrefix"
+if (-not (Test-Path "src/Solutions.UI/Solutions.UI.csproj")) {
+    txc workspace component create pp-solution `
+        --output "src/Solutions.UI" `
+        --param "PublisherName=$PublisherName" `
+        --param "PublisherPrefix=$PublisherPrefix"
 
-Write-Host "  ✓ Solutions.UI" -ForegroundColor Green
+    Write-Host "  ✓ Solutions.UI" -ForegroundColor Green
 
-# Add Solutions.UI to the Package Deployer project as a .NET ProjectReference
-cd src/Packages.Main
-dotnet add "./Packages.Main.csproj" reference "../Solutions.UI/Solutions.UI.csproj"
-cd ../..
+    # Add Solutions.UI to the Package Deployer project as a .NET ProjectReference
+    cd src/Packages.Main
+    dotnet add "./Packages.Main.csproj" reference "../Solutions.UI/Solutions.UI.csproj"
+    cd ../..
 
-Write-Host "  ✓ ProjectReference: UI → Packages.Main" -ForegroundColor Green
+    Write-Host "  ✓ ProjectReference: UI → Packages.Main" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                              Existing Entity References
-# ──────────────────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                              Existing Entity References
+    # ──────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Entity References (UI) ──" -ForegroundColor Cyan
+    Write-Host "`n── Entity References (UI) ──" -ForegroundColor Cyan
 
-# Behavior=Existing creates a reference, not a table: the schema stays owned by
-# Solutions.DataModel; this solution only layers UI (forms, views, ribbon) on top of it.
+    # Behavior=Existing creates a reference, not a table: the schema stays owned by
+    # Solutions.DataModel; this solution only layers UI (forms, views, ribbon) on top of it.
 
-txc workspace component create pp-entity `
-    --output "src/Solutions.UI" `
-    --param "Behavior=Existing" `
-    --param "PublisherPrefix=$PublisherPrefix" `
-    --param "LogicalName=warehouselocation" `
-    --param "DisplayName=Warehouse Location"
+    txc workspace component create pp-entity `
+        --output "src/Solutions.UI" `
+        --param "Behavior=Existing" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=warehouselocation" `
+        --param "DisplayName=Warehouse Location"
 
-Write-Host "  ✓ Entity ref: Warehouse Location" -ForegroundColor Green
+    Write-Host "  ✓ Entity ref: Warehouse Location" -ForegroundColor Green
 
-txc workspace component create pp-entity `
-    --output "src/Solutions.UI" `
-    --param "Behavior=Existing" `
-    --param "PublisherPrefix=$PublisherPrefix" `
-    --param "LogicalName=warehouseitem" `
-    --param "DisplayName=Warehouse Item"
+    txc workspace component create pp-entity `
+        --output "src/Solutions.UI" `
+        --param "Behavior=Existing" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=warehouseitem" `
+        --param "DisplayName=Warehouse Item"
 
-Write-Host "  ✓ Entity ref: Warehouse Item" -ForegroundColor Green
+    Write-Host "  ✓ Entity ref: Warehouse Item" -ForegroundColor Green
 
-txc workspace component create pp-entity `
-    --output "src/Solutions.UI" `
-    --param "Behavior=Existing" `
-    --param "PublisherPrefix=$PublisherPrefix" `
-    --param "LogicalName=warehousetransaction" `
-    --param "DisplayName=Warehouse Transaction"
+    txc workspace component create pp-entity `
+        --output "src/Solutions.UI" `
+        --param "Behavior=Existing" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=warehousetransaction" `
+        --param "DisplayName=Warehouse Transaction"
 
-Write-Host "  ✓ Entity ref: Warehouse Transaction" -ForegroundColor Green
+    Write-Host "  ✓ Entity ref: Warehouse Transaction" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                                  Model-Driven App
-# ──────────────────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                                  Model-Driven App
+    # ──────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Model-Driven App ──" -ForegroundColor Cyan
+    Write-Host "`n── Model-Driven App ──" -ForegroundColor Cyan
 
-txc workspace component create pp-app-model `
-    --output "src/Solutions.UI" `
-    --param "PublisherPrefix=$PublisherPrefix" `
-    --param "LogicalName=warehouseapp"
+    txc workspace component create pp-app-model `
+        --output "src/Solutions.UI" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=warehouseapp"
 
-Write-Host "  ✓ App: warehouseapp" -ForegroundColor Green
+    Write-Host "  ✓ App: warehouseapp" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                                  App Components
-# ──────────────────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                                  App Components
+    # ──────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── App Components ──" -ForegroundColor Cyan
+    Write-Host "`n── App Components ──" -ForegroundColor Cyan
 
-txc workspace component create pp-app-model-component `
-    --output "src/Solutions.UI" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehouselocation" `
-    --param "AppName=${PublisherPrefix}_warehouseapp"
+    txc workspace component create pp-app-model-component `
+        --output "src/Solutions.UI" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehouselocation" `
+        --param "AppName=${PublisherPrefix}_warehouseapp"
 
-Write-Host "  ✓ App component: warehouselocation" -ForegroundColor Green
+    Write-Host "  ✓ App component: warehouselocation" -ForegroundColor Green
 
-txc workspace component create pp-app-model-component `
-    --output "src/Solutions.UI" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehouseitem" `
-    --param "AppName=${PublisherPrefix}_warehouseapp"
+    txc workspace component create pp-app-model-component `
+        --output "src/Solutions.UI" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehouseitem" `
+        --param "AppName=${PublisherPrefix}_warehouseapp"
 
-Write-Host "  ✓ App component: warehouseitem" -ForegroundColor Green
+    Write-Host "  ✓ App component: warehouseitem" -ForegroundColor Green
 
-txc workspace component create pp-app-model-component `
-    --output "src/Solutions.UI" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction" `
-    --param "AppName=${PublisherPrefix}_warehouseapp"
+    txc workspace component create pp-app-model-component `
+        --output "src/Solutions.UI" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction" `
+        --param "AppName=${PublisherPrefix}_warehouseapp"
 
-Write-Host "  ✓ App component: warehousetransaction" -ForegroundColor Green
+    Write-Host "  ✓ App component: warehousetransaction" -ForegroundColor Green
+} else {
+    Write-Host "  ✓ Solutions.UI (exists)" -ForegroundColor Green
+}

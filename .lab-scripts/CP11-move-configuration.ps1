@@ -31,9 +31,10 @@ Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/13-config-data.ps1"
 
-    $dataDir = Join-Path $LabRoot "src/Packages.Main/Data"
+    $dataDir    = Join-Path $LabRoot "src/Packages.Main/Data"
+    $schemaPath = Join-Path $dataDir "data_schema.xml"
     Set-LabValue 'configDataDirectory'  $dataDir
-    Set-LabValue 'configDataSchemaPath' (Join-Path $dataDir "data_schema.xml")
+    Set-LabValue 'configDataSchemaPath' $schemaPath
     Set-LabValue 'configDataFilePath'   (Join-Path $dataDir "data.xml")
 
     if ($env:LAB_LOCAL_MODE) {
@@ -42,21 +43,31 @@ try {
         Write-Info "  'txc data pkg import' again to load it into Test. There is no live Dev/"
         Write-Info "  Test environment, so the seed data.xml scaffolded above is left as-is."
     } else {
+        $devProfile  = Get-LabValue 'devProfile'
+        $testProfile = Get-LabValue 'testProfile'
+        if (-not $devProfile -or -not $testProfile) { Write-Err "Dev/Test profiles not found in lab state. Run CP04 first."; exit 1 }
+        # Lab-state only remembers the profile NAMES — confirm they still exist in this
+        # machine's own txc session (a fresh machine/Codespace won't have them even if
+        # lab-state does).
+        $liveProfiles = @(txc config profile list --format json | ConvertFrom-Json).id
+        foreach ($p in @($devProfile, $testProfile)) {
+            if ($p -notin $liveProfiles) { Write-Err "txc profile '$p' not found on this machine — run CP04 again."; exit 1 }
+        }
+
         # Step 1: Import the seed package into Dev — the app now has data.
-        txc data pkg import $dataDir --profile dev --allow-production
+        txc data pkg import $dataDir --profile $devProfile --allow-production
         if ($LASTEXITCODE -ne 0) { Write-Err "Seed import to Dev failed"; exit 1 }
         Write-Ok "Seed data imported to Dev"
 
         # Step 2: Round-trip — export Dev data back into the package. Records added by hand
         # in the maker portal get captured as source, same idea as the CP10 solution pull.
-        txc data pkg export --schema (Join-Path $dataDir "data_schema.xml") --output $dataDir --overwrite --profile dev --allow-production
+        txc data pkg export --schema $schemaPath --output $dataDir --overwrite --profile $devProfile --allow-production
         if ($LASTEXITCODE -ne 0) { Write-Err "Config export from Dev failed"; exit 1 }
         Write-Ok "Dev data exported back to source"
 
         # Step 3: Import into Test — config travels with the app, no re-keying per environment.
-        txc data pkg import $dataDir --profile test --allow-production
+        txc data pkg import $dataDir --profile $testProfile --allow-production
         if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
-        Set-LabValue 'configImportedToUrl' (Get-LabValue 'testEnvUrl')
         Write-Ok "Config imported to Test"
     }
 } finally { Pop-Location }
