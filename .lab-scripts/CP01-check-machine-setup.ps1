@@ -64,9 +64,23 @@ if ($missing.Count -gt 0) {
 $rid = Initialize-RandomIdentifier
 Write-Ok "Random identifier for this lab: $rid"
 
+# Both updates below hit nuget.org and can flake transiently (especially with a room full of
+# attendees doing the same thing at once) - retry once before giving up, and actually check
+# the exit code instead of trusting the command silently did what it was asked. A stale
+# template pack fails confusingly much later (e.g. "Unknown parameter" on a real parameter,
+# in CP09's code-app scaffold) instead of here, where the fix is obvious (just re-run CP01).
+function Invoke-WithRetry([string]$Description, [scriptblock]$Command) {
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        & $Command 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { return }
+        if ($attempt -eq 1) { Write-Info "  $Description failed, retrying once..." }
+    }
+    throw "$Description failed after 2 attempts (exit $LASTEXITCODE)"
+}
+
 # Ensure TALXIS CLI is latest (picks up any last-minute fixes).
 Write-Info "Updating TALXIS CLI to latest..."
-dotnet tool update --global TALXIS.CLI 2>&1 | Out-Null
+Invoke-WithRetry "TALXIS CLI update" { dotnet tool update --global TALXIS.CLI }
 $env:PATH = "$HOME/.dotnet/tools:$env:PATH"
 Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
 
@@ -75,7 +89,7 @@ Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
 # from the TALXIS.DevKit.Templates.Dataverse template pack, not from the CLI binary above.
 # Keep the two in lockstep so newly-scaffolded components match the CLI we just updated to.
 Write-Info "Updating TALXIS DevKit templates to latest..."
-dotnet new install TALXIS.DevKit.Templates.Dataverse 2>&1 | Out-Null
+Invoke-WithRetry "TALXIS DevKit templates update" { dotnet new install TALXIS.DevKit.Templates.Dataverse }
 Write-Ok "TALXIS DevKit templates updated"
 
 if ($env:LAB_LOCAL_MODE) {
