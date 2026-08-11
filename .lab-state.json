@@ -6,5 +6,8 @@
   "devEnvUrl": "https://local-dev.stub.invalid",
   "devProfile": "dev",
   "testEnvUrl": "https://local-test.stub.invalid",
-  "testProfile": "test"
+  "testProfile": "test",
+  "tenantId": "00000000-0000-0000-0000-000000000000",
+  "appId": "00000000-0000-0000-0000-000000000000",
+  "dataverseTestUrl": "https://local-test.stub.invalid"
 }
