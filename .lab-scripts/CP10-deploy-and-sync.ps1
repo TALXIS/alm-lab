@@ -59,8 +59,15 @@ Write-Info "Building the deployment package..."
 $pkgProj    = Join-Path $LabRoot "src/Packages.Main/Packages.Main.csproj"
 $publishDir = Join-Path $LabRoot ".lab-scripts/.tmp-deploy"
 Remove-Item $publishDir -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
-dotnet publish $pkgProj -c Release -o $publishDir --nologo --verbosity quiet
+# No -o here on purpose: passing an explicit output dir makes dotnet set a global
+# PublishDir property that leaks into every nested project build in the graph — including
+# Plugins.Warehouse's own auto-publish-on-build step (Microsoft.PowerApps.MSBuild.Plugin
+# defaults PublishOnBuild=true), redirecting its output away from its own bin/<Config>/
+# <TFM>/publish/ folder and breaking EnsurePluginAssemblyDataXml downstream.
+# See: https://github.com/TALXIS/tools-devkit-build/issues/109
+dotnet publish $pkgProj -c Release --nologo --verbosity quiet
 if ($LASTEXITCODE -ne 0) { Write-Err "dotnet publish failed"; exit 1 }
 
 # Locate the pdpkg.zip (Package Deployer package archive).
