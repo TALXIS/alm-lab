@@ -70,6 +70,14 @@ dotnet tool update --global TALXIS.CLI 2>&1 | Out-Null
 $env:PATH = "$HOME/.dotnet/tools:$env:PATH"
 Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
 
+# The agentbox image bakes in a pinned txc + template pack version for fast startup, but
+# `txc workspace component create` (used by every scaffold script) reads its scaffolding
+# from the TALXIS.DevKit.Templates.Dataverse template pack, not from the CLI binary above.
+# Keep the two in lockstep so newly-scaffolded components match the CLI we just updated to.
+Write-Info "Updating TALXIS DevKit templates to latest..."
+dotnet new install TALXIS.DevKit.Templates.Dataverse 2>&1 | Out-Null
+Write-Ok "TALXIS DevKit templates updated"
+
 if ($env:LAB_LOCAL_MODE) {
     Write-Step "Sign in 1/3 — GitHub"
     Write-Info "LAB_LOCAL_MODE: skipped sign-in for GitHub"
@@ -127,6 +135,7 @@ Verify the local toolchain and sign in to the services required to build and dep
 
 ## Changes
 - verify dotnet, git, gh, pac, txc, az, and node are available
+- update the TALXIS CLI (txc) and TALXIS DevKit template pack to latest
 - authenticate GitHub CLI, TALXIS CLI, and Azure CLI
 - persist the random identifier, tenant id, and auth profile references
 ## Testing
