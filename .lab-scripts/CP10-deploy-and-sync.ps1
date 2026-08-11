@@ -56,10 +56,7 @@ if ($env:LAB_LOCAL_MODE) {
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Info "Building the deployment package..."
-$pkgProj    = Join-Path $LabRoot "src/Packages.Main/Packages.Main.csproj"
-$publishDir = Join-Path $LabRoot ".lab-scripts/.tmp-deploy"
-Remove-Item $publishDir -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
+$pkgProj = Join-Path $LabRoot "src/Packages.Main/Packages.Main.csproj"
 
 # No -o here on purpose: passing an explicit output dir makes dotnet set a global
 # PublishDir property that leaks into every nested project build in the graph — including
@@ -70,26 +67,22 @@ New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 dotnet publish $pkgProj -c Release --nologo --verbosity quiet
 if ($LASTEXITCODE -ne 0) { Write-Err "dotnet publish failed"; exit 1 }
 
-# Locate the pdpkg.zip (Package Deployer package archive).
+# Locate the pdpkg.zip (Package Deployer package archive) at its natural output location —
+# no need to stage/copy it anywhere, bin/ is gitignored either way.
 $pdpkg = Get-ChildItem (Join-Path $LabRoot "src/Packages.Main/bin/Release") -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1
 if (-not $pdpkg) { Write-Err "Packages.Main.pdpkg.zip not found after publish"; exit 1 }
-Copy-Item $pdpkg.FullName (Join-Path $publishDir "Packages.Main.pdpkg.zip") -Force
 Write-Ok "Package built: $($pdpkg.Name)"
 
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env pkg import' to deploy the built"
     Write-Info "  package to Dev ($devUrl), then 'txc env solution pull' to sync manual"
     Write-Info "  environment changes back to src/Solutions.Security."
-    Remove-Item $publishDir -Recurse -Force -ErrorAction SilentlyContinue
 } else {
 
 Write-Info "Deploying package to Dev environment ($devUrl)..."
-txc env pkg import (Join-Path $publishDir "Packages.Main.pdpkg.zip") --profile dev
+txc env pkg import $pdpkg.FullName --profile dev
 if ($LASTEXITCODE -ne 0) { Write-Err "Package import to Dev failed"; exit 1 }
 Write-Ok "Package deployed to Dev environment"
-
-# Cleanup temp publish dir.
-Remove-Item $publishDir -Recurse -Force -ErrorAction SilentlyContinue
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 2: Pause for manual environment changes (interactive mode).
