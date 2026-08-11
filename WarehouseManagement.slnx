@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Packages.Main/Packages.Main.csproj" />
+    <Project Path="src/Plugins.Warehouse/Plugins.Warehouse.csproj" />
     <Project Path="src/Solutions.DataModel/Solutions.DataModel.csproj" />
+    <Project Path="src/Solutions.Logic/Solutions.Logic.csproj" />
   </Folder>
 </Solution>
