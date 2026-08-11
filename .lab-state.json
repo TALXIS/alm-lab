@@ -11,5 +11,7 @@
   "appId": "00000000-0000-0000-0000-000000000000",
   "configDataDirectory": "/tmp/lab-dry-run/src/Packages.Main/Data",
   "configDataSchemaPath": "/tmp/lab-dry-run/src/Packages.Main/Data/data_schema.xml",
-  "configDataFilePath": "/tmp/lab-dry-run/src/Packages.Main/Data/data.xml"
+  "configDataFilePath": "/tmp/lab-dry-run/src/Packages.Main/Data/data.xml",
+  "packageDeployerScaffolded": true,
+  "dataModelScaffolded": true
 }
