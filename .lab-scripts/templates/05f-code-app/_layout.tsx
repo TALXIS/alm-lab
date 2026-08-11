@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom"
-import { Package, ArrowRightLeft } from "lucide-react"
+import { Package, ArrowRightLeft, MapPin } from "lucide-react"
 
 type LayoutProps = { showHeader?: boolean }
 
@@ -26,6 +26,14 @@ export default function Layout({ showHeader = true }: LayoutProps) {
               >
                 <ArrowRightLeft className="h-4 w-4" />
                 Transactions
+              </NavLink>
+              <NavLink to="/locations"
+                className={({ isActive }) =>
+                  `text-sm flex items-center gap-1.5 text-muted-foreground hover:text-foreground ${isActive ? "text-foreground font-medium" : ""}`
+                }
+              >
+                <MapPin className="h-4 w-4" />
+                Locations
               </NavLink>
             </nav>
           </div>

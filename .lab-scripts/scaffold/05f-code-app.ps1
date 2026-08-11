@@ -20,10 +20,10 @@
 #
 # After scaffolding and data-source generation, the placeholder UI is replaced with a real
 # implementation (templates/05f-code-app/): an items list, an item detail with its
-# transactions, and a transactions list — all built on the typed models and services that
-# pp-app-code-data generated from the Solutions.DataModel metadata. All three tables are
-# used: items and transactions drive the pages, locations resolve the item's location
-# lookup (list column, detail card, New Item picker).
+# transactions, a transactions list and a locations list — all built on the typed models
+# and services that pp-app-code-data generated from the Solutions.DataModel metadata.
+# All three tables get their own page; locations additionally resolve the item's location
+# lookup (list column, detail card, New Item picker) and show a per-location item count.
 # Expects: $PublisherPrefix from parent scope.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -115,7 +115,8 @@ foreach ($file in @(
     @{ Template = "_layout.tsx";               Target = "pages/_layout.tsx" },
     @{ Template = "warehouse-items.tsx";       Target = "pages/warehouse-items.tsx" },
     @{ Template = "warehouse-item-detail.tsx"; Target = "pages/warehouse-item-detail.tsx" },
-    @{ Template = "transactions.tsx";          Target = "pages/transactions.tsx" }
+    @{ Template = "transactions.tsx";          Target = "pages/transactions.tsx" },
+    @{ Template = "locations.tsx";             Target = "pages/locations.tsx" }
 )) {
     Expand-LabTemplate -Path "05f-code-app/$($file.Template)" `
         -Destination "$appSrc/$($file.Target)" `
