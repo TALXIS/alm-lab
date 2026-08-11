@@ -46,8 +46,13 @@ Write-Ok "Azure: tenant $tenantId"
 
 # Step 2: App registration + service principal.
 $appName = "wm-deploy-$rid"
-Set-LabValue 'appName' $appName
 $appId = Get-LabValue 'appId'
+if ($appId -and -not (az ad app show --id $appId --query id -o tsv 2>$null)) {
+    # Cached appId in lab-state no longer exists in Azure AD (e.g. deleted, or lab-state
+    # inherited from another tenant/machine) — treat as absent and recreate below.
+    Write-Warn2 "Cached appId '$appId' not found in Azure AD — recreating."
+    $appId = $null
+}
 if (-not $appId) {
     $appId = az ad app list --display-name $appName --query "[0].appId" -o tsv 2>$null
     if (-not $appId) {
@@ -59,18 +64,12 @@ if (-not $appId) {
     }
 }
 Set-LabValue 'appId' $appId
-$appObjectId = az ad app show --id $appId --query id -o tsv 2>$null
-if ($appObjectId) { Set-LabValue 'appObjectId' $appObjectId }
-$servicePrincipalObjectId = az ad sp show --id $appId --query id -o tsv 2>$null
-if (-not $servicePrincipalObjectId) {
+if (-not (az ad sp show --id $appId --query id -o tsv 2>$null)) {
     az ad sp create --id $appId | Out-Null
-    $servicePrincipalObjectId = az ad sp show --id $appId --query id -o tsv 2>$null
 }
-if ($servicePrincipalObjectId) { Set-LabValue 'servicePrincipalObjectId' $servicePrincipalObjectId }
 
 # Step 3: Federated credential trusting main of this repo.
 $fedCredentialName = "github-main"
-Set-LabValue 'federatedCredentialName' $fedCredentialName
 $fed = @{ name=$fedCredentialName; issuer="https://token.actions.githubusercontent.com";
           subject="repo:$repo`:ref:refs/heads/main"; audiences=@("api://AzureADTokenExchange") } | ConvertTo-Json
 $tmp = New-TemporaryFile; Set-Content $tmp $fed -Encoding UTF8
@@ -120,7 +119,6 @@ if ($env:LAB_LOCAL_MODE) {
     gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
     Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
 }
-Set-LabValue 'dataverseTestUrl' $testUrl
 
 # Step 6: Enable GitHub Actions on the fork (forks have them disabled by default).
 if ($env:LAB_LOCAL_MODE) {

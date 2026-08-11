@@ -29,7 +29,7 @@ if (-not $id) {
     $id = gh api "repos/$repo/rulesets" -q ".[] | select(.name==`"$rulesetName`") | .id"
     if ($id) { Set-LabValue 'mainRulesetId' $id }
 }
-if (-not $id) { Write-Err "Main ruleset id not found. Run CP03 first."; exit 1 }
+if (-not $id) { Write-Err "Main ruleset not found on $repo — run CP03-setup-continuous-integration.ps1 first (it must actually complete at least once, not just be skipped)."; exit 1 }
 $rules = @(
     @{ type="deletion" }, @{ type="non_fast_forward" },
     @{ type="pull_request"; parameters=@{ required_approving_review_count=0
