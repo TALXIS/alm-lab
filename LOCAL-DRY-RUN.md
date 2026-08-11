@@ -29,6 +29,25 @@ browser download can fail with `SELF_SIGNED_CERT_IN_CHAIN`. Trust that proxy's C
 container first: mount it and run `update-ca-certificates` before the checkpoints. Not
 needed on a plain internet-connected host.
 
+**Node/npm needs its own separate fix.** `update-ca-certificates` only wires the CA into the
+OS/`dotnet` trust store — Node's own TLS stack doesn't consult it, so any checkpoint that
+runs `npm install` (CP09's code app and script-library components, e.g. `Scripts.UI`,
+`Apps.WarehousePicking`) will still fail with `SELF_SIGNED_CERT_IN_CHAIN` even after the step
+above. Point Node/npm at the same CA bundle explicitly, before running the checkpoints:
+
+```bash
+export NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/<your-proxy-ca>.crt
+npm config set cafile /usr/local/share/ca-certificates/<your-proxy-ca>.crt
+```
+
+Symptom if you skip this: the checkpoint script doesn't fail outright — MSBuild's
+`NodeRestore` target just reports `npm install exited with code 1` after several minutes
+(it silently retries), and CP09 continues past the failed component with a `⚠ ... build had
+issues` warning rather than stopping. Set the two lines above before the run, or if you're
+already mid-run, set them and manually re-run `npm install` in the affected project
+directory, then re-run the checkpoint script — it's idempotent and will pick up from where
+it left off.
+
 ## Verifying it worked
 
 - `git tag` shows a tag per checkpoint that made a real change
