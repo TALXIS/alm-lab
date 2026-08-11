@@ -2,6 +2,7 @@ using System;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using FakeXrmEasy.Plugins;
+using Plugins.Tests;
 using Plugins.Warehouse;
 
 namespace Tests.Plugins
