@@ -3,29 +3,31 @@
 # ║              14: Unit Tests — Plugin (FakeXrmEasy) and Script (Jest) Projects          ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Creates Plugins.Tests (FakeXrmEasy in-memory Dataverse) and Scripts.Tests (Jest with a
+# Creates Tests.Plugins (FakeXrmEasy in-memory Dataverse) and Tests.Scripts (Jest with a
 # mocked Xrm) with tests adapted to the warehouse plugins and form scripts.
 # Expects: $PublisherPrefix from parent scope.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#                                    Plugins.Tests
+#                                    Tests.Plugins
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Plugins.Tests ──" -ForegroundColor Cyan
+Write-Host "`n── Tests.Plugins ──" -ForegroundColor Cyan
 
 $prefix = $PublisherPrefix
 
+if (-not (Get-LabValue 'pluginsTestsScaffolded')) {
+
 # The pp-plugin-test template's Cleanup post-action expects .template.temp to exist and
 # fails (rolling everything back) when it doesn't - pre-create it as a workaround.
-New-Item -ItemType Directory -Path "src/Plugins.Tests/.template.temp" -Force | Out-Null
+New-Item -ItemType Directory -Path "src/Tests.Plugins/.template.temp" -Force | Out-Null
 
 txc workspace component create pp-plugin-test `
-    --output "src/Plugins.Tests"
+    --output "src/Tests.Plugins"
 
-dotnet sln add src/Plugins.Tests
+dotnet sln add src/Tests.Plugins
 
-cd src/Plugins.Tests
-# Plugins.Tests targets net10.0 (FakeXrmEasy v3) but Plugins.Warehouse targets net462 -
+cd src/Tests.Plugins
+# Tests.Plugins targets net10.0 (FakeXrmEasy v3) but Plugins.Warehouse targets net462 -
 # the Dataverse plugin sandbox is still .NET Framework, so that side can't move (see the
 # constraint note near the top of CP14-implement-unit-tests.ps1). `dotnet add reference`
 # refuses to link projects across that gap: it runs its own net10.0-vs-net462 compatibility
@@ -35,7 +37,7 @@ cd src/Plugins.Tests
 # warning ("resolved using .NETFramework,Version=v4.7.2 instead of..."). That warning is
 # expected and benign here - don't "fix" it by trying to retarget either project. So skip
 # the CLI and add the <ProjectReference> element to the csproj XML directly instead.
-$testCsproj = "Plugins.Tests.csproj"
+$testCsproj = "Tests.Plugins.csproj"
 [xml]$csprojXml = Get-Content $testCsproj -Raw
 $namespaceUri = $csprojXml.DocumentElement.NamespaceURI
 $itemGroup = $csprojXml.CreateElement("ItemGroup", $namespaceUri)
@@ -46,7 +48,7 @@ $csprojXml.Project.AppendChild($itemGroup) | Out-Null
 $csprojXml.Save((Resolve-Path $testCsproj))
 cd ../..
 
-Write-Host "  ✓ Plugins.Tests project (FakeXrmEasy)" -ForegroundColor Green
+Write-Host "  ✓ Tests.Plugins project (FakeXrmEasy)" -ForegroundColor Green
 
 # Tests adapted to OUR plugins: both require ${prefix}_transactiontype in the Target,
 # validation only guards Outbound (100000001), and Inbound (100000000) adds stock.
@@ -57,7 +59,7 @@ using Microsoft.Xrm.Sdk.Query;
 using FakeXrmEasy.Plugins;
 using Plugins.Warehouse;
 
-namespace Plugins.Tests
+namespace Tests.Plugins
 {
     [TestClass]
     public class ValidateWarehouseTransactionPluginTests : FakeXrmEasyTestBase
@@ -129,7 +131,7 @@ namespace Plugins.Tests
 }
 "@
 
-Set-Content -Path "src/Plugins.Tests/ValidateWarehouseTransactionPluginTests.cs" -Value $validateTests -Encoding UTF8
+Set-Content -Path "src/Tests.Plugins/ValidateWarehouseTransactionPluginTests.cs" -Value $validateTests -Encoding UTF8
 Write-Host "  ✓ ValidateWarehouseTransactionPluginTests.cs" -ForegroundColor Green
 
 $subtractTests = @"
@@ -139,7 +141,7 @@ using Microsoft.Xrm.Sdk.Query;
 using FakeXrmEasy.Plugins;
 using Plugins.Warehouse;
 
-namespace Plugins.Tests
+namespace Tests.Plugins
 {
     [TestClass]
     public class SubtractQuantityPluginTests : FakeXrmEasyTestBase
@@ -198,25 +200,36 @@ namespace Plugins.Tests
 }
 "@
 
-Set-Content -Path "src/Plugins.Tests/SubtractQuantityPluginTests.cs" -Value $subtractTests -Encoding UTF8
+Set-Content -Path "src/Tests.Plugins/SubtractQuantityPluginTests.cs" -Value $subtractTests -Encoding UTF8
 Write-Host "  ✓ SubtractQuantityPluginTests.cs" -ForegroundColor Green
 
+# Marks the block done — checked instead of Test-Path on the csproj so a re-run after a
+# partial failure (e.g. project created but the csproj XML patch or test files didn't
+# finish) retries everything rather than silently skipping the missing work.
+Set-LabValue 'pluginsTestsScaffolded' $true
+
+} else {
+    Write-Host "  ✓ Plugins.Tests (exists)" -ForegroundColor Green
+}
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#                                    Scripts.Tests
+#                                    Tests.Scripts
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Scripts.Tests ──" -ForegroundColor Cyan
+Write-Host "`n── Tests.Scripts ──" -ForegroundColor Cyan
+
+if (-not (Get-LabValue 'scriptsTestsScaffolded')) {
 
 # ScriptLibraryPath points at the rollup bundle Scripts.UI builds - the same file that
 # ships as the web resource is the file under test.
 txc workspace component create pp-test-script `
-    --output "src/Scripts.Tests" `
-    --param "ScriptTestProjectName=Scripts.Tests" `
+    --output "src/Tests.Scripts" `
+    --param "ScriptTestProjectName=Tests.Scripts" `
     --param "ScriptLibraryPath=../Scripts.UI/build/${prefix}_main.js"
 
-dotnet sln add src/Scripts.Tests
+dotnet sln add src/Tests.Scripts
 
-Write-Host "  ✓ Scripts.Tests project (Jest)" -ForegroundColor Green
+Write-Host "  ✓ Tests.Scripts project (Jest)" -ForegroundColor Green
 
 # Jest 30 does not expose global.jest to the template's setupXrm, so the Xrm functions a
 # test relies on are assigned as jest.fn() explicitly in beforeEach (same as dev-loops CFN).
@@ -280,7 +293,7 @@ test('onQuantityChange recalculates total value from unit price', async () => {
 });
 "@
 
-Set-Content -Path "src/Scripts.Tests/tests/transactionForm.test.js" -Value $formTests -Encoding UTF8
+Set-Content -Path "src/Tests.Scripts/tests/transactionForm.test.js" -Value $formTests -Encoding UTF8
 Write-Host "  ✓ tests/transactionForm.test.js" -ForegroundColor Green
 
 $ribbonTests = @"
@@ -328,5 +341,13 @@ test('checkStockLevels reports healthy stock above reorder point', async () => {
 });
 "@
 
-Set-Content -Path "src/Scripts.Tests/tests/ribbonActions.test.js" -Value $ribbonTests -Encoding UTF8
+Set-Content -Path "src/Tests.Scripts/tests/ribbonActions.test.js" -Value $ribbonTests -Encoding UTF8
 Write-Host "  ✓ tests/ribbonActions.test.js" -ForegroundColor Green
+
+# Marks the block done — checked instead of Test-Path on the project directory so a re-run
+# after a partial failure retries everything rather than silently skipping missing work.
+Set-LabValue 'scriptsTestsScaffolded' $true
+
+} else {
+    Write-Host "  ✓ Scripts.Tests (exists)" -ForegroundColor Green
+}

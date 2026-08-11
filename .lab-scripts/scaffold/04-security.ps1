@@ -12,101 +12,110 @@
 
 Write-Host "`n── Solutions.Security ──" -ForegroundColor Cyan
 
-txc workspace component create pp-solution `
-    --output "src/Solutions.Security" `
-    --param "PublisherName=$PublisherName" `
-    --param "PublisherPrefix=$PublisherPrefix"
+if (-not (Get-LabValue 'securityScaffolded')) {
+    txc workspace component create pp-solution `
+        --output "src/Solutions.Security" `
+        --param "PublisherName=$PublisherName" `
+        --param "PublisherPrefix=$PublisherPrefix"
 
-Write-Host "  ✓ Solutions.Security" -ForegroundColor Green
+    Write-Host "  ✓ Solutions.Security" -ForegroundColor Green
 
-# Add Solutions.Security to the Package Deployer project as a .NET ProjectReference
-cd src/Packages.Main
-dotnet add "./Packages.Main.csproj" reference "../Solutions.Security/Solutions.Security.csproj"
-cd ../..
+    # Add Solutions.Security to the Package Deployer project as a .NET ProjectReference
+    cd src/Packages.Main
+    dotnet add "./Packages.Main.csproj" reference "../Solutions.Security/Solutions.Security.csproj"
+    cd ../..
 
-Write-Host "  ✓ ProjectReference: Security → Packages.Main" -ForegroundColor Green
+    Write-Host "  ✓ ProjectReference: Security → Packages.Main" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                                    Security Roles
-# ──────────────────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                                    Security Roles
+    # ──────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Security Roles ──" -ForegroundColor Cyan
+    Write-Host "`n── Security Roles ──" -ForegroundColor Cyan
 
-txc workspace component create pp-security-role `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse worker"
+    txc workspace component create pp-security-role `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse worker"
 
-Write-Host "  ✓ Role: Warehouse worker" -ForegroundColor Green
+    Write-Host "  ✓ Role: Warehouse worker" -ForegroundColor Green
 
-txc workspace component create pp-security-role `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse manager"
+    txc workspace component create pp-security-role `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse manager"
 
-Write-Host "  ✓ Role: Warehouse manager" -ForegroundColor Green
+    Write-Host "  ✓ Role: Warehouse manager" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                                  Role Privileges
-# ──────────────────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                                  Role Privileges
+    # ──────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Security Role Privileges ──" -ForegroundColor Cyan
+    Write-Host "`n── Security Role Privileges ──" -ForegroundColor Cyan
 
-# Level = how far the privilege reaches: Basic = own records, Local = business unit,
-# Deep = BU + child BUs, Global = organization-wide. Worker gets broad reads but edits
-# only transactions they own (Write: Basic); manager gets full CRUD Global everywhere.
+    # Level = how far the privilege reaches: Basic = own records, Local = business unit,
+    # Deep = BU + child BUs, Global = organization-wide. Worker gets broad reads but edits
+    # only transactions they own (Write: Basic); manager gets full CRUD Global everywhere.
 
-# Warehouse worker — warehouseitem: Read/Write/Create/Append/AppendTo (Global)
-txc workspace component create pp-security-role-privilege `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse worker" `
-    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehouseitem"
+    # Warehouse worker — warehouseitem: Read/Write/Create/Append/AppendTo (Global)
+    txc workspace component create pp-security-role-privilege `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse worker" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehouseitem"
 
-Write-Host "  ✓ Worker → warehouseitem (RWCA)" -ForegroundColor Green
+    Write-Host "  ✓ Worker → warehouseitem (RWCA)" -ForegroundColor Green
 
-# Warehouse worker — warehouselocation: Read (Global)
-txc workspace component create pp-security-role-privilege `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse worker" `
-    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }]" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehouselocation"
+    # Warehouse worker — warehouselocation: Read (Global)
+    txc workspace component create pp-security-role-privilege `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse worker" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }]" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehouselocation"
 
-Write-Host "  ✓ Worker → warehouselocation (R)" -ForegroundColor Green
+    Write-Host "  ✓ Worker → warehouselocation (R)" -ForegroundColor Green
 
-# Warehouse worker — warehousetransaction: Read (Global), Write (Basic), Create (Basic)
-# Create is what lets a worker actually "pick" — creating an Outbound transaction record is
-# the pick action itself (see Plugins.Warehouse), so without it the code app's core workflow
-# would be unusable by the persona it's built for.
-txc workspace component create pp-security-role-privilege `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse worker" `
-    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Basic }, { PrivilegeType: Create, Level: Basic }]" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction"
+    # Warehouse worker — warehousetransaction: Read (Global), Write (Basic), Create (Basic)
+    # Create is what lets a worker actually "pick" — creating an Outbound transaction record is
+    # the pick action itself (see Plugins.Warehouse), so without it the code app's core workflow
+    # would be unusable by the persona it's built for.
+    txc workspace component create pp-security-role-privilege `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse worker" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Basic }, { PrivilegeType: Create, Level: Basic }]" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction"
 
-Write-Host "  ✓ Worker → warehousetransaction (R/W/C)" -ForegroundColor Green
+    Write-Host "  ✓ Worker → warehousetransaction (R/W/C)" -ForegroundColor Green
 
-# Warehouse manager — warehouseitem: Full CRUD (Global)
-txc workspace component create pp-security-role-privilege `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse manager" `
-    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Delete, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehouseitem"
+    # Warehouse manager — warehouseitem: Full CRUD (Global)
+    txc workspace component create pp-security-role-privilege `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse manager" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Delete, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehouseitem"
 
-Write-Host "  ✓ Manager → warehouseitem (CRUD)" -ForegroundColor Green
+    Write-Host "  ✓ Manager → warehouseitem (CRUD)" -ForegroundColor Green
 
-# Warehouse manager — warehouselocation: Full CRUD (Global)
-txc workspace component create pp-security-role-privilege `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse manager" `
-    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Delete, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehouselocation"
+    # Warehouse manager — warehouselocation: Full CRUD (Global)
+    txc workspace component create pp-security-role-privilege `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse manager" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Delete, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehouselocation"
 
-Write-Host "  ✓ Manager → warehouselocation (CRUD)" -ForegroundColor Green
+    Write-Host "  ✓ Manager → warehouselocation (CRUD)" -ForegroundColor Green
 
-# Warehouse manager — warehousetransaction: Full CRUD (Global)
-txc workspace component create pp-security-role-privilege `
-    --output "src/Solutions.Security" `
-    --param "RoleName=Warehouse manager" `
-    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Delete, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
-    --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction"
+    # Warehouse manager — warehousetransaction: Full CRUD (Global)
+    txc workspace component create pp-security-role-privilege `
+        --output "src/Solutions.Security" `
+        --param "RoleName=Warehouse manager" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Global }, { PrivilegeType: Create, Level: Global }, { PrivilegeType: Delete, Level: Global }, { PrivilegeType: Append, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
+        --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction"
 
-Write-Host "  ✓ Manager → warehousetransaction (CRUD)" -ForegroundColor Green
+    Write-Host "  ✓ Manager → warehousetransaction (CRUD)" -ForegroundColor Green
+
+    # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
+    # re-run after a partial failure (e.g. solution created but a role/privilege create
+    # failed) retries everything rather than silently skipping the missing work.
+    Set-LabValue 'securityScaffolded' $true
+} else {
+    Write-Host "  ✓ Solutions.Security (exists)" -ForegroundColor Green
+}

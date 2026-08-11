@@ -7,10 +7,10 @@
 # The fast layers of the test pyramid. CP13 gave us browser UI tests - thorough but slow
 # and environment-bound. This checkpoint adds the two layers underneath, both running in
 # milliseconds with no Dataverse environment at all:
-#   - Plugins.Tests   - FakeXrmEasy fakes the whole Dataverse pipeline in memory, so the
+#   - Tests.Plugins   - FakeXrmEasy fakes the whole Dataverse pipeline in memory, so the
 #                       plugin logic (stock validation, inbound/outbound math) is tested
 #                       as plain C#.
-#   - Scripts.Tests   - Jest loads the built web-resource bundle with a mocked Xrm object,
+#   - Tests.Scripts   - Jest loads the built web-resource bundle with a mocked Xrm object,
 #                       so form scripts and ribbon actions are tested as plain JavaScript.
 #
 # The tests are adapted to OUR app: the plugins require a transaction type and treat
@@ -43,12 +43,12 @@ try {
         if ($LASTEXITCODE -ne 0) { Write-Err "Scripts.UI build failed"; exit 1 }
     }
     Write-Info "Running script unit tests (dotnet test → Jest)..."
-    dotnet test src/Scripts.Tests/Scripts.Tests.csproj --nologo
+    dotnet test src/Tests.Scripts/Tests.Scripts.csproj --nologo
     if ($LASTEXITCODE -ne 0) { Write-Err "Script tests failed"; exit 1 }
     Write-Ok "Script unit tests passed"
 
     # ── Run plugin tests (FakeXrmEasy) ──
-    dotnet test src/Plugins.Tests/Plugins.Tests.csproj --nologo
+    dotnet test src/Tests.Plugins/Tests.Plugins.csproj --nologo
     if ($LASTEXITCODE -ne 0) { Write-Err "Plugin tests failed"; exit 1 }
     Write-Ok "Plugin unit tests passed"
 
@@ -72,11 +72,11 @@ jobs:
         with:
           dotnet-version: '10.x'
       - name: Plugin unit tests (FakeXrmEasy)
-        run: dotnet test src/Plugins.Tests/Plugins.Tests.csproj --configuration Release
+        run: dotnet test src/Tests.Plugins/Tests.Plugins.csproj --configuration Release
       - name: Build script bundle
         run: dotnet build src/Scripts.UI/Scripts.UI.csproj --configuration Release
       - name: Script unit tests (Jest via dotnet test)
-        run: dotnet test src/Scripts.Tests/Scripts.Tests.csproj --configuration Release
+        run: dotnet test src/Tests.Scripts/Tests.Scripts.csproj --configuration Release
 '@
     $unitTestsYml | Set-Content -Path (Join-Path $wf "unit-tests.yml") -Encoding UTF8
     Write-Ok "Installed unit-tests.yml (runs on every PR; CP12 shows how to make it required)"
@@ -86,8 +86,8 @@ Save-Checkpoint -Id "cp14" -Message "Add plugin and script unit test projects wi
 Add the fast layers of the test pyramid so warehouse logic is verified without a Dataverse environment. Plugin logic is covered with FakeXrmEasy and the form/ribbon scripts with Jest against the built web-resource bundle.
 
 ## Changes
-- add src/Plugins.Tests with FakeXrmEasy tests for both warehouse plugins
-- add src/Scripts.Tests with Jest tests for form, ribbon, and grid bridge scripts
+- add src/Tests.Plugins with FakeXrmEasy tests for both warehouse plugins
+- add src/Tests.Scripts with Jest tests for form, ribbon, and grid bridge scripts
 - add .github/workflows/unit-tests.yml running both suites on every PR
 ## Testing
 - both suites pass locally via dotnet test 

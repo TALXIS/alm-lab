@@ -13,6 +13,8 @@
 
 Write-Host "`n── Solutions.Logic ──" -ForegroundColor Cyan
 
+if (-not (Get-LabValue 'logicSolutionScaffolded')) {
+
 txc workspace component create pp-solution `
     --output "src/Solutions.Logic" `
     --param "PublisherName=$PublisherName" `
@@ -93,3 +95,12 @@ txc workspace component create pp-plugin-assembly-step `
 
 
 Write-Host "  ✓ Step: SubtractQuantityPlugin (Post-operation, Create)" -ForegroundColor Green
+
+# Marks the whole block done — checked instead of Test-Path on the solution csproj so a
+# re-run after a partial failure (e.g. solution created but assembly/step registration
+# didn't finish) retries everything rather than silently skipping the missing work.
+Set-LabValue 'logicSolutionScaffolded' $true
+
+} else {
+    Write-Host "  ✓ Solutions.Logic (exists)" -ForegroundColor Green
+}

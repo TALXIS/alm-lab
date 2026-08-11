@@ -11,7 +11,13 @@ trunk-based development, PR quality gates and GitHub Actions deployments.
    > ⚠️ Don't use a "one-click" badge that points at `TALXIS/alm-lab` — that starts the Codespace on the parent repo, where you can't push and your free minutes won't apply. Always launch from your own fork.
 
 3. Wait for VS Code to load in the browser. Open a terminal (Ctrl+`) — you're in PowerShell.
-4. Work through the **Checkpoints** below in order, starting with `CP01`.
+4. Work through the **Checkpoints** below, starting with `CP01`. CP01 is the only one you
+   truly must run first — it's the step that signs you in. After that, every checkpoint
+   checks its own prerequisites (both `.lab-state.json` and this machine's live CLI
+   sessions) before doing anything, so re-running a checkpoint that already succeeded is
+   safe, and you can jump ahead or skip one you don't need. If a checkpoint can't find
+   something it needs, it tells you exactly which earlier checkpoint to (re-)run. Not sure
+   where you left off? Run `.lab-scripts/lab-status.ps1` for a summary.
 
 > 💡 Each checkpoint script is fully commented — open it, read what it does, then run it.
 > You can run them step-by-step (`F8` on selected lines) or all at once.
@@ -72,6 +78,22 @@ git push --force
 
 Your variables persist in `.lab-state.json` (committed), so you can resume on a fresh
 Codespace even if your terminal crashes.
+
+## Resuming on a different machine
+
+`.lab-state.json` travels with the repo, but auth sessions and CLI profiles (gh/txc/az)
+live on whatever machine you're on right now — they don't come along with a `git clone`.
+To pick up the lab on a fresh Codespace, VM, or after a crash:
+
+1. Clone the repo (or open a new Codespace on your fork).
+2. If you want to resume from a specific checkpoint rather than the latest commit:
+   `git checkout <tag>` (e.g. `git checkout cp07`).
+3. Run `.lab-scripts/lab-status.ps1` — it reports which checkpoints are done according to
+   `.lab-state.json` and git tags, and whether this machine's own `gh`/`txc`/`az` sessions
+   actually match what lab-state expects (a mismatch here is the most common reason a
+   checkpoint fails partway through instead of at the top with a clear message).
+4. Re-run CP01 if `lab-status.ps1` flags missing/mismatched auth, then continue with
+   whichever checkpoint it names as next.
 
 ## Developing this lab
 

@@ -30,7 +30,7 @@ Write-Step "CP02 — Repository layout"
 Push-Location $LabRoot
 try {
     $solutionName = "WarehouseManagement"
-    Set-LabValue 'solutionName'   $solutionName
+    Set-LabValue 'slnxName'       $solutionName
     Set-LabValue 'publisherName'   "ALMLab"
     Set-LabValue 'publisherPrefix' "almlab"
 

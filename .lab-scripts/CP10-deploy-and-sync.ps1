@@ -29,7 +29,8 @@ $ErrorActionPreference = "Stop"
 Write-Step "CP10 — Deploy to Dev & sync changes back"
 
 $devUrl = Get-LabValue 'devEnvUrl'
-if (-not $devUrl) { Write-Err "Dev environment URL not found in lab state. Run CP04 first."; exit 1 }
+$devProfile = Get-LabValue 'devProfile'
+if (-not $devUrl -or -not $devProfile) { Write-Err "Dev environment not found in lab state. Run CP04 first."; exit 1 }
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 0: Import the TALXIS Grid control package FIRST. The Warehouse Location form
@@ -79,8 +80,21 @@ if ($env:LAB_LOCAL_MODE) {
     Write-Info "  environment changes back to src/Solutions.Security."
 } else {
 
+# Lab-state only remembers the profile NAME — confirm it still exists in this machine's own
+# txc session before using it (a fresh machine/Codespace won't have it even if lab-state does).
+# Wrapped in try/catch: a missing txc binary or unexpected output must fall through to the
+# clear error below, not crash with a raw PowerShell exception.
+$devProfileFound = $false
+try {
+    $devProfileFound = [bool](txc config profile list --format json | ConvertFrom-Json -ErrorAction Stop | Where-Object { $_.id -eq $devProfile })
+} catch { $devProfileFound = $false }
+if (-not $devProfileFound) {
+    Write-Err "txc profile '$devProfile' not found on this machine — run CP04 again."
+    exit 1
+}
+
 Write-Info "Deploying package to Dev environment ($devUrl)..."
-txc env pkg import $pdpkg.FullName --profile dev
+txc env pkg import $pdpkg.FullName --profile $devProfile
 if ($LASTEXITCODE -ne 0) { Write-Err "Package import to Dev failed"; exit 1 }
 Write-Ok "Package deployed to Dev environment"
 
@@ -116,7 +130,7 @@ $solutions = @("Solutions.Security")  # The one we asked them to modify
 foreach ($sol in $solutions) {
     $solPath = Join-Path $LabRoot "src/$sol"
     if (Test-Path $solPath) {
-        txc env solution pull --folder $solPath --profile dev
+        txc env solution pull --folder $solPath --profile $devProfile
         if ($LASTEXITCODE -ne 0) { Write-Warn2 "Pull for $sol returned non-zero (may be OK if no changes)" }
     }
 }
