@@ -33,6 +33,7 @@ try {
     . "$PSScriptRoot/scaffold/03b-data-model.ps1"
     . "$PSScriptRoot/scaffold/03c-columns.ps1"
     dotnet build --nologo --verbosity quiet
+    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp06" -Message "Add warehouse data model schema and column definitions" -Body @'

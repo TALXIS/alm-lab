@@ -126,7 +126,7 @@ $locationItemsRelationship = Get-RelationshipName "${PublisherPrefix}_warehousel
 $itemTransactionsRelationship = Get-RelationshipName "${PublisherPrefix}_warehouseitem" "${PublisherPrefix}_itemid"
 if (-not $locationItemsRelationship -or -not $itemTransactionsRelationship) {
     Write-Host "  ✗ Lookup relationships not found in Solutions.DataModel — run CP06 first" -ForegroundColor Red
-    exit 1
+    throw "Lookup relationships not found in Solutions.DataModel"
 }
 
 # Warehouse Location form: subgrid showing related Warehouse Items
