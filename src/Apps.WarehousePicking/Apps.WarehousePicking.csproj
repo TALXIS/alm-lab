@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="TALXIS.DevKit.Build.Sdk/1.8.4">
+  <PropertyGroup>
+    <AppName>warehousepicking</AppName>
+    <ProjectType>CodeApp</ProjectType>
+  </PropertyGroup>
+</Project>

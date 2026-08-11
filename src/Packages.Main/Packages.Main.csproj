@@ -17,5 +17,6 @@
     <ProjectReference Include="..\Solutions.DataModel\Solutions.DataModel.csproj" />
     <ProjectReference Include="..\Solutions.Logic\Solutions.Logic.csproj" />
     <ProjectReference Include="..\Solutions.Security\Solutions.Security.csproj" />
+    <ProjectReference Include="..\Solutions.UI\Solutions.UI.csproj" />
   </ItemGroup>
 </Project>
