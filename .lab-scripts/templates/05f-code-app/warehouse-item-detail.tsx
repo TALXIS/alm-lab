@@ -60,13 +60,16 @@ export default function WarehouseItemDetailPage() {
       const result = await __PREFIX_PASCAL___warehousetransactionsService.create({
         __PREFIX___name: `${actionLabel} - ${item?.__PREFIX___name ?? id} - ${new Date().toISOString()}`,
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${id})`,
-        __PREFIX___quantity: String(quantity),
+        __PREFIX___quantity: Number(quantity),
         __PREFIX___transactiontype: dialogType! as __PREFIX_PASCAL___warehousetransactions__PREFIX___transactiontype,
         __PREFIX___transactiondate: new Date().toISOString(),
         __PREFIX___referencenumber: referenceNumber || undefined,
         // ownerid/owneridtype/statecode are required on Base (true for reads) but Dataverse
-        // defaults all three on create — the cast suppresses just that mismatch.
-      } as Parameters<typeof __PREFIX_PASCAL___warehousetransactionsService.create>[0])
+        // defaults all three on create. quantity is typed as string on Base too, but Dataverse's
+        // Web API expects a real JSON number for a Whole Number field — the cast (through
+        // unknown, since we're deliberately overriding both mismatches) still catches real typos
+        // in the fields we do pass.
+      } as unknown as Parameters<typeof __PREFIX_PASCAL___warehousetransactionsService.create>[0])
       if (!result.success) throw new Error(result.error?.message ?? "Failed to create transaction")
       return result.data
     },
@@ -137,6 +140,11 @@ export default function WarehouseItemDetailPage() {
 
           <div>
             <h2 className="text-lg font-medium mb-3">Transaction history</h2>
+            {transactionsQuery.isError && (
+              <p className="text-sm text-destructive mb-3">
+                Failed to load transaction history: {(transactionsQuery.error as Error).message}
+              </p>
+            )}
             <Table>
               <TableHeader>
                 <TableRow>

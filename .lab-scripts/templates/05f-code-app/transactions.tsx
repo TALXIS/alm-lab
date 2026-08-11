@@ -54,13 +54,16 @@ export default function TransactionsPage() {
       const result = await __PREFIX_PASCAL___warehousetransactionsService.create({
         __PREFIX___name: `${typeLabel} - ${selectedItem?.__PREFIX___name ?? form.itemId} - ${new Date().toISOString()}`,
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${form.itemId})`,
-        __PREFIX___quantity: String(form.quantity),
+        __PREFIX___quantity: Number(form.quantity),
         __PREFIX___transactiontype: Number(form.type) as __PREFIX_PASCAL___warehousetransactions__PREFIX___transactiontype,
         __PREFIX___transactiondate: new Date().toISOString(),
         __PREFIX___referencenumber: form.referenceNumber || undefined,
         // ownerid/owneridtype/statecode are required on Base (true for reads) but Dataverse
-        // defaults all three on create — the cast suppresses just that mismatch.
-      } as Parameters<typeof __PREFIX_PASCAL___warehousetransactionsService.create>[0])
+        // defaults all three on create. quantity is typed as string on Base too, but Dataverse's
+        // Web API expects a real JSON number for a Whole Number field — the cast (through
+        // unknown, since we're deliberately overriding both mismatches) still catches real typos
+        // in the fields we do pass.
+      } as unknown as Parameters<typeof __PREFIX_PASCAL___warehousetransactionsService.create>[0])
       if (!result.success) throw new Error(result.error?.message ?? "Failed to create transaction")
       return result.data
     },

@@ -18,7 +18,10 @@ export default function LocationsPage() {
   })
 
   const itemsQuery = useQuery({
-    queryKey: ["warehouseItems"],
+    // Distinct from the "warehouseItems" key used elsewhere: this fetches a narrower field
+    // projection, and react-query caches by key alone — sharing the key would let a partial
+    // record (missing name/sku/category) get served to the Items/Transactions pages first.
+    queryKey: ["warehouseItemsForLocations"],
     queryFn: async () => {
       const result = await __PREFIX_PASCAL___warehouseitemsService.getAll({
         select: ["__PREFIX___warehouseitemid", "__PREFIX___availablequantity", "___PREFIX___locationid_value"],
@@ -58,15 +61,19 @@ export default function LocationsPage() {
             <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No locations yet.</TableCell></TableRow>
           )}
           {!isLoading && locationsQuery.data?.map((location) => {
-            const itemsHere = itemsQuery.data?.filter((item) => item.___PREFIX___locationid_value === location.__PREFIX___warehouselocationid) ?? []
-            const totalQty = itemsHere.reduce((sum, item) => sum + Number(item.__PREFIX___availablequantity ?? 0), 0)
+            // itemsQuery.isError means "unknown", not zero — don't render a false 0/0 that
+            // looks like a real (empty) count.
+            const itemsHere = itemsQuery.isError
+              ? null
+              : itemsQuery.data?.filter((item) => item.___PREFIX___locationid_value === location.__PREFIX___warehouselocationid) ?? []
+            const totalQty = itemsHere?.reduce((sum, item) => sum + Number(item.__PREFIX___availablequantity ?? 0), 0)
             return (
               <TableRow key={location.__PREFIX___warehouselocationid} data-testid="location-row">
                 <TableCell className="font-medium">{location.__PREFIX___name}</TableCell>
                 <TableCell>{location.__PREFIX___address ?? "—"}</TableCell>
                 <TableCell className="text-right">{location.__PREFIX___capacity ?? "—"}</TableCell>
-                <TableCell className="text-right">{itemsHere.length}</TableCell>
-                <TableCell className="text-right">{totalQty}</TableCell>
+                <TableCell className="text-right">{itemsHere ? itemsHere.length : "—"}</TableCell>
+                <TableCell className="text-right">{itemsHere ? totalQty : "—"}</TableCell>
                 <TableCell>
                   <Badge variant={location.__PREFIX___isactive ? "default" : "secondary"}>
                     {location.__PREFIX___isactive ? "Active" : "Inactive"}

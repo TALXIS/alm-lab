@@ -53,14 +53,16 @@ export default function WarehouseItemsPage() {
         __PREFIX___name: form.name,
         __PREFIX___sku: form.sku,
         __PREFIX___category: form.category ? (Number(form.category) as __PREFIX_PASCAL___warehouseitems__PREFIX___category) : undefined,
-        __PREFIX___availablequantity: String(form.availableQuantity || "0"),
-        __PREFIX___unitprice: form.unitPrice ? String(form.unitPrice) : undefined,
+        __PREFIX___availablequantity: Number(form.availableQuantity || "0"),
+        __PREFIX___unitprice: form.unitPrice ? Number(form.unitPrice) : undefined,
         ...(form.locationId ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${form.locationId})` } : {}),
         // ownerid/owneridtype/statecode are typed as required on Base (true for reads — every
-        // record has an owner/state), but Dataverse defaults all three on create; the cast below
-        // only suppresses that "missing property" mismatch, it still catches real typos/type
-        // errors in the fields we do pass.
-      } as Parameters<typeof __PREFIX_PASCAL___warehouseitemsService.create>[0])
+        // record has an owner/state), but Dataverse defaults all three on create. availablequantity/
+        // unitprice are typed as string on Base too, but Dataverse's Web API expects real JSON
+        // numbers for Whole Number/Money fields, not quoted strings — the generated type is
+        // imprecise here. The cast (through unknown, since we're deliberately overriding both
+        // mismatches) still catches real typos in the fields we do pass.
+      } as unknown as Parameters<typeof __PREFIX_PASCAL___warehouseitemsService.create>[0])
       if (!result.success) throw new Error(result.error?.message ?? "Failed to create warehouse item")
       return result.data
     },
@@ -81,6 +83,7 @@ export default function WarehouseItemsPage() {
           <Button
             variant="outline"
             size="icon"
+            aria-label="Refresh warehouse items"
             data-testid="refresh-items"
             onClick={() => queryClient.invalidateQueries({ queryKey: ["warehouseItems"] })}
           >
