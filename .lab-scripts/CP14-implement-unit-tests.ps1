@@ -55,30 +55,7 @@ try {
     # ── Install the unit-tests workflow so both suites run on every PR ──
     $wf = Join-Path $LabRoot ".github/workflows"
     New-Item -ItemType Directory -Path $wf -Force | Out-Null
-    $unitTestsYml = @'
-name: unit-tests
-on:
-  pull_request:
-  push:
-    branches: [main]
-permissions:
-  contents: read
-jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-      - name: Plugin unit tests (FakeXrmEasy)
-        run: dotnet test src/Tests.Plugins/Tests.Plugins.csproj --configuration Release
-      - name: Build script bundle
-        run: dotnet build src/Scripts.UI/Scripts.UI.csproj --configuration Release
-      - name: Script unit tests (Jest via dotnet test)
-        run: dotnet test src/Tests.Scripts/Tests.Scripts.csproj --configuration Release
-'@
-    $unitTestsYml | Set-Content -Path (Join-Path $wf "unit-tests.yml") -Encoding UTF8
+    Copy-Item "$PSScriptRoot/workflows/unit-tests.yml" $wf -Force
     Write-Ok "Installed unit-tests.yml (runs on every PR; CP12 shows how to make it required)"
 } finally { Pop-Location }
 

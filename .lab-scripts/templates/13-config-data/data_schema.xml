@@ -1,0 +1,40 @@
+<entities>
+  <entity name="__PREFIX___warehouselocation" displayname="Warehouse Location"
+          primaryidfield="__PREFIX___warehouselocationid" primarynamefield="__PREFIX___name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Location" name="__PREFIX___warehouselocationid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="__PREFIX___name" type="string" customfield="true" />
+      <field displayname="Address" name="__PREFIX___address" type="string" customfield="true" />
+      <field displayname="Capacity" name="__PREFIX___capacity" type="number" customfield="true" />
+      <field displayname="Is Active" name="__PREFIX___isactive" type="bool" customfield="true" />
+    </fields>
+  </entity>
+  <entity name="__PREFIX___warehouseitem" displayname="Warehouse Item"
+          primaryidfield="__PREFIX___warehouseitemid" primarynamefield="__PREFIX___name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Item" name="__PREFIX___warehouseitemid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="__PREFIX___name" type="string" customfield="true" />
+      <field displayname="SKU" name="__PREFIX___sku" type="string" customfield="true" />
+      <field displayname="Available Quantity" name="__PREFIX___availablequantity" type="number" customfield="true" />
+      <field displayname="Category" name="__PREFIX___category" type="optionsetvalue" customfield="true" />
+      <field displayname="Is Perishable" name="__PREFIX___isperishable" type="bool" customfield="true" />
+      <field displayname="Unit Price" name="__PREFIX___unitprice" type="money" customfield="true" />
+      <field displayname="Reorder Point" name="__PREFIX___reorderpoint" type="number" customfield="true" />
+      <field displayname="Location" name="__PREFIX___locationid" type="entityreference" lookupType="__PREFIX___warehouselocation" customfield="true" />
+    </fields>
+  </entity>
+  <entity name="__PREFIX___warehousetransaction" displayname="Warehouse Transaction"
+          primaryidfield="__PREFIX___warehousetransactionid" primarynamefield="__PREFIX___name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Transaction" name="__PREFIX___warehousetransactionid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="__PREFIX___name" type="string" customfield="true" />
+      <field displayname="Item" name="__PREFIX___itemid" type="entityreference" lookupType="__PREFIX___warehouseitem" customfield="true" />
+      <field displayname="Quantity" name="__PREFIX___quantity" type="number" customfield="true" />
+      <field displayname="Transaction Type" name="__PREFIX___transactiontype" type="optionsetvalue" customfield="true" />
+      <field displayname="Reference Number" name="__PREFIX___referencenumber" type="string" customfield="true" />
+    </fields>
+  </entity>
+</entities>

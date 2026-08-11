@@ -40,24 +40,7 @@ try {
 # described in scaffold/11-tests-ui.ps1.
 $wf = Join-Path $LabRoot ".github/workflows"
 New-Item -ItemType Directory -Path $wf -Force | Out-Null
-@'
-name: test
-on:
-  workflow_dispatch:
-permissions:
-  contents: read
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-      - run: dotnet test src/Tests.UI/Tests.UI.csproj --configuration Release
-        env:
-          TXC_HEADLESS: 'true'
-'@ | Set-Content -Path (Join-Path $wf "test.yml") -Encoding UTF8
+Copy-Item "$PSScriptRoot/workflows/test.yml" $wf -Force
 
 Save-Checkpoint -Id "cp13" -Message "Add UI BDD test project and PR validation workflow" -Body @'
 Add browser-based regression coverage so key warehouse scenarios can be validated. This introduces the Playwright test project and a manual test workflow; running it live needs a captured Playwright auth state (see the scaffold script comments for the capture steps).
