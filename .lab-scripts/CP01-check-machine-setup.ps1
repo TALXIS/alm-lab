@@ -81,7 +81,6 @@ function Invoke-WithRetry([string]$Description, [scriptblock]$Command) {
 # Ensure TALXIS CLI is latest (picks up any last-minute fixes).
 Write-Info "Updating TALXIS CLI to latest..."
 Invoke-WithRetry "TALXIS CLI update" { dotnet tool update --global TALXIS.CLI }
-$env:PATH = "$HOME/.dotnet/tools:$env:PATH"
 Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
 
 # The agentbox image bakes in a pinned txc + template pack version for fast startup, but
