@@ -13,10 +13,15 @@
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
-$repo = Get-LabValue 'repo'; if (-not $repo) { $repo = gh repo view --json nameWithOwner -q .nameWithOwner }
-Set-LabValue 'repo' $repo
 
 Write-Step "CP12 — Require build check on PRs"
+
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would resolve the repo via 'gh repo view' and PUT"
+    Write-Info "  repos/<repo>/rulesets/<id> to add a required_status_checks rule for 'build'."
+} else {
+$repo = Get-LabValue 'repo'; if (-not $repo) { $repo = gh repo view --json nameWithOwner -q .nameWithOwner }
+Set-LabValue 'repo' $repo
 
 $id = Get-LabValue 'mainRulesetId'
 if (-not $id) {
@@ -24,7 +29,7 @@ if (-not $id) {
     $id = gh api "repos/$repo/rulesets" -q ".[] | select(.name==`"$rulesetName`") | .id"
     if ($id) { Set-LabValue 'mainRulesetId' $id }
 }
-if (-not $id) { Write-Err "Main ruleset id not found. Run CP03 first."; exit 1 }
+if (-not $id) { Write-Err "Main ruleset not found on $repo — run CP03-setup-continuous-integration.ps1 first (it must actually complete at least once, not just be skipped)."; exit 1 }
 $rules = @(
     @{ type="deletion" }, @{ type="non_fast_forward" },
     @{ type="pull_request"; parameters=@{ required_approving_review_count=0
@@ -39,7 +44,9 @@ Remove-Item $tmp
 Set-LabValue 'mainRulesetId' $id
 Write-Ok "Ruleset now requires 'build' to pass"
 
-Save-Checkpoint -Id "cp11" -Message "Require build status checks before merging into main" -Body @'
+}
+
+Save-Checkpoint -Id "cp12" -Message "Require build status checks before merging into main" -Body @'
 Tighten the main branch rules so pull requests must pass the build before they can merge. This turns the warehouse solution build into an enforceable quality gate for every change.
 
 ## Changes
@@ -49,4 +56,4 @@ Tighten the main branch rules so pull requests must pass the build before they c
 ## Testing
 - ruleset update succeeds and the build check is registered as a required status
 '@
-Write-Host "`nNext: .lab-scripts/CP13-automate-testing.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP13-automate-ui-testing.ps1" -ForegroundColor Cyan

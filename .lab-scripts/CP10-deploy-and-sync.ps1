@@ -11,6 +11,13 @@
 # and pull them back to source with `txc env solution pull`. This demonstrates the
 # bidirectional inner loop: source ↔ environment.
 #
+# Managed vs unmanaged, the core solution concept: unmanaged solutions are open for editing
+# - the working state of a dev environment. Managed solutions are sealed, layered artifacts
+# for every downstream environment: they merge as diff layers, can be cleanly uninstalled,
+# and managed properties can restrict edits. Rule of thumb: production should never contain
+# unmanaged components. That is why we pull the unmanaged layer from Dev - the place where
+# humans edit - while pipelines only ever ship built packages forward.
+#
 # In auto mode: deploy + pull (no manual changes expected).
 #
 # Run:  .lab-scripts/CP10-deploy-and-sync.ps1
@@ -22,7 +29,27 @@ $ErrorActionPreference = "Stop"
 Write-Step "CP10 — Deploy to Dev & sync changes back"
 
 $devUrl = Get-LabValue 'devEnvUrl'
-if (-not $devUrl) { Write-Err "Dev environment URL not found in lab state. Run CP04 first."; exit 1 }
+$devProfile = Get-LabValue 'devProfile'
+if (-not $devUrl -or -not $devProfile) { Write-Err "Dev environment not found in lab state. Run CP04 first."; exit 1 }
+
+# ──────────────────────────────────────────────────────────────────────────────────────────
+# Step 0: Import the TALXIS Grid control package FIRST. The Warehouse Location form
+# references talxis_TALXIS.PCF.Grid (attached in CP09) — importing the app package into an
+# environment that doesn't have the control yet fails on a missing-dependency check.
+# The package comes from nuget.org by name, latest version.
+# ──────────────────────────────────────────────────────────────────────────────────────────
+
+$gridPackage = 'TALXIS.Controls.Grid.Package'
+
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env pkg import $gridPackage' to"
+    Write-Info "  import the TALXIS Grid control package into Dev ($devUrl)."
+} else {
+    Write-Info "Importing TALXIS Grid control package ($gridPackage)..."
+    txc env pkg import $gridPackage
+    if ($LASTEXITCODE -ne 0) { Write-Err "Grid control package import failed"; exit 1 }
+}
+
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 1: Build the full Package Deployer package and deploy to Dev.
@@ -30,26 +57,46 @@ if (-not $devUrl) { Write-Err "Dev environment URL not found in lab state. Run C
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Info "Building the deployment package..."
-$pkgProj    = Join-Path $LabRoot "src/Packages.Main/Packages.Main.csproj"
-$publishDir = Join-Path $LabRoot ".lab-scripts/.tmp-deploy"
-Remove-Item $publishDir -Recurse -Force -ErrorAction SilentlyContinue
+$pkgProj = Join-Path $LabRoot "src/Packages.Main/Packages.Main.csproj"
 
-dotnet publish $pkgProj -c Release -o $publishDir --nologo --verbosity quiet
+# No -o here on purpose: passing an explicit output dir makes dotnet set a global
+# PublishDir property that leaks into every nested project build in the graph — including
+# Plugins.Warehouse's own auto-publish-on-build step (Microsoft.PowerApps.MSBuild.Plugin
+# defaults PublishOnBuild=true), redirecting its output away from its own bin/<Config>/
+# <TFM>/publish/ folder and breaking EnsurePluginAssemblyDataXml downstream.
+# See: https://github.com/TALXIS/tools-devkit-build/issues/109
+dotnet publish $pkgProj -c Release --nologo --verbosity quiet
 if ($LASTEXITCODE -ne 0) { Write-Err "dotnet publish failed"; exit 1 }
 
-# Locate the pdpkg.zip (Package Deployer package archive).
+# Locate the pdpkg.zip (Package Deployer package archive) at its natural output location —
+# no need to stage/copy it anywhere, bin/ is gitignored either way.
 $pdpkg = Get-ChildItem (Join-Path $LabRoot "src/Packages.Main/bin/Release") -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1
 if (-not $pdpkg) { Write-Err "Packages.Main.pdpkg.zip not found after publish"; exit 1 }
-Copy-Item $pdpkg.FullName (Join-Path $publishDir "Packages.Main.pdpkg.zip") -Force
 Write-Ok "Package built: $($pdpkg.Name)"
 
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env pkg import' to deploy the built"
+    Write-Info "  package to Dev ($devUrl), then 'txc env solution pull' to sync manual"
+    Write-Info "  environment changes back to src/Solutions.Security."
+} else {
+
+# Lab-state only remembers the profile NAME — confirm it still exists in this machine's own
+# txc session before using it (a fresh machine/Codespace won't have it even if lab-state does).
+# Wrapped in try/catch: a missing txc binary or unexpected output must fall through to the
+# clear error below, not crash with a raw PowerShell exception.
+$devProfileFound = $false
+try {
+    $devProfileFound = [bool](txc config profile list --format json | ConvertFrom-Json -ErrorAction Stop | Where-Object { $_.id -eq $devProfile })
+} catch { $devProfileFound = $false }
+if (-not $devProfileFound) {
+    Write-Err "txc profile '$devProfile' not found on this machine — run CP04 again."
+    exit 1
+}
+
 Write-Info "Deploying package to Dev environment ($devUrl)..."
-txc env pkg import (Join-Path $publishDir "Packages.Main.pdpkg.zip") --profile dev
+txc env pkg import $pdpkg.FullName --profile $devProfile
 if ($LASTEXITCODE -ne 0) { Write-Err "Package import to Dev failed"; exit 1 }
 Write-Ok "Package deployed to Dev environment"
-
-# Cleanup temp publish dir.
-Remove-Item $publishDir -Recurse -Force -ErrorAction SilentlyContinue
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 2: Pause for manual environment changes (interactive mode).
@@ -83,7 +130,7 @@ $solutions = @("Solutions.Security")  # The one we asked them to modify
 foreach ($sol in $solutions) {
     $solPath = Join-Path $LabRoot "src/$sol"
     if (Test-Path $solPath) {
-        txc env solution pull --folder $solPath --profile dev
+        txc env solution pull --folder $solPath --profile $devProfile
         if ($LASTEXITCODE -ne 0) { Write-Warn2 "Pull for $sol returned non-zero (may be OK if no changes)" }
     }
 }
@@ -96,6 +143,8 @@ if ($changes) {
     Write-Host $changes
 } else {
     Write-Info "No environment changes detected (expected in auto mode)."
+}
+
 }
 
 Save-Checkpoint -Id "cp10" -Message "Deploy package to Dev and sync environment changes" -Body @'

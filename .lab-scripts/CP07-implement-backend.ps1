@@ -8,6 +8,16 @@
 # Logic solution that registers the SDK message processing steps. Plugins are C#, compiled
 # by dotnet build and packaged for deployment.
 #
+# Note the split: Plugins.Warehouse holds the code, Solutions.Logic holds the registration.
+# The assembly is a build artifact; where and when it runs is Dataverse configuration, and
+# each belongs to its own project.
+#
+# Stage choice matters: ValidateWarehouseTransaction runs in Pre-validation - before the
+# database transaction starts - the cheapest place to reject bad input with an
+# InvalidPluginExecutionException. SubtractQuantity runs in Post-operation: the record is
+# already written but still inside the transaction, so the stock update and the transaction
+# record commit or roll back together.
+#
 # Run:  .lab-scripts/CP07-implement-backend.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
@@ -22,6 +32,7 @@ try {
     . "$PSScriptRoot/scaffold/07-plugins.ps1"
     . "$PSScriptRoot/scaffold/08-logic-solution.ps1"
     dotnet build --nologo --verbosity quiet
+    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp07" -Message "Add inventory transaction plugin and logic solution steps" -Body @'

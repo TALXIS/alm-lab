@@ -5,9 +5,12 @@
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # We adopt a trunk-based workflow: everyone integrates into 'main' through short-lived
-# branches and pull requests. To protect the trunk we add a branch ruleset that:
+# branches and pull requests. The alternative - long-lived feature branches - drifts away
+# from main and ends in merge hell: the longer a branch lives, the bigger and riskier the
+# merge. Short-lived topic branches (a day or two, named like users/<name>/<topic>) keep
+# every integration small. To protect the trunk we add a branch ruleset that:
 #   - blocks direct pushes to main (changes must come via PR)
-#   - requires the PR to be up to date and (later, CP11) pass the build check
+#   - requires the PR to be up to date and (later, CP12) pass the build check
 #
 # We work on YOUR fork, so we detect owner/repo from the git origin remote.
 #
@@ -18,6 +21,12 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
 Write-Step "CP03 — Continuous Integration (branch protection)"
+
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would resolve the origin repo and create the"
+    Write-Info "  'alm-lab-main-protection' ruleset (deletion/non_fast_forward/pull_request rules)"
+    Write-Info "  via 'gh api repos/<owner>/<repo>/rulesets'."
+} else {
 
 # Step 1: Resolve the fork (owner/repo) from the origin remote (not the upstream parent).
 $originUrl = git -C $LabRoot remote get-url origin 2>$null
@@ -37,6 +46,7 @@ $ruleset = @{
         @{ type = "deletion" },
         @{ type = "non_fast_forward" },
         @{ type = "pull_request"; parameters = @{
+            # 0 approvals because you work solo in this lab; a real team requires >= 1 reviewer
             required_approving_review_count   = 0
             dismiss_stale_reviews_on_push     = $true
             require_code_owner_review         = $false
@@ -68,11 +78,13 @@ Remove-Item $tmp -ErrorAction SilentlyContinue
 Set-LabValue 'mainRulesetId'   $rulesetRecord.id
 Set-LabValue 'mainRulesetName' $rulesetRecord.name
 
+}
+
 # Step 3: Demonstrate the loop — create a topic branch for upcoming work.
 Push-Location $LabRoot
 try {
     git checkout main --quiet 2>$null
-    git checkout -b "setup/runtime" --quiet 2>$null
+    git checkout -B "setup/runtime" --quiet 2>$null
     Write-Ok "Created topic branch: setup/runtime"
 } finally { Pop-Location }
 

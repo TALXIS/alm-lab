@@ -5,7 +5,20 @@
     "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "remoteEnv": {
-    "TXC_PLAINTEXT_FALLBACK": "1"
+    "TXC_PLAINTEXT_FALLBACK": "1",
+    // Global dotnet tools must win over the image's baked-in /usr/local/bin copies so that
+    // the postStartCommand updates below are actually visible on PATH (prepend, not append).
+    "PATH": "${containerEnv:HOME}/.dotnet/tools:${containerEnv:PATH}"
+  },
+  // The image bakes pac/txc into /usr/local/bin at build time; updating that copy in place
+  // always fails with "Invalid cross-device link" (dotnet/sdk#3838 - dotnet's tool infra
+  // hard-links across the image's read-only layer, which Docker forbids). --global tools
+  // don't have that problem, so this is how attendees pick up a mid-workshop hotfix just by
+  // restarting their Codespace/container, without waiting for the next scheduled image rebuild.
+  "postStartCommand": {
+    "update-pac": "dotnet tool update --global Microsoft.PowerApps.CLI.Tool 2>/dev/null || true",
+    "update-txc": "dotnet tool update --global TALXIS.CLI 2>/dev/null || true",
+    "update-devkit-templates": "dotnet new install TALXIS.DevKit.Templates.Dataverse 2>/dev/null || dotnet new install TALXIS.DevKit.Templates.Dataverse 2>/dev/null || true"
   },
   "customizations": {
     "codespaces": {

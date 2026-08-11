@@ -6,7 +6,12 @@
 #
 # A Power Platform project is best managed as a monorepo: plugins, scripts, PCFs, connectors
 # and solution components live under one Git repo. MSBuild (dotnet build) orchestrates the
-# whole build. We create:
+# whole build. Why not one repo per component? Splitting tightly-coupled parts multiplies
+# overhead - versioned artifact feeds for every dependency, coordinated PRs across repos,
+# reviews without full context, and one CI/CD setup per repo. One repo means one history,
+# one build, and PRs that show the whole change; split out only what is genuinely reusable
+# across projects. Keep the layout shallow and predictable (src/ + one solution file).
+# We create:
 #   - a Visual Studio solution file (.slnx) to track all projects
 #   - NuGet.config pointing at nuget.org for TALXIS DevKit packages
 #   - a src/ folder where solutions and code projects will live
@@ -25,7 +30,7 @@ Write-Step "CP02 — Repository layout"
 Push-Location $LabRoot
 try {
     $solutionName = "WarehouseManagement"
-    Set-LabValue 'solutionName'   $solutionName
+    Set-LabValue 'slnxName'       $solutionName
     Set-LabValue 'publisherName'   "ALMLab"
     Set-LabValue 'publisherPrefix' "almlab"
 
@@ -40,7 +45,8 @@ try {
 '@ | Set-Content -Path "NuGet.config" -Encoding UTF8
     Write-Ok "NuGet.config"
 
-    # Step 2: Visual Studio solution (modern .slnx) to track all projects in the monorepo
+    # Step 2: Visual Studio solution (modern .slnx) to track all projects in the monorepo.
+    # .slnx is the new XML solution format - human-readable and merge-friendly, unlike .sln.
     if (-not (Test-Path "$solutionName.slnx")) {
         dotnet new sln --name $solutionName | Out-Null
         if (Test-Path "$solutionName.sln") {

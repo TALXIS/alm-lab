@@ -7,6 +7,13 @@
 # Least-privilege by design: a Security solution with two roles (Warehouse Manager and
 # Warehouse Worker) granting scoped privileges over the warehouse tables.
 #
+# Privileges have a depth (Level), not just a type: Basic = own records, Local = own
+# business unit, Deep = BU plus child BUs, Global = whole organization. The matrix is
+# deliberate: a worker reads everything (Global) but edits only transactions they own
+# (Write: Basic), while a manager gets full CRUD Globally. Model roles for personas, not
+# individual people - and give automated test users a least-privileged role too, never
+# an admin account.
+#
 # Run:  .lab-scripts/CP08-implement-security.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
@@ -20,6 +27,7 @@ Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/04-security.ps1"
     dotnet build --nologo --verbosity quiet
+    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp08" -Message "Add warehouse security roles and entity privileges" -Body @'

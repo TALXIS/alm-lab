@@ -12,59 +12,68 @@
 
 Write-Host "`n── Solutions.DataModel ──" -ForegroundColor Cyan
 
-txc workspace component create pp-solution `
-    --output "src/Solutions.DataModel" `
-    --param "PublisherName=$PublisherName" `
-    --param "PublisherPrefix=$PublisherPrefix"
+if (-not (Get-LabValue 'dataModelScaffolded')) {
+    txc workspace component create pp-solution `
+        --output "src/Solutions.DataModel" `
+        --param "PublisherName=$PublisherName" `
+        --param "PublisherPrefix=$PublisherPrefix"
 
-Write-Host "  ✓ Solutions.DataModel" -ForegroundColor Green
+    Write-Host "  ✓ Solutions.DataModel" -ForegroundColor Green
 
-# Add Solutions.DataModel to the Package Deployer project as a .NET ProjectReference
-dotnet add "src/Packages.Main/Packages.Main.csproj" reference "src/Solutions.DataModel/Solutions.DataModel.csproj"
+    # Add Solutions.DataModel to the Package Deployer project as a .NET ProjectReference
+    dotnet add "src/Packages.Main/Packages.Main.csproj" reference "src/Solutions.DataModel/Solutions.DataModel.csproj"
 
-Write-Host "  ✓ ProjectReference: DataModel → Packages.Main" -ForegroundColor Green
+    Write-Host "  ✓ ProjectReference: DataModel → Packages.Main" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                                       Entities
-# ──────────────────────────────────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                                       Entities
+    # ──────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Entities (DataModel) ──" -ForegroundColor Cyan
+    Write-Host "`n── Entities (DataModel) ──" -ForegroundColor Cyan
 
-# Warehouse Location
-txc workspace component create pp-entity `
-    --output "src/Solutions.DataModel" `
-    --param "EntityType=Standard" `
-    --param "Behavior=New" `
-    --param "PublisherPrefix=$PublisherPrefix" `
-    --param "LogicalName=warehouselocation" `
-    --param "LogicalNamePlural=warehouselocations" `
-    --param "DisplayName=Warehouse Location" `
-    --param "DisplayNamePlural=Warehouse Locations"
+    # Warehouse Location
+    txc workspace component create pp-entity `
+        --output "src/Solutions.DataModel" `
+        --param "EntityType=Standard" `
+        --param "Behavior=New" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=warehouselocation" `
+        --param "LogicalNamePlural=warehouselocations" `
+        --param "DisplayName=Warehouse Location" `
+        --param "DisplayNamePlural=Warehouse Locations"
 
-Write-Host "  ✓ Entity: Warehouse Location" -ForegroundColor Green
+    Write-Host "  ✓ Entity: Warehouse Location" -ForegroundColor Green
 
-# Warehouse Item
-txc workspace component create pp-entity `
-    --output "src/Solutions.DataModel" `
-    --param "EntityType=Standard" `
-    --param "Behavior=New" `
-    --param "PublisherPrefix=$PublisherPrefix" `
-    --param "LogicalName=warehouseitem" `
-    --param "LogicalNamePlural=warehouseitems" `
-    --param "DisplayName=Warehouse Item" `
-    --param "DisplayNamePlural=Warehouse Items"
+    # Warehouse Item
+    txc workspace component create pp-entity `
+        --output "src/Solutions.DataModel" `
+        --param "EntityType=Standard" `
+        --param "Behavior=New" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=warehouseitem" `
+        --param "LogicalNamePlural=warehouseitems" `
+        --param "DisplayName=Warehouse Item" `
+        --param "DisplayNamePlural=Warehouse Items"
 
-Write-Host "  ✓ Entity: Warehouse Item" -ForegroundColor Green
+    Write-Host "  ✓ Entity: Warehouse Item" -ForegroundColor Green
 
-# Warehouse Transaction
-txc workspace component create pp-entity `
-    --output "src/Solutions.DataModel" `
-    --param "EntityType=Standard" `
-    --param "Behavior=New" `
-    --param "PublisherPrefix=$PublisherPrefix" `
-    --param "LogicalName=warehousetransaction" `
-    --param "LogicalNamePlural=warehousetransactions" `
-    --param "DisplayName=Warehouse Transaction" `
-    --param "DisplayNamePlural=Warehouse Transactions"
+    # Warehouse Transaction
+    txc workspace component create pp-entity `
+        --output "src/Solutions.DataModel" `
+        --param "EntityType=Standard" `
+        --param "Behavior=New" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=warehousetransaction" `
+        --param "LogicalNamePlural=warehousetransactions" `
+        --param "DisplayName=Warehouse Transaction" `
+        --param "DisplayNamePlural=Warehouse Transactions"
 
-Write-Host "  ✓ Entity: Warehouse Transaction" -ForegroundColor Green
+    Write-Host "  ✓ Entity: Warehouse Transaction" -ForegroundColor Green
+
+    # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
+    # re-run after a partial failure (e.g. solution created but an entity create failed)
+    # retries everything rather than silently skipping the missing entities.
+    Set-LabValue 'dataModelScaffolded' $true
+} else {
+    Write-Host "  ✓ Solutions.DataModel (exists)" -ForegroundColor Green
+}

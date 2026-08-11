@@ -14,6 +14,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
+      # The code app project builds with Vite, which needs Node 20.19+ / 22.12+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Restore
         run: dotnet restore WarehouseManagement.slnx
       - name: Build (validates Dataverse solutions)

@@ -13,6 +13,8 @@
 #                              Plugin Project
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
+if (-not (Get-LabValue 'pluginsScaffolded')) {
+
 txc workspace component create pp-plugin `
     --output "src/Plugins.Warehouse" `
     --param "PublisherName=$PublisherName" `
@@ -59,9 +61,9 @@ namespace Plugins.Warehouse
             if (!target.Contains("${prefix}_quantity") || !target.Contains("${prefix}_itemid") || !target.Contains("${prefix}_transactiontype"))
                 return;
 
-            // Only validate outbound transactions (option value 2 = Outbound)
+            // Only validate outbound transactions 
             var transactionType = (OptionSetValue)target["${prefix}_transactiontype"];
-            if (transactionType.Value != 2)
+            if (transactionType.Value != 100000001)
                 return;
 
             try
@@ -142,10 +144,10 @@ namespace Plugins.Warehouse
             var item = service.Retrieve("${prefix}_warehouseitem", itemRef.Id, new ColumnSet("${prefix}_availablequantity"));
             var available = item.Contains("${prefix}_availablequantity") ? (int)item["${prefix}_availablequantity"] : 0;
 
-            // Inbound (1) = add stock, Outbound (2) = subtract stock
-            if (transactionType.Value == 1)
+            // Inbound (100000000) = add stock, Outbound (100000001) = subtract stock
+            if (transactionType.Value == 100000000)
                 item["${prefix}_availablequantity"] = available + quantity;
-            else if (transactionType.Value == 2)
+            else if (transactionType.Value == 100000001)
                 item["${prefix}_availablequantity"] = available - quantity;
             else
                 return;
@@ -179,3 +181,12 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "  ⚠ Plugin publish had issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
 }
 cd ../..
+
+# Marks the whole block done — checked instead of Test-Path on the csproj so a re-run after
+# a partial failure (e.g. project created but a plugin class/build step didn't finish)
+# retries everything rather than silently skipping the missing work.
+Set-LabValue 'pluginsScaffolded' $true
+
+} else {
+    Write-Host "  ✓ Plugins.Warehouse (exists)" -ForegroundColor Green
+}
