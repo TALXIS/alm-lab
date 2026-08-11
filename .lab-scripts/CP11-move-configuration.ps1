@@ -72,6 +72,34 @@ try {
         txc data pkg import $dataDir --profile $testProfile --allow-production
         if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
         Write-Ok "Config imported to Test"
+
+        # ──────────────────────────────────────────────────────────────────────────────────
+        # Step 4: Try the code app against real data (interactive mode).
+        # This is the earliest point in the lab where both the schema+plugins (CP10) and
+        # meaningful seed data (this checkpoint) exist in Dev — the code app's data sources
+        # only return real rows from here on. Pause and point the learner at it directly,
+        # same "open it and try something" pattern as CP10's environment pause.
+        # ──────────────────────────────────────────────────────────────────────────────────
+
+        $autoMode = $env:LAB_AUTO -eq '1'
+        if (-not $autoMode) {
+            Write-Host ""
+            Write-Host "╔══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
+            Write-Host "║  Real data is seeded — try the Warehouse Picking code app live!      ║" -ForegroundColor Yellow
+            Write-Host "║                                                                      ║" -ForegroundColor Yellow
+            Write-Host "║    cd src/Apps.WarehousePicking && npm install && npm run dev        ║" -ForegroundColor Yellow
+            Write-Host "║                                                                      ║" -ForegroundColor Yellow
+            Write-Host "║  Open the printed local URL, sign in, then try:                      ║" -ForegroundColor Yellow
+            Write-Host "║   1. Pick a small quantity from Office Laptop (qty 100) — succeeds,  ║" -ForegroundColor Yellow
+            Write-Host "║      and the qty on hand updates live.                               ║" -ForegroundColor Yellow
+            Write-Host "║   2. Pick more than 5 from Wireless Mouse (qty 5) — watch the live    ║" -ForegroundColor Yellow
+            Write-Host "║      ValidateWarehouseTransactionPlugin rejection surface as a toast. ║" -ForegroundColor Yellow
+            Write-Host "║                                                                      ║" -ForegroundColor Yellow
+            Write-Host "║  Press ENTER when you're done trying it...                           ║" -ForegroundColor Yellow
+            Write-Host "╚══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+            Write-Host ""
+            Read-Host "Press ENTER to continue"
+        }
     }
 } finally { Pop-Location }
 
@@ -83,7 +111,13 @@ Package warehouse reference data so environments stay consistent as the app move
 - add src/Packages.Main/Data/data.xml with seed locations, items, and transactions
 - add the [Content_Types].xml OPC manifest required by the CMT package format
 - import the package into Dev and Test; export captures manual Dev records as source
+- pause after the Dev import so you can run the Warehouse Picking code app locally
+  (npm run dev) against real seeded data — pick from Office Laptop (qty 100, succeeds)
+  and try over-picking Wireless Mouse (qty 5, fails with the live plugin validation
+  error surfaced as a toast)
 ## Testing
 - txc data package import and export complete successfully against Dev and Test
+- code app npm run dev against Dev shows real items/locations, a successful pick updates
+  quantity live, and an over-pick on Wireless Mouse surfaces the plugin's rejection message
 '@
 Write-Host "`nNext: .lab-scripts/CP12-extend-branch-policies-build-checks.ps1" -ForegroundColor Cyan
