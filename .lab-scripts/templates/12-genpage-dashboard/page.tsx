@@ -29,7 +29,7 @@ interface WarehouseItem {
   __PREFIX___warehouseitemid: string;
   __PREFIX___name: string;
   __PREFIX___sku: string;
-  __PREFIX___quantityonhand: number;
+  __PREFIX___availablequantity: number;
   __PREFIX___reorderpoint: number;
 }
 
@@ -89,21 +89,21 @@ const GeneratedComponent = (props: GeneratedComponentProps) => {
             '__PREFIX___warehouseitemid',
             '__PREFIX___name',
             '__PREFIX___sku',
-            '__PREFIX___quantityonhand',
+            '__PREFIX___availablequantity',
             '__PREFIX___reorderpoint',
           ],
-          orderBy: '__PREFIX___quantityonhand asc',
+          orderBy: '__PREFIX___availablequantity asc',
           pageSize: 50,
         }),
         props.dataApi.queryTable('__PREFIX___warehouselocation', {
           select: ['__PREFIX___warehouselocationid'],
-          pageSize: 1,
+          pageSize: 50,
         }),
       ]);
 
       const allItems = itemsResult.rows;
       const lowStock = allItems.filter(
-        (i) => i.__PREFIX___quantityonhand <= (i.__PREFIX___reorderpoint ?? LOW_STOCK_THRESHOLD)
+        (i) => i.__PREFIX___availablequantity <= (i.__PREFIX___reorderpoint ?? LOW_STOCK_THRESHOLD)
       );
 
       setItems(allItems);
@@ -173,7 +173,7 @@ const GeneratedComponent = (props: GeneratedComponentProps) => {
           </TableHeader>
           <TableBody>
             {items.map((item) => {
-              const isLow = item.__PREFIX___quantityonhand <= (item.__PREFIX___reorderpoint ?? LOW_STOCK_THRESHOLD);
+              const isLow = item.__PREFIX___availablequantity <= (item.__PREFIX___reorderpoint ?? LOW_STOCK_THRESHOLD);
               return (
                 <TableRow key={item.__PREFIX___warehouseitemid}>
                   <TableCell>
@@ -183,7 +183,7 @@ const GeneratedComponent = (props: GeneratedComponentProps) => {
                     <TableCellLayout>{item.__PREFIX___sku}</TableCellLayout>
                   </TableCell>
                   <TableCell>
-                    <TableCellLayout>{item.__PREFIX___quantityonhand}</TableCellLayout>
+                    <TableCellLayout>{item.__PREFIX___availablequantity}</TableCellLayout>
                   </TableCell>
                   <TableCell>
                     <TableCellLayout>{item.__PREFIX___reorderpoint}</TableCellLayout>
