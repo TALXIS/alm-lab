@@ -24,6 +24,12 @@ public sealed class WarehousePickingSteps
     private readonly ScenarioContext _scenarioContext;
     private IPage Page => (IPage)_scenarioContext[Hooks.PageKey];
 
+    // Captured from the UI when the item is opened, not assumed from the CMT seed data —
+    // this is a real, shared Dataverse environment with no test fixture/teardown, and CP11's
+    // own "try it live" walkthrough picks from these same records, so the absolute quantity
+    // drifts across lab runs. Every assertion below is relative to this captured baseline.
+    private int _startingQuantity;
+
     public WarehousePickingSteps(ScenarioContext scenarioContext)
     {
         _scenarioContext = scenarioContext;
@@ -44,28 +50,49 @@ public sealed class WarehousePickingSteps
         var row = Page.GetByTestId("warehouse-item-row").Filter(new() { HasText = itemName });
         await row.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
         await row.GetByRole(AriaRole.Link).ClickAsync();
-        await Page.GetByTestId("pick-button").WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+
+        var quantityLocator = Page.GetByTestId("item-detail-qty");
+        await quantityLocator.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+        var quantityText = await quantityLocator.InnerTextAsync();
+        if (!int.TryParse(quantityText.Trim(), out _startingQuantity))
+        {
+            Assert.Fail($"Expected a numeric qty on hand but found '{quantityText}'.");
+        }
     }
 
     [When("I pick a quantity of {string}")]
     public async Task WhenIPickAQuantityOf(string quantity)
+    {
+        await SubmitPickAsync(quantity);
+    }
+
+    [When("I try to pick more than the available quantity")]
+    public async Task WhenITryToPickMoreThanTheAvailableQuantity()
+    {
+        await SubmitPickAsync((_startingQuantity + 1).ToString());
+    }
+
+    [Then("I should see an error that the requested quantity exceeds the available stock")]
+    public async Task ThenIShouldSeeAnErrorThatTheRequestedQuantityExceedsTheAvailableStock()
+    {
+        var requested = _startingQuantity + 1;
+        var message = $"Not enough product in stock. Available: {_startingQuantity}, requested: {requested}.";
+        await Expect(Page.GetByText(message)).ToBeVisibleAsync(new() { Timeout = 15000 });
+    }
+
+    [Then("the quantity on hand should have decreased by {string}")]
+    public async Task ThenTheQuantityOnHandShouldHaveDecreasedBy(string decrement)
+    {
+        var expected = (_startingQuantity - int.Parse(decrement)).ToString();
+        await Expect(Page.GetByTestId("item-detail-qty")).ToHaveTextAsync(expected, new() { Timeout = 15000 });
+    }
+
+    private async Task SubmitPickAsync(string quantity)
     {
         await Page.GetByTestId("pick-button").ClickAsync();
         var quantityInput = Page.Locator("#tx-quantity");
         await quantityInput.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
         await quantityInput.FillAsync(quantity);
         await Page.GetByTestId("submit-transaction").ClickAsync();
-    }
-
-    [Then("I should see the error {string}")]
-    public async Task ThenIShouldSeeTheError(string message)
-    {
-        await Expect(Page.GetByText(message)).ToBeVisibleAsync(new() { Timeout = 15000 });
-    }
-
-    [Then("the quantity on hand should read {string}")]
-    public async Task ThenTheQuantityOnHandShouldRead(string expectedQuantity)
-    {
-        await Expect(Page.GetByTestId("item-detail-qty")).ToHaveTextAsync(expectedQuantity, new() { Timeout = 15000 });
     }
 }
