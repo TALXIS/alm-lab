@@ -20,7 +20,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install txc
-        run: dotnet tool install --global TALXIS.CLI --prerelease
+        run: dotnet tool install --global TALXIS.CLI
 
       - name: Configure txc WIF auth
         env:
