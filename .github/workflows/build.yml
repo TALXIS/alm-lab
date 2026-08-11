@@ -1,0 +1,33 @@
+name: build
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      # The code app project builds with Vite, which needs Node 20.19+ / 22.12+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore
+        run: dotnet restore WarehouseManagement.slnx
+      - name: Build (validates Dataverse solutions)
+        run: dotnet build WarehouseManagement.slnx --configuration Release --no-restore
+      - name: Publish package
+        run: |
+          dotnet publish src/Packages.Main/Packages.Main.csproj --configuration Release --no-build -o ./drop
+          # The .pdpkg.zip is created alongside the project, not in --output; collect it for deploy
+          cp src/Packages.Main/bin/Release/Packages.Main.pdpkg.zip ./drop/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: drop
+          path: ./drop/Packages.Main.pdpkg.zip
