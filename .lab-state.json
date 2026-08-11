@@ -1,5 +1,7 @@
 {
   "publisherPrefix": "almlab",
   "publisherName": "ALMLab",
-  "slnxName": "WarehouseManagement"
+  "slnxName": "WarehouseManagement",
+  "packageDeployerScaffolded": true,
+  "dataModelScaffolded": true
 }
