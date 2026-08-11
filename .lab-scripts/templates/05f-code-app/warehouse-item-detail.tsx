@@ -10,6 +10,7 @@ import {
   categoryLabels,
   transactionTypeLabels,
   transactionTypeOptions,
+  isLowStock,
 } from "@/utils/optionSets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -50,10 +51,13 @@ export default function WarehouseItemDetailPage() {
   const [txQuantity, setTxQuantity] = useState("");
   const [txType, setTxType] = useState("");
 
-  const { data: item, isLoading: itemLoading } = useQuery({
+  const { data: item, isLoading: itemLoading, error: itemError } = useQuery({
     queryKey: ["warehouseItem", id],
     queryFn: async () => {
       const result = await __PASCAL___warehouseitemsService.get(id!);
+      // get()/getAll() resolve an IOperationResult, they never throw — without this check
+      // a failed read looks identical to "item not found".
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse item");
       return result.data;
     },
     enabled: !!id,
@@ -73,7 +77,8 @@ export default function WarehouseItemDetailPage() {
         filter: `___PREFIX___itemid_value eq '${id}'`,
         orderBy: ["__PREFIX___transactiondate desc"],
       });
-      return result.data ?? [];
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load transactions");
+      return result.data;
     },
     enabled: !!id,
   });
@@ -85,7 +90,8 @@ export default function WarehouseItemDetailPage() {
         select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
         orderBy: ["__PREFIX___name asc"],
       });
-      return result.data ?? [];
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse locations");
+      return result.data;
     },
   });
 
@@ -98,13 +104,20 @@ export default function WarehouseItemDetailPage() {
 
   const createTxMutation = useMutation({
     mutationFn: async () => {
-      return __PASCAL___warehousetransactionsService.create({
+      const result = await __PASCAL___warehousetransactionsService.create({
         __PREFIX___name: txName,
-        __PREFIX___quantity: txQuantity,
+        // quantity is typed as string on Base, but Dataverse's Web API expects a real JSON
+        // number for a Whole Number field — Number() avoids a silent type mismatch.
+        __PREFIX___quantity: Number(txQuantity),
         __PREFIX___transactiontype: Number(txType) as any,
         __PREFIX___transactiondate: new Date().toISOString(),
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${id})`,
       } as any);
+      // create() resolves an IOperationResult, it never throws — this is the one place the
+      // ValidateWarehouseTransactionPlugin's "Not enough product in stock" rejection on an
+      // over-pick would otherwise be silently swallowed and reported as a success.
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to create transaction");
+      return result.data;
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["itemTransactions", id] });
@@ -112,8 +125,8 @@ export default function WarehouseItemDetailPage() {
       toast.success("Transaction created");
       resetForm();
     },
-    onError: (err) => {
-      toast.error("Failed to create transaction: " + String(err));
+    onError: (err: Error) => {
+      toast.error("Failed to create transaction: " + err.message);
     },
   });
 
@@ -146,7 +159,9 @@ export default function WarehouseItemDetailPage() {
   if (!item) {
     return (
       <div className="p-6">
-        <p className="text-muted-foreground">Item not found.</p>
+        <p className="text-muted-foreground">
+          {itemError ? `Failed to load item: ${(itemError as Error).message}` : "Item not found."}
+        </p>
         <Link to="/">
           <Button variant="link" className="mt-2">
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to items
@@ -182,7 +197,10 @@ export default function WarehouseItemDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold" data-testid="item-detail-qty">
+            <div
+              className={`text-3xl font-bold ${isLowStock(item.__PREFIX___availablequantity, item.__PREFIX___reorderpoint) ? "text-destructive" : ""}`}
+              data-testid="item-detail-qty"
+            >
               {item.__PREFIX___availablequantity}
             </div>
           </CardContent>
