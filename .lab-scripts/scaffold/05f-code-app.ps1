@@ -17,6 +17,11 @@
 # alongside the model-driven components instead of needing its own solution project.
 # During the solution build the DevKit runs npm install / npm run build, registers the app
 # as a CanvasApp root component and packs dist/ into the solution.
+#
+# After scaffolding and data-source generation, the placeholder UI is replaced with a real
+# implementation (templates/05f-code-app/): an items list, an item detail with its
+# transactions, and a transactions list — all built on the typed models and services that
+# pp-app-code-data generated from the Solutions.DataModel metadata.
 # Expects: $PublisherPrefix from parent scope.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -71,5 +76,38 @@ foreach ($table in @("warehouselocation", "warehouseitem", "warehousetransaction
 
     Write-Host "  ✓ Data source: $logicalName" -ForegroundColor Green
 }
+
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#                                   UI implementation
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#
+# The pp-app-code template ships a placeholder home page. Replace it with the warehouse UI:
+# router + layout + three pages wired to the generated services (react-query + shadcn/ui).
+# The generated TS names derive from EntitySetName (e.g. Almlab_warehouseitemsService),
+# hence the PascalCase prefix token next to the plain publisher prefix.
+# Full sources: .lab-scripts/templates/05f-code-app/
+
+Write-Host "`n── Code App UI ──" -ForegroundColor Cyan
+
+$prefixPascal = [char]::ToUpper($PublisherPrefix[0]) + $PublisherPrefix.Substring(1)
+$appSrc = "src/Apps.WarehousePicking/src"
+$uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
+
+foreach ($file in @(
+    @{ Template = "optionSets.ts";             Target = "utils/optionSets.ts" },
+    @{ Template = "router.tsx";                Target = "router.tsx" },
+    @{ Template = "_layout.tsx";               Target = "pages/_layout.tsx" },
+    @{ Template = "warehouse-items.tsx";       Target = "pages/warehouse-items.tsx" },
+    @{ Template = "warehouse-item-detail.tsx"; Target = "pages/warehouse-item-detail.tsx" },
+    @{ Template = "transactions.tsx";          Target = "pages/transactions.tsx" }
+)) {
+    Expand-LabTemplate -Path "05f-code-app/$($file.Template)" `
+        -Destination "$appSrc/$($file.Target)" `
+        -Tokens $uiTokens
+    Write-Host "  ✓ $($file.Target)" -ForegroundColor Green
+}
+
+# The router no longer references the template's placeholder home page
+Remove-Item "$appSrc/pages/home.tsx" -ErrorAction SilentlyContinue
 
 Write-Host "  ℹ Local preview: cd src/Apps.WarehousePicking && npm run dev" -ForegroundColor DarkGray
