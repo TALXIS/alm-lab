@@ -25,7 +25,19 @@ txc workspace component create pp-plugin-test `
 dotnet sln add src/Plugins.Tests
 
 cd src/Plugins.Tests
-dotnet add reference ../Plugins.Warehouse/Plugins.Warehouse.csproj
+# `dotnet add reference` refuses this: it does its own net10.0-vs-net462 compatibility
+# preflight with no bypass flag, even though the build itself resolves it fine via NuGet
+# asset target fallback (see the NU1702 warning `dotnet build`/`dotnet test` print below).
+# Add the <ProjectReference> element to the csproj XML directly instead of going through the CLI.
+$testCsproj = "Plugins.Tests.csproj"
+[xml]$csprojXml = Get-Content $testCsproj -Raw
+$namespaceUri = $csprojXml.DocumentElement.NamespaceURI
+$itemGroup = $csprojXml.CreateElement("ItemGroup", $namespaceUri)
+$projectReference = $csprojXml.CreateElement("ProjectReference", $namespaceUri)
+$projectReference.SetAttribute("Include", "../Plugins.Warehouse/Plugins.Warehouse.csproj")
+$itemGroup.AppendChild($projectReference) | Out-Null
+$csprojXml.Project.AppendChild($itemGroup) | Out-Null
+$csprojXml.Save((Resolve-Path $testCsproj))
 cd ../..
 
 Write-Host "  ✓ Plugins.Tests project (FakeXrmEasy)" -ForegroundColor Green
