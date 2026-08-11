@@ -2,5 +2,9 @@
   "randomIdentifier": 4147,
   "solutionName": "WarehouseManagement",
   "publisherName": "ALMLab",
-  "publisherPrefix": "almlab"
+  "publisherPrefix": "almlab",
+  "devEnvUrl": "https://local-dev.stub.invalid",
+  "devProfile": "dev",
+  "testEnvUrl": "https://local-test.stub.invalid",
+  "testProfile": "test"
 }
