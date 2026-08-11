@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries>
+  <savedquery>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>0</isdefault>
+    <savedqueryid>{56c6336b-71b6-4543-ab60-b497fb359c54}</savedqueryid>
+    <queryapi>
+    </queryapi>
+    <layoutxml>
+      <grid name="resultset" jump="name" select="1" preview="0" icon="1">
+        <row name="result" id="almlab_warehousetransactionid">
+          <cell name="almlab_name" width="125" />
+          <cell name="almlab_transactiontype" width="125" />
+          <cell name="almlab_itemid" width="125" />
+          <cell name="almlab_quantity" width="125" />
+          <cell name="almlab_transactiondate" width="125" />
+          <cell name="almlab_totalvalue" width="125" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>64</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="almlab_warehousetransaction">
+          <attribute name="almlab_name" />
+          <order attribute="almlab_name" descending="false" />
+          <attribute name="almlab_transactiontype" />
+          <attribute name="almlab_itemid" />
+          <attribute name="almlab_quantity" />
+          <attribute name="almlab_transactiondate" />
+          <attribute name="almlab_totalvalue" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Warehouse Transactions Lookup View" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
