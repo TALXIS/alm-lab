@@ -82,7 +82,13 @@ if ($env:LAB_LOCAL_MODE) {
 
 # Lab-state only remembers the profile NAME — confirm it still exists in this machine's own
 # txc session before using it (a fresh machine/Codespace won't have it even if lab-state does).
-if (-not (txc config profile list --format json | ConvertFrom-Json | Where-Object { $_.id -eq $devProfile })) {
+# Wrapped in try/catch: a missing txc binary or unexpected output must fall through to the
+# clear error below, not crash with a raw PowerShell exception.
+$devProfileFound = $false
+try {
+    $devProfileFound = [bool](txc config profile list --format json | ConvertFrom-Json -ErrorAction Stop | Where-Object { $_.id -eq $devProfile })
+} catch { $devProfileFound = $false }
+if (-not $devProfileFound) {
     Write-Err "txc profile '$devProfile' not found on this machine — run CP04 again."
     exit 1
 }

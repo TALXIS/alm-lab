@@ -17,7 +17,7 @@ Write-Host "`n── Tests.UI ──" -ForegroundColor Cyan
 #                              Scaffold Test Project
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-if (-not (Test-Path "src/Tests.UI/Tests.UI.csproj")) {
+if (-not (Get-LabValue 'testsUiScaffolded')) {
 
 txc workspace component create pp-test-ui `
     --output "src/Tests.UI"
@@ -126,6 +126,11 @@ if (Test-Path $playwrightScript) {
 } else {
     Write-Host "  ⚠ playwright.ps1 not found at $playwrightScript — run dotnet build first" -ForegroundColor Yellow
 }
+
+# Marks the whole block done — checked instead of Test-Path on the csproj so a re-run after
+# a partial failure (e.g. project created but the feature file/build didn't finish) retries
+# everything rather than silently skipping the missing work.
+Set-LabValue 'testsUiScaffolded' $true
 
 } else {
     Write-Host "  ✓ Tests.UI (exists)" -ForegroundColor Green

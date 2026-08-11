@@ -13,7 +13,7 @@
 #                              Plugin Project
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-if (-not (Test-Path "src/Plugins.Warehouse/Plugins.Warehouse.csproj")) {
+if (-not (Get-LabValue 'pluginsScaffolded')) {
 
 txc workspace component create pp-plugin `
     --output "src/Plugins.Warehouse" `
@@ -181,6 +181,11 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "  ⚠ Plugin publish had issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
 }
 cd ../..
+
+# Marks the whole block done — checked instead of Test-Path on the csproj so a re-run after
+# a partial failure (e.g. project created but a plugin class/build step didn't finish)
+# retries everything rather than silently skipping the missing work.
+Set-LabValue 'pluginsScaffolded' $true
 
 } else {
     Write-Host "  ✓ Plugins.Warehouse (exists)" -ForegroundColor Green

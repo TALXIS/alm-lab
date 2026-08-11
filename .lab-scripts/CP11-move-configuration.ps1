@@ -48,8 +48,11 @@ try {
         if (-not $devProfile -or -not $testProfile) { Write-Err "Dev/Test profiles not found in lab state. Run CP04 first."; exit 1 }
         # Lab-state only remembers the profile NAMES — confirm they still exist in this
         # machine's own txc session (a fresh machine/Codespace won't have them even if
-        # lab-state does).
-        $liveProfiles = @(txc config profile list --format json | ConvertFrom-Json).id
+        # lab-state does). Wrapped in try/catch: a missing txc binary or unexpected output
+        # must fall through to the clear error below, not crash with a raw PowerShell
+        # exception.
+        $liveProfiles = @()
+        try { $liveProfiles = @(txc config profile list --format json | ConvertFrom-Json -ErrorAction Stop).id } catch { $liveProfiles = @() }
         foreach ($p in @($devProfile, $testProfile)) {
             if ($p -notin $liveProfiles) { Write-Err "txc profile '$p' not found on this machine — run CP04 again."; exit 1 }
         }

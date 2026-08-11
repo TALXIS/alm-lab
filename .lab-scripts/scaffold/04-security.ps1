@@ -12,7 +12,7 @@
 
 Write-Host "`n── Solutions.Security ──" -ForegroundColor Cyan
 
-if (-not (Test-Path "src/Solutions.Security/Solutions.Security.csproj")) {
+if (-not (Get-LabValue 'securityScaffolded')) {
     txc workspace component create pp-solution `
         --output "src/Solutions.Security" `
         --param "PublisherName=$PublisherName" `
@@ -108,6 +108,11 @@ if (-not (Test-Path "src/Solutions.Security/Solutions.Security.csproj")) {
         --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction"
 
     Write-Host "  ✓ Manager → warehousetransaction (CRUD)" -ForegroundColor Green
+
+    # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
+    # re-run after a partial failure (e.g. solution created but a role/privilege create
+    # failed) retries everything rather than silently skipping the missing work.
+    Set-LabValue 'securityScaffolded' $true
 } else {
     Write-Host "  ✓ Solutions.Security (exists)" -ForegroundColor Green
 }

@@ -12,7 +12,7 @@
 
 Write-Host "`n── Solutions.DataModel ──" -ForegroundColor Cyan
 
-if (-not (Test-Path "src/Solutions.DataModel/Solutions.DataModel.csproj")) {
+if (-not (Get-LabValue 'dataModelScaffolded')) {
     txc workspace component create pp-solution `
         --output "src/Solutions.DataModel" `
         --param "PublisherName=$PublisherName" `
@@ -69,6 +69,11 @@ if (-not (Test-Path "src/Solutions.DataModel/Solutions.DataModel.csproj")) {
         --param "DisplayNamePlural=Warehouse Transactions"
 
     Write-Host "  ✓ Entity: Warehouse Transaction" -ForegroundColor Green
+
+    # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
+    # re-run after a partial failure (e.g. solution created but an entity create failed)
+    # retries everything rather than silently skipping the missing entities.
+    Set-LabValue 'dataModelScaffolded' $true
 } else {
     Write-Host "  ✓ Solutions.DataModel (exists)" -ForegroundColor Green
 }
