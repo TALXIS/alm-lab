@@ -1,185 +1,286 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { __PASCAL___warehousetransactionsService } from "@/generated/services/__PASCAL___warehousetransactionsService";
+import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
+import type { __PASCAL___warehousetransactions } from "@/generated/models/__PASCAL___warehousetransactionsModel";
+import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
+import { transactionTypeLabels, transactionTypeOptions } from "@/utils/optionSets";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select"
-import { __PREFIX_PASCAL___warehouseitemsService } from "@/generated/services/__PREFIX_PASCAL___warehouseitemsService"
-import { __PREFIX_PASCAL___warehousetransactionsService } from "@/generated/services/__PREFIX_PASCAL___warehousetransactionsService"
-import type { __PREFIX_PASCAL___warehousetransactions__PREFIX___transactiontype } from "@/generated/models/__PREFIX_PASCAL___warehousetransactionsModel"
-import { TRANSACTION_TYPE_OUTBOUND, transactionTypeOptions } from "@/utils/optionSets"
-
-const emptyForm = { itemId: "", type: "", quantity: "1", referenceNumber: "" }
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { ArrowRightLeft, Plus, RefreshCw } from "lucide-react";
 
 export default function TransactionsPage() {
-  const queryClient = useQueryClient()
-  const [open, setOpen] = useState(false)
-  const [form, setForm] = useState(emptyForm)
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [txName, setTxName] = useState("");
+  const [txQuantity, setTxQuantity] = useState("");
+  const [txType, setTxType] = useState("");
+  const [txItemId, setTxItemId] = useState("");
 
-  const transactionsQuery = useQuery({
+  const { data: transactions, isLoading, error } = useQuery({
     queryKey: ["allTransactions"],
     queryFn: async () => {
-      const result = await __PREFIX_PASCAL___warehousetransactionsService.getAll({ orderBy: ["__PREFIX___transactiondate desc"] })
-      if (!result.success) throw new Error(result.error?.message ?? "Failed to load transactions")
-      return result.data
+      const result = await __PASCAL___warehousetransactionsService.getAll({
+        select: [
+          "__PREFIX___warehousetransactionid",
+          "__PREFIX___name",
+          "__PREFIX___quantity",
+          "__PREFIX___transactiontype",
+          "__PREFIX___transactiondate",
+          "statecode",
+        ],
+        orderBy: ["__PREFIX___transactiondate desc"],
+      });
+      return result.data ?? [];
     },
-  })
+  });
 
-  const itemsQuery = useQuery({
-    queryKey: ["warehouseItems"],
+  const { data: items } = useQuery({
+    queryKey: ["warehouseItemsLookup"],
     queryFn: async () => {
-      const result = await __PREFIX_PASCAL___warehouseitemsService.getAll({ orderBy: ["__PREFIX___name asc"] })
-      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse items")
-      return result.data
+      const result = await __PASCAL___warehouseitemsService.getAll({
+        select: ["__PREFIX___warehouseitemid", "__PREFIX___name"],
+        filter: "statecode eq 0",
+        orderBy: ["__PREFIX___name asc"],
+      });
+      return result.data ?? [];
     },
-  })
+  });
 
-  const createTransaction = useMutation({
+  const createMutation = useMutation({
     mutationFn: async () => {
-      const selectedItem = itemsQuery.data?.find((item) => item.__PREFIX___warehouseitemid === form.itemId)
-      const typeLabel = transactionTypeOptions.find((option) => String(option.value) === form.type)?.label ?? "Transaction"
-      const result = await __PREFIX_PASCAL___warehousetransactionsService.create({
-        __PREFIX___name: `${typeLabel} - ${selectedItem?.__PREFIX___name ?? form.itemId} - ${new Date().toISOString()}`,
-        "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${form.itemId})`,
-        __PREFIX___quantity: Number(form.quantity),
-        __PREFIX___transactiontype: Number(form.type) as __PREFIX_PASCAL___warehousetransactions__PREFIX___transactiontype,
+      return __PASCAL___warehousetransactionsService.create({
+        __PREFIX___name: txName,
+        __PREFIX___quantity: txQuantity,
+        __PREFIX___transactiontype: Number(txType) as any,
         __PREFIX___transactiondate: new Date().toISOString(),
-        __PREFIX___referencenumber: form.referenceNumber || undefined,
-        // ownerid/owneridtype/statecode are required on Base (true for reads) but Dataverse
-        // defaults all three on create. quantity is typed as string on Base too, but Dataverse's
-        // Web API expects a real JSON number for a Whole Number field — the cast (through
-        // unknown, since we're deliberately overriding both mismatches) still catches real typos
-        // in the fields we do pass.
-      } as unknown as Parameters<typeof __PREFIX_PASCAL___warehousetransactionsService.create>[0])
-      if (!result.success) throw new Error(result.error?.message ?? "Failed to create transaction")
-      return result.data
+        "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${txItemId})`,
+      } as any);
     },
-    onSuccess: () => {
-      toast.success("Transaction created")
-      queryClient.invalidateQueries({ queryKey: ["allTransactions"] })
-      setForm(emptyForm)
-      setOpen(false)
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["allTransactions"] });
+      toast.success("Transaction created successfully");
+      resetForm();
     },
-    onError: (error: Error) => toast.error(error.message),
-  })
+    onError: (err) => {
+      toast.error("Failed to create transaction: " + String(err));
+    },
+  });
+
+  const resetForm = () => {
+    setDialogOpen(false);
+    setTxName("");
+    setTxQuantity("");
+    setTxType("");
+    setTxItemId("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!txName || !txQuantity || !txType || !txItemId) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    createMutation.mutate();
+  };
 
   return (
-    <div className="py-8 space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Transactions</h1>
-        <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setForm(emptyForm) }}>
-          <DialogTrigger asChild>
-            <Button data-testid="new-transaction-button"><Plus className="h-4 w-4 mr-2" />New Transaction</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>New Transaction</DialogTitle></DialogHeader>
-            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); createTransaction.mutate() }}>
-              <div className="space-y-2">
-                <Label htmlFor="tx-item">Item</Label>
-                <Select value={form.itemId} onValueChange={(value) => setForm({ ...form, itemId: value })}>
-                  <SelectTrigger id="tx-item"><SelectValue placeholder="Select an item" /></SelectTrigger>
-                  <SelectContent>
-                    {itemsQuery.data?.map((item) => (
-                      <SelectItem key={item.__PREFIX___warehouseitemid} value={item.__PREFIX___warehouseitemid}>
-                        {item.__PREFIX___name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tx-type">Type</Label>
-                <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value })}>
-                  <SelectTrigger id="tx-type"><SelectValue placeholder="Select a type" /></SelectTrigger>
-                  <SelectContent>
-                    {transactionTypeOptions.map((option) => (
-                      <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tx-quantity">Quantity</Label>
-                <Input
-                  id="tx-quantity" type="number" min="1" required
-                  value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tx-reference">Reference Number</Label>
-                <Input
-                  id="tx-reference" value={form.referenceNumber}
-                  onChange={(e) => setForm({ ...form, referenceNumber: e.target.value })}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit" data-testid="create-transaction-submit"
-                  disabled={createTransaction.isPending || !form.itemId || !form.type}
-                >
-                  {createTransaction.isPending ? "Creating…" : "Create"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-3">
+          <ArrowRightLeft className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Transactions
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              All warehouse transactions
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() =>
+              queryClient.refetchQueries({ queryKey: ["allTransactions"] })
+            }
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Transaction
+          </Button>
+        </div>
       </div>
 
-      {transactionsQuery.isError && (
-        <p className="text-sm text-destructive">Failed to load transactions: {(transactionsQuery.error as Error).message}</p>
+      {error && (
+        <div className="rounded-md bg-destructive/10 p-4 text-destructive text-sm">
+          Failed to load transactions: {String(error)}
+        </div>
       )}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Item</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="text-right">Quantity</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Reference</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactionsQuery.isLoading && Array.from({ length: 3 }).map((_, i) => (
-            <TableRow key={i}>
-              {Array.from({ length: 5 }).map((__, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead className="text-right">Quantity</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Date</TableHead>
             </TableRow>
-          ))}
-          {!transactionsQuery.isLoading && transactionsQuery.data?.length === 0 && (
-            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No transactions yet.</TableCell></TableRow>
-          )}
-          {transactionsQuery.data?.map((transaction) => (
-            <TableRow key={transaction.__PREFIX___warehousetransactionid}>
-              <TableCell>
-                <Link to={`/items/${transaction.___PREFIX___itemid_value}`} className="hover:underline">
-                  {transaction.__PREFIX___itemidname ?? "—"}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <Badge variant={transaction.__PREFIX___transactiontype === TRANSACTION_TYPE_OUTBOUND ? "destructive" : "default"}>
-                  {transaction.__PREFIX___transactiontypename}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">{transaction.__PREFIX___quantity}</TableCell>
-              <TableCell>{new Date(transaction.__PREFIX___transactiondate).toLocaleString()}</TableCell>
-              <TableCell>{transaction.__PREFIX___referencenumber ?? "—"}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : transactions && transactions.length > 0 ? (
+              transactions.map((tx: __PASCAL___warehousetransactions) => (
+                <TableRow key={tx.__PREFIX___warehousetransactionid}>
+                  <TableCell className="font-medium">{tx.__PREFIX___name}</TableCell>
+                  <TableCell className="text-right font-mono">
+                    {tx.__PREFIX___quantity}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {transactionTypeLabels[
+                        tx.__PREFIX___transactiontype as keyof typeof transactionTypeLabels
+                      ] ?? tx.__PREFIX___transactiontype}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={tx.statecode === 0 ? "default" : "destructive"}
+                    >
+                      {tx.statecode === 0 ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {tx.__PREFIX___transactiondate
+                      ? new Date(tx.__PREFIX___transactiondate).toLocaleDateString()
+                      : "-"}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  No transactions found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Transaction</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="txName">Name *</Label>
+              <Input
+                id="txName"
+                value={txName}
+                onChange={(e) => setTxName(e.target.value)}
+                placeholder="Enter transaction name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Warehouse Item *</Label>
+              <Select value={txItemId} onValueChange={setTxItemId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select item" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(items ?? []).map((item: __PASCAL___warehouseitems) => (
+                    <SelectItem
+                      key={item.__PREFIX___warehouseitemid}
+                      value={item.__PREFIX___warehouseitemid}
+                    >
+                      {item.__PREFIX___name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="txQuantity">Quantity *</Label>
+              <Input
+                id="txQuantity"
+                type="number"
+                min="0"
+                value={txQuantity}
+                onChange={(e) => setTxQuantity(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Transaction Type *</Label>
+              <Select value={txType} onValueChange={setTxType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select transaction type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {transactionTypeOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={resetForm}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }

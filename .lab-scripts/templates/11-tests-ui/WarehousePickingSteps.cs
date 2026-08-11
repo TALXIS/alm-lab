@@ -87,12 +87,17 @@ public sealed class WarehousePickingSteps
         await Expect(Page.GetByTestId("item-detail-qty")).ToHaveTextAsync(expected, new() { Timeout = 15000 });
     }
 
+    // A "pick" in the UI is a New Transaction with type Outbound — fill the dialog the same
+    // way a floor worker would: name, quantity, type, submit.
     private async Task SubmitPickAsync(string quantity)
     {
-        await Page.GetByTestId("pick-button").ClickAsync();
-        var quantityInput = Page.Locator("#tx-quantity");
+        await Page.GetByTestId("new-transaction-button").ClickAsync();
+        var quantityInput = Page.Locator("#txQuantity");
         await quantityInput.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+        await Page.Locator("#txName").FillAsync($"BDD pick {DateTime.UtcNow:yyyyMMddHHmmss}");
         await quantityInput.FillAsync(quantity);
+        await Page.GetByTestId("tx-type-trigger").ClickAsync();
+        await Page.GetByRole(AriaRole.Option, new() { Name = "Outbound" }).ClickAsync();
         await Page.GetByTestId("submit-transaction").ClickAsync();
     }
 }

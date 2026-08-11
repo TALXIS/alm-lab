@@ -58,8 +58,8 @@ Build the model-driven warehouse experience so users can navigate inventory data
 - add form scripts and ribbon commands for warehouse workflows
 - attach talxis_TALXIS.PCF.Grid to the Warehouse Items subgrid via txc workspace control attach (group by category, sum of quantity, low-stock highlighting from Scripts.UI)
 - add src/Apps.WarehousePicking, a Vite + React + TypeScript code app referenced directly into Solutions.UI
-- register the warehouse tables as code app data sources (typed models + services)
-- author the picking UI on top of the template starter: an items list with a low-stock indicator matching the TALXIS Grid, an item detail page with Pick/Restock actions backed by the warehouse transaction plugins, a global transactions ledger, and a locations list
+- register the three warehouse tables as code app data sources (typed models + services)
+- implement the code app UI: items list, item detail with its transactions, a transactions list and a locations list (with per-location item counts), all querying Dataverse through the generated services; locations also resolve the item's location lookup
 - add Node setup to the build workflow so the code app builds in CI
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the UI, TALXIS Grid, and code app included

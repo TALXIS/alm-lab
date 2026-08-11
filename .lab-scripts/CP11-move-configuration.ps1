@@ -90,9 +90,9 @@ try {
             Write-Host "║    cd src/Apps.WarehousePicking && npm install && npm run dev        ║" -ForegroundColor Yellow
             Write-Host "║                                                                      ║" -ForegroundColor Yellow
             Write-Host "║  Open the printed local URL, sign in, then try:                      ║" -ForegroundColor Yellow
-            Write-Host "║   1. Pick a small quantity from Office Laptop (qty 100) — succeeds,  ║" -ForegroundColor Yellow
-            Write-Host "║      and the qty on hand updates live.                               ║" -ForegroundColor Yellow
-            Write-Host "║   2. Pick more than 5 from Wireless Mouse (qty 5) — watch the live    ║" -ForegroundColor Yellow
+            Write-Host "║   1. Open Office Laptop (qty 100) and create an Outbound transaction ║" -ForegroundColor Yellow
+            Write-Host "║      for a small quantity — succeeds, qty on hand updates live.      ║" -ForegroundColor Yellow
+            Write-Host "║   2. Request more than 5 for Wireless Mouse (qty 5) — watch the live  ║" -ForegroundColor Yellow
             Write-Host "║      ValidateWarehouseTransactionPlugin rejection surface as a toast. ║" -ForegroundColor Yellow
             Write-Host "║                                                                      ║" -ForegroundColor Yellow
             Write-Host "║  Press ENTER when you're done trying it...                           ║" -ForegroundColor Yellow
