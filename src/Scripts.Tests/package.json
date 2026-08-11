@@ -1,0 +1,19 @@
+{
+  "name": "pp-test-script",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --runInBand"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "jest-junit": "^16.0.0",
+    "ts-node": "^10.9.2"
+  }
+}
