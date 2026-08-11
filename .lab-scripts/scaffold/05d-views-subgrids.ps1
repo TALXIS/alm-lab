@@ -52,6 +52,59 @@ function Add-ViewColumns {
     $xml.Save($viewFile.FullName)
 }
 
+# Add-ViewColumns only ever touches the lookup view (querytype=64) that
+# pp-entity-view generates — it never reaches the entity's actual default
+# public view (querytype=0, isdefault=1), which is what the sitemap's main
+# grid renders. Without this, attendees see a nav grid with just Name +
+# Created On no matter how many columns get added to the lookup view.
+#
+# CP06's pp-entity component already scaffolds that default view locally
+# (in Solutions.DataModel/Entities/<entity>/SavedQueries/), with a real,
+# known GUID — no live environment call needed to find it. We copy that
+# view into Solutions.UI under the same GUID and add the same columns, so
+# Solutions.UI's managed layer overrides the DataModel-owned default view's
+# columns rather than creating a duplicate.
+function Add-DefaultViewColumns {
+    param(
+        [string]$EntityLogicalName,
+        [string[]]$Columns  # logical names of columns to add
+    )
+
+    $dataModelViewDir = "src/Solutions.DataModel/Entities/${EntityLogicalName}/SavedQueries"
+    if (-not (Test-Path $dataModelViewDir)) { return }
+
+    $defaultViewFile = Get-ChildItem "$dataModelViewDir/*.xml" | Where-Object {
+        $candidate = [xml](Get-Content $_.FullName -Raw)
+        $candidate.savedqueries.savedquery.querytype -eq "0" -and $candidate.savedqueries.savedquery.isdefault -eq "1"
+    } | Select-Object -First 1
+    if (-not $defaultViewFile) {
+        Write-Host "  ✗ Default view not found in Solutions.DataModel for $EntityLogicalName — run CP06 first" -ForegroundColor Red
+        throw "Default view not found in Solutions.DataModel for $EntityLogicalName"
+    }
+
+    $uiViewDir = "src/Solutions.UI/Entities/${EntityLogicalName}/SavedQueries"
+    New-Item -ItemType Directory -Path $uiViewDir -Force | Out-Null
+    $uiViewPath = Join-Path $uiViewDir $defaultViewFile.Name
+    Copy-Item $defaultViewFile.FullName $uiViewPath -Force
+
+    $xml = [xml](Get-Content $uiViewPath -Raw)
+    $row = $xml.SelectSingleNode("//row")
+    $fetchEntity = $xml.SelectSingleNode("//entity")
+
+    foreach ($col in $Columns) {
+        $cell = $xml.CreateElement("cell")
+        $cell.SetAttribute("name", $col)
+        $cell.SetAttribute("width", "125")
+        $row.AppendChild($cell) | Out-Null
+
+        $attr = $xml.CreateElement("attribute")
+        $attr.SetAttribute("name", $col)
+        $fetchEntity.AppendChild($attr) | Out-Null
+    }
+
+    $xml.Save($uiViewPath)
+}
+
 txc workspace component create pp-entity-view `
     --output "src/Solutions.UI" `
     --param "EntitySchemaName=${PublisherPrefix}_warehouselocation" `
@@ -61,6 +114,10 @@ txc workspace component create pp-entity-view `
 Add-ViewColumns `
     -EntityLogicalName "${PublisherPrefix}_warehouselocation" `
     -PrimaryIdName "${PublisherPrefix}_warehouselocationid" `
+    -Columns @("${PublisherPrefix}_address", "${PublisherPrefix}_capacity", "${PublisherPrefix}_isactive")
+
+Add-DefaultViewColumns `
+    -EntityLogicalName "${PublisherPrefix}_warehouselocation" `
     -Columns @("${PublisherPrefix}_address", "${PublisherPrefix}_capacity", "${PublisherPrefix}_isactive")
 
 # Capture the generated view GUID (filename without extension, strip braces)
@@ -80,6 +137,10 @@ Add-ViewColumns `
     -PrimaryIdName "${PublisherPrefix}_warehouseitemid" `
     -Columns @("${PublisherPrefix}_sku", "${PublisherPrefix}_category", "${PublisherPrefix}_availablequantity", "${PublisherPrefix}_unitprice", "${PublisherPrefix}_locationid")
 
+Add-DefaultViewColumns `
+    -EntityLogicalName "${PublisherPrefix}_warehouseitem" `
+    -Columns @("${PublisherPrefix}_sku", "${PublisherPrefix}_category", "${PublisherPrefix}_availablequantity", "${PublisherPrefix}_unitprice", "${PublisherPrefix}_locationid")
+
 # Capture the generated view GUID
 $warehouseitemViewFile = Get-ChildItem "src/Solutions.UI/Entities/${PublisherPrefix}_warehouseitem/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $warehouseitemViewGuid = $warehouseitemViewFile.BaseName.Trim('{}')
@@ -95,6 +156,10 @@ txc workspace component create pp-entity-view `
 Add-ViewColumns `
     -EntityLogicalName "${PublisherPrefix}_warehousetransaction" `
     -PrimaryIdName "${PublisherPrefix}_warehousetransactionid" `
+    -Columns @("${PublisherPrefix}_transactiontype", "${PublisherPrefix}_itemid", "${PublisherPrefix}_quantity", "${PublisherPrefix}_transactiondate", "${PublisherPrefix}_totalvalue")
+
+Add-DefaultViewColumns `
+    -EntityLogicalName "${PublisherPrefix}_warehousetransaction" `
     -Columns @("${PublisherPrefix}_transactiontype", "${PublisherPrefix}_itemid", "${PublisherPrefix}_quantity", "${PublisherPrefix}_transactiondate", "${PublisherPrefix}_totalvalue")
 
 # Capture the generated view GUID
