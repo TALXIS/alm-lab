@@ -62,6 +62,26 @@ function Initialize-RandomIdentifier {
     return (Get-LabValue 'randomIdentifier')
 }
 
+# ── Template expansion ──────────────────────────────────────────────────────────────────
+# Renders a whole-file template from .lab-scripts/templates/ by replacing __TOKEN__
+# placeholders with literal values (plain string replace, no regex — so scaffold scripts
+# no longer need backtick-escaping for target languages that use $ themselves, like C#
+# interpolated strings or JS/TS template literals).
+function Expand-LabTemplate {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Destination,
+        [hashtable]$Tokens = @{}
+    )
+    $content = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot "../templates/$Path")
+    foreach ($key in $Tokens.Keys) {
+        $content = $content.Replace("__${key}__", [string]$Tokens[$key])
+    }
+    $destDir = Split-Path $Destination -Parent
+    if ($destDir -and -not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+    Set-Content -LiteralPath $Destination -Value $content -Encoding UTF8
+}
+
 # ── Checkpoint via Pull Request ─────────────────────────────────────────────────────────
 # Proper ALM: every checkpoint lands on main through a PR. We branch, commit, push, open a
 # PR, pause so you can review the diff + checks in the browser, then merge + tag for rollback.

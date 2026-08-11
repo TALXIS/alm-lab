@@ -44,17 +44,10 @@ Write-Host "  ✓ Sample feature: WarehouseItemNavigation.feature" -ForegroundCo
 # Write a meaningful scenario into the feature file
 # Note: replace the login step value with your actual test user account
 $testUser = if ($env:TXC_TEST_USER) { $env:TXC_TEST_USER } else { "your-user@yourtenant.onmicrosoft.com" }
-$featureContent = @"
-Feature: WarehouseItemNavigation
-
-Scenario: User can open a warehouse item from the main view
-    Given I am logged in as '$testUser'
-    And I open the '${PublisherPrefix}_warehouseapp' app
-    When I click on 'Warehouse Items' in the sitemap
-    Then I should see the 'Active Warehouse Items' view
-"@
-
-Set-Content -Path "src/Tests.UI/Features/WarehouseItemNavigation.feature" -Value $featureContent -Encoding UTF8
+# Full source: .lab-scripts/templates/11-tests-ui/WarehouseItemNavigation.feature
+Expand-LabTemplate -Path "11-tests-ui/WarehouseItemNavigation.feature" `
+    -Destination "src/Tests.UI/Features/WarehouseItemNavigation.feature" `
+    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
 Write-Host "  ✓ Feature scenario written" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -77,23 +70,10 @@ Write-Host "  ✓ Feature scenario written" -ForegroundColor Green
 $envUrl = if ($env:TXC_ENVIRONMENT_URL) { $env:TXC_ENVIRONMENT_URL } else { "https://yourenv.crm4.dynamics.com" }
 # Resolve to absolute path — works cross-platform (Windows, Linux/Codespaces, macOS)
 $authStatePath = [System.IO.Path]::GetFullPath("src/Tests.UI/auth-state.json").Replace('\', '/')
-$appSettings = @"
-{
-  "TestSettings": {
-    "EnvironmentUrl": "$envUrl",
-    "AppName": "Warehouse Management",
-    "Headless": true,
-    "SlowMo": 0,
-    "Timeout": 60000,
-    "StorageStatePath": "$authStatePath",
-    "ScreenshotOnFailure": true,
-    "TracingEnabled": false,
-    "OutputPath": "TestResults"
-  }
-}
-"@
-
-Set-Content -Path "src/Tests.UI/appsettings.json" -Value $appSettings -Encoding UTF8
+# Full source: .lab-scripts/templates/11-tests-ui/appsettings.json
+Expand-LabTemplate -Path "11-tests-ui/appsettings.json" `
+    -Destination "src/Tests.UI/appsettings.json" `
+    -Tokens @{ ENV_URL = $envUrl; AUTH_STATE_PATH = $authStatePath }
 Write-Host "  ✓ appsettings.json configured" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────

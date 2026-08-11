@@ -35,14 +35,7 @@ try {
     Set-LabValue 'publisherPrefix' "almlab"
 
     # Step 1: NuGet feed (TALXIS DevKit build SDK + templates come from nuget.org)
-    @'
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
-  </packageSources>
-</configuration>
-'@ | Set-Content -Path "NuGet.config" -Encoding UTF8
+    Copy-Item "$PSScriptRoot/workflows/NuGet.config" "NuGet.config" -Force
     Write-Ok "NuGet.config"
 
     # Step 2: Visual Studio solution (modern .slnx) to track all projects in the monorepo.

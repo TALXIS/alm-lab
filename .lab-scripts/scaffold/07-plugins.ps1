@@ -28,137 +28,20 @@ Write-Host "  ✓ Plugins.Warehouse project" -ForegroundColor Green
 #                         ValidateWarehouseTransactionPlugin.cs
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-$prefix = $PublisherPrefix
-$validatePlugin = @"
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
-using System;
-
-namespace Plugins.Warehouse
-{
-    public class ValidateWarehouseTransactionPlugin : PluginBase
-    {
-        public ValidateWarehouseTransactionPlugin(string unsecureConfiguration, string secureConfiguration)
-            : base(typeof(ValidateWarehouseTransactionPlugin))
-        {
-        }
-
-        protected override void ExecuteDataversePlugin(ILocalPluginContext localPluginContext)
-        {
-            if (localPluginContext == null)
-            {
-                throw new ArgumentNullException(nameof(localPluginContext));
-            }
-
-            var context = localPluginContext.PluginExecutionContext;
-            var serviceFactory = localPluginContext.OrgSvcFactory;
-            var service = serviceFactory.CreateOrganizationService(context.UserId);
-            var tracingService = localPluginContext.TracingService;
-
-            if (!(context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity target) || target.LogicalName != "${prefix}_warehousetransaction")
-                return;
-
-            if (!target.Contains("${prefix}_quantity") || !target.Contains("${prefix}_itemid") || !target.Contains("${prefix}_transactiontype"))
-                return;
-
-            // Only validate outbound transactions 
-            var transactionType = (OptionSetValue)target["${prefix}_transactiontype"];
-            if (transactionType.Value != 100000001)
-                return;
-
-            try
-            {
-                var quantity = (int)target["${prefix}_quantity"];
-                var itemRef = (EntityReference)target["${prefix}_itemid"];
-
-                var item = service.Retrieve("${prefix}_warehouseitem", itemRef.Id, new ColumnSet("${prefix}_availablequantity"));
-
-                int available = 0;
-                if (item != null && item.Contains("${prefix}_availablequantity"))
-                {
-                    available = (int)item["${prefix}_availablequantity"];
-                }
-
-                if (quantity > available)
-                {
-                    throw new InvalidPluginExecutionException(
-                        `$"Not enough product in stock. Available: {available}, requested: {quantity}.");
-                }
-            }
-            catch (InvalidPluginExecutionException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                tracingService.Trace("Plugin Exception: {0}", ex.ToString());
-                throw;
-            }
-        }
-    }
-}
-"@
-
-Set-Content -Path "src/Plugins.Warehouse/ValidateWarehouseTransactionPlugin.cs" -Value $validatePlugin -Encoding UTF8
+# Full source: .lab-scripts/templates/07-plugins/ValidateWarehouseTransactionPlugin.cs
+Expand-LabTemplate -Path "07-plugins/ValidateWarehouseTransactionPlugin.cs" `
+    -Destination "src/Plugins.Warehouse/ValidateWarehouseTransactionPlugin.cs" `
+    -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ ValidateWarehouseTransactionPlugin.cs" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                            SubtractQuantityPlugin.cs
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-$subtractPlugin = @"
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
-using System;
-
-namespace Plugins.Warehouse
-{
-    public class SubtractQuantityPlugin : PluginBase
-    {
-        public SubtractQuantityPlugin(string unsecureConfiguration, string secureConfiguration)
-            : base(typeof(SubtractQuantityPlugin))
-        {
-        }
-
-        protected override void ExecuteDataversePlugin(ILocalPluginContext localPluginContext)
-        {
-            if (localPluginContext == null)
-            {
-                throw new ArgumentNullException(nameof(localPluginContext));
-            }
-
-            var context = localPluginContext.PluginExecutionContext;
-            var serviceFactory = localPluginContext.OrgSvcFactory;
-            var service = serviceFactory.CreateOrganizationService(context.UserId);
-
-            if (!(context.InputParameters["Target"] is Entity target) || target.LogicalName != "${prefix}_warehousetransaction")
-                return;
-
-            if (!target.Contains("${prefix}_quantity") || !target.Contains("${prefix}_itemid") || !target.Contains("${prefix}_transactiontype"))
-                return;
-
-            var quantity = (int)target["${prefix}_quantity"];
-            var itemRef = (EntityReference)target["${prefix}_itemid"];
-            var transactionType = (OptionSetValue)target["${prefix}_transactiontype"];
-
-            var item = service.Retrieve("${prefix}_warehouseitem", itemRef.Id, new ColumnSet("${prefix}_availablequantity"));
-            var available = item.Contains("${prefix}_availablequantity") ? (int)item["${prefix}_availablequantity"] : 0;
-
-            // Inbound (100000000) = add stock, Outbound (100000001) = subtract stock
-            if (transactionType.Value == 100000000)
-                item["${prefix}_availablequantity"] = available + quantity;
-            else if (transactionType.Value == 100000001)
-                item["${prefix}_availablequantity"] = available - quantity;
-            else
-                return;
-
-            service.Update(item);
-        }
-    }
-}
-"@
-
-Set-Content -Path "src/Plugins.Warehouse/SubtractQuantityPlugin.cs" -Value $subtractPlugin -Encoding UTF8
+# Full source: .lab-scripts/templates/07-plugins/SubtractQuantityPlugin.cs
+Expand-LabTemplate -Path "07-plugins/SubtractQuantityPlugin.cs" `
+    -Destination "src/Plugins.Warehouse/SubtractQuantityPlugin.cs" `
+    -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ SubtractQuantityPlugin.cs" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
