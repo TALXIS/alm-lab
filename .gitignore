@@ -10,6 +10,14 @@
 TestResults/
 [Tt]est[Rr]esult*/
 
+# Reqnroll telemetry marker (anonymous usage-telemetry GUID, written by Reqnroll's MSBuild
+# tooling in the test project directory the first time it runs). Not sensitive, just noise.
+# The real fix (opting scaffolded pp-test-ui/pp-test-ui-selenium projects out of Reqnroll
+# telemetry by default) lives upstream in TALXIS/tools-devkit-templates; this entry is
+# defense-in-depth here in case a template still lacks the opt-out or telemetry ever writes
+# something regardless.
+Reqnroll/
+
 # NuGet
 *.nupkg
 **/[Pp]ackages/*
