@@ -72,14 +72,17 @@ txc workspace component create pp-security-role-privilege `
 
 Write-Host "  ✓ Worker → warehouselocation (R)" -ForegroundColor Green
 
-# Warehouse worker — warehousetransaction: Read (Global), Write (Basic)
+# Warehouse worker — warehousetransaction: Read (Global), Write (Basic), Create (Basic)
+# Create is what lets a worker actually "pick" — creating an Outbound transaction record is
+# the pick action itself (see Plugins.Warehouse), so without it the code app's core workflow
+# would be unusable by the persona it's built for.
 txc workspace component create pp-security-role-privilege `
     --output "src/Solutions.Security" `
     --param "RoleName=Warehouse worker" `
-    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Basic }]" `
+    --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Basic }, { PrivilegeType: Create, Level: Basic }]" `
     --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction"
 
-Write-Host "  ✓ Worker → warehousetransaction (R/W)" -ForegroundColor Green
+Write-Host "  ✓ Worker → warehousetransaction (R/W/C)" -ForegroundColor Green
 
 # Warehouse manager — warehouseitem: Full CRUD (Global)
 txc workspace component create pp-security-role-privilege `
