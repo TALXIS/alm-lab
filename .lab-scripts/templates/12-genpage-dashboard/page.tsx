@@ -151,7 +151,7 @@ const GeneratedComponent = (props: GeneratedComponentProps) => {
           <CardHeader header={<Text weight="semibold">Low Stock Alerts</Text>} />
           <div className={styles.cardBody}>
             <WarningRegular fontSize={28} />
-            <Text className={` ${summary.lowStockCount > 0 ? styles.lowStock : ''}`}>
+            <Text className={`${styles.cardValue} ${summary.lowStockCount > 0 ? styles.lowStock : ''}`}>
               {summary.lowStockCount}
             </Text>
           </div>
