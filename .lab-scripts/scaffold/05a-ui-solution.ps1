@@ -13,7 +13,7 @@
 
 Write-Host "`n── Solutions.UI ──" -ForegroundColor Cyan
 
-if (-not (Test-Path "src/Solutions.UI/Solutions.UI.csproj")) {
+if (-not (Get-LabValue 'uiSolutionScaffolded')) {
     txc workspace component create pp-solution `
         --output "src/Solutions.UI" `
         --param "PublisherName=$PublisherName" `
@@ -103,6 +103,11 @@ if (-not (Test-Path "src/Solutions.UI/Solutions.UI.csproj")) {
         --param "AppName=${PublisherPrefix}_warehouseapp"
 
     Write-Host "  ✓ App component: warehousetransaction" -ForegroundColor Green
+
+    # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
+    # re-run after a partial failure (e.g. solution created but the app/components didn't
+    # finish) retries everything rather than silently skipping the missing work.
+    Set-LabValue 'uiSolutionScaffolded' $true
 } else {
     Write-Host "  ✓ Solutions.UI (exists)" -ForegroundColor Green
 }
