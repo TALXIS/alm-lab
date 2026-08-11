@@ -9,5 +9,8 @@
   "testProfile": "test",
   "tenantId": "00000000-0000-0000-0000-000000000000",
   "appId": "00000000-0000-0000-0000-000000000000",
-  "dataverseTestUrl": "https://local-test.stub.invalid"
+  "dataverseTestUrl": "https://local-test.stub.invalid",
+  "configDataDirectory": "/workspaces/alm-lab/src/Packages.Main/Data",
+  "configDataSchemaPath": "/workspaces/alm-lab/src/Packages.Main/Data/data_schema.xml",
+  "configDataFilePath": "/workspaces/alm-lab/src/Packages.Main/Data/data.xml"
 }
