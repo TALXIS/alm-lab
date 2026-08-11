@@ -25,10 +25,16 @@ txc workspace component create pp-plugin-test `
 dotnet sln add src/Plugins.Tests
 
 cd src/Plugins.Tests
-# `dotnet add reference` refuses this: it does its own net10.0-vs-net462 compatibility
-# preflight with no bypass flag, even though the build itself resolves it fine via NuGet
-# asset target fallback (see the NU1702 warning `dotnet build`/`dotnet test` print below).
-# Add the <ProjectReference> element to the csproj XML directly instead of going through the CLI.
+# Plugins.Tests targets net10.0 (FakeXrmEasy v3) but Plugins.Warehouse targets net462 -
+# the Dataverse plugin sandbox is still .NET Framework, so that side can't move (see the
+# constraint note near the top of CP14-implement-unit-tests.ps1). `dotnet add reference`
+# refuses to link projects across that gap: it runs its own net10.0-vs-net462 compatibility
+# preflight and there is no bypass flag, not even `-f`/`--framework` (checked). The actual
+# build doesn't share that limitation - NuGet's asset target fallback resolves the net462
+# reference fine, which is why `dotnet build`/`dotnet test` further down print a NU1702
+# warning ("resolved using .NETFramework,Version=v4.7.2 instead of..."). That warning is
+# expected and benign here - don't "fix" it by trying to retarget either project. So skip
+# the CLI and add the <ProjectReference> element to the csproj XML directly instead.
 $testCsproj = "Plugins.Tests.csproj"
 [xml]$csprojXml = Get-Content $testCsproj -Raw
 $namespaceUri = $csprojXml.DocumentElement.NamespaceURI
