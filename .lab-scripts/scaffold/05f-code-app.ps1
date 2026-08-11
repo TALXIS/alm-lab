@@ -21,7 +21,9 @@
 # After scaffolding and data-source generation, the placeholder UI is replaced with a real
 # implementation (templates/05f-code-app/): an items list, an item detail with its
 # transactions, and a transactions list — all built on the typed models and services that
-# pp-app-code-data generated from the Solutions.DataModel metadata.
+# pp-app-code-data generated from the Solutions.DataModel metadata. All three tables are
+# used: items and transactions drive the pages, locations resolve the item's location
+# lookup (list column, detail card, New Item picker).
 # Expects: $PublisherPrefix from parent scope.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -65,17 +67,31 @@ Write-Host "`n── Code App Data Sources ──" -ForegroundColor Cyan
 
 # ModelSolutionPath is resolved from the --output folder (the template runs its post-actions
 # there), so it points at the data model project relative to the code app project.
-foreach ($table in @("warehouselocation", "warehouseitem", "warehousetransaction")) {
-    $logicalName = "${PublisherPrefix}_$table"
+# One pp-app-code-data invocation per table — three tables, three data sources.
 
-    txc workspace component create pp-app-code-data `
-        --output "src/Apps.WarehousePicking" `
-        --param "EntityLogicalName=$logicalName" `
-        --param "ModelSolutionPath=../Solutions.DataModel"
-    if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source $logicalName failed" -ForegroundColor Red; throw "Data source $logicalName failed" }
+# Warehouse Items — items list page, item detail page, item lookup in transaction forms
+txc workspace component create pp-app-code-data `
+    --output "src/Apps.WarehousePicking" `
+    --param "EntityLogicalName=${PublisherPrefix}_warehouseitem" `
+    --param "ModelSolutionPath=../Solutions.DataModel"
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source ${PublisherPrefix}_warehouseitem failed" -ForegroundColor Red; throw "Data source ${PublisherPrefix}_warehouseitem failed" }
+Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouseitem" -ForegroundColor Green
 
-    Write-Host "  ✓ Data source: $logicalName" -ForegroundColor Green
-}
+# Warehouse Transactions — transactions list page, per-item transactions, create dialogs
+txc workspace component create pp-app-code-data `
+    --output "src/Apps.WarehousePicking" `
+    --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction" `
+    --param "ModelSolutionPath=../Solutions.DataModel"
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source ${PublisherPrefix}_warehousetransaction failed" -ForegroundColor Red; throw "Data source ${PublisherPrefix}_warehousetransaction failed" }
+Write-Host "  ✓ Data source: ${PublisherPrefix}_warehousetransaction" -ForegroundColor Green
+
+# Warehouse Locations — location names on the items list/detail, location pick on New Item
+txc workspace component create pp-app-code-data `
+    --output "src/Apps.WarehousePicking" `
+    --param "EntityLogicalName=${PublisherPrefix}_warehouselocation" `
+    --param "ModelSolutionPath=../Solutions.DataModel"
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source ${PublisherPrefix}_warehouselocation failed" -ForegroundColor Red; throw "Data source ${PublisherPrefix}_warehouselocation failed" }
+Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouselocation" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                                   UI implementation

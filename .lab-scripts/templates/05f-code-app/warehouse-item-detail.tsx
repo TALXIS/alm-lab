@@ -3,7 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import { __PASCAL___warehousetransactionsService } from "@/generated/services/__PASCAL___warehousetransactionsService";
+import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehousetransactions } from "@/generated/models/__PASCAL___warehousetransactionsModel";
+import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
 import {
   categoryLabels,
   transactionTypeLabels,
@@ -38,7 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Package, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Plus, Package, ArrowRightLeft, MapPin } from "lucide-react";
 
 export default function WarehouseItemDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -75,6 +77,24 @@ export default function WarehouseItemDetailPage() {
     },
     enabled: !!id,
   });
+
+  const { data: locations } = useQuery({
+    queryKey: ["warehouseLocations"],
+    queryFn: async () => {
+      const result = await __PASCAL___warehouselocationsService.getAll({
+        select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
+        orderBy: ["__PREFIX___name asc"],
+      });
+      return result.data ?? [];
+    },
+  });
+
+  const locationNames = new Map(
+    (locations ?? []).map((loc: __PASCAL___warehouselocations) => [
+      loc.__PREFIX___warehouselocationid,
+      loc.__PREFIX___name,
+    ])
+  );
 
   const createTxMutation = useMutation({
     mutationFn: async () => {
@@ -154,7 +174,7 @@ export default function WarehouseItemDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -180,6 +200,21 @@ export default function WarehouseItemDetailPage() {
                 {categoryLabels[
                   item.__PREFIX___category as keyof typeof categoryLabels
                 ] ?? item.__PREFIX___category}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Location
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <span className="text-lg font-medium">
+                {locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "-"}
               </span>
             </div>
           </CardContent>

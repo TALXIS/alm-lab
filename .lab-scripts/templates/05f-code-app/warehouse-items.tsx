@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
+import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
+import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
 import { categoryLabels, categoryOptions } from "@/utils/optionSets";
 import {
   Table,
@@ -41,6 +43,7 @@ export default function WarehouseItemsPage() {
   const [sku, setSku] = useState("");
   const [quantity, setQuantity] = useState("");
   const [category, setCategory] = useState("");
+  const [locationId, setLocationId] = useState("");
 
   const { data: items, isLoading, error } = useQuery({
     queryKey: ["warehouseItems"],
@@ -52,6 +55,7 @@ export default function WarehouseItemsPage() {
           "__PREFIX___sku",
           "__PREFIX___availablequantity",
           "__PREFIX___category",
+          "___PREFIX___locationid_value",
           "createdon",
           "statecode",
         ],
@@ -61,6 +65,24 @@ export default function WarehouseItemsPage() {
     },
   });
 
+  const { data: locations } = useQuery({
+    queryKey: ["warehouseLocations"],
+    queryFn: async () => {
+      const result = await __PASCAL___warehouselocationsService.getAll({
+        select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
+        orderBy: ["__PREFIX___name asc"],
+      });
+      return result.data ?? [];
+    },
+  });
+
+  const locationNames = new Map(
+    (locations ?? []).map((loc: __PASCAL___warehouselocations) => [
+      loc.__PREFIX___warehouselocationid,
+      loc.__PREFIX___name,
+    ])
+  );
+
   const createMutation = useMutation({
     mutationFn: async () => {
       return __PASCAL___warehouseitemsService.create({
@@ -68,6 +90,9 @@ export default function WarehouseItemsPage() {
         __PREFIX___sku: sku,
         __PREFIX___availablequantity: quantity,
         __PREFIX___category: Number(category) as any,
+        ...(locationId
+          ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${locationId})` }
+          : {}),
       } as any);
     },
     onSuccess: async () => {
@@ -86,6 +111,7 @@ export default function WarehouseItemsPage() {
     setSku("");
     setQuantity("");
     setCategory("");
+    setLocationId("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -142,6 +168,7 @@ export default function WarehouseItemsPage() {
               <TableHead>SKU</TableHead>
               <TableHead className="text-right">Available Qty</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
@@ -150,7 +177,7 @@ export default function WarehouseItemsPage() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -181,6 +208,9 @@ export default function WarehouseItemsPage() {
                       ] ?? item.__PREFIX___category}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "-"}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -199,7 +229,7 @@ export default function WarehouseItemsPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No warehouse items found
                 </TableCell>
               </TableRow>
@@ -253,6 +283,24 @@ export default function WarehouseItemsPage() {
                   {categoryOptions.map((opt) => (
                     <SelectItem key={opt.value} value={String(opt.value)}>
                       {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select value={locationId} onValueChange={setLocationId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(locations ?? []).map((loc: __PASCAL___warehouselocations) => (
+                    <SelectItem
+                      key={loc.__PREFIX___warehouselocationid}
+                      value={loc.__PREFIX___warehouselocationid}
+                    >
+                      {loc.__PREFIX___name}
                     </SelectItem>
                   ))}
                 </SelectContent>
