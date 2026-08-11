@@ -5,7 +5,9 @@
 #
 # Creates a Playwright-based BDD test project using the pp-test-ui template.
 # Includes frozen step bindings for model-driven app surfaces (forms, views,
-# command bar, navigation) and a sample feature file.
+# command bar, navigation) and a sample feature file, plus a second feature +
+# hand-authored custom steps for the Warehouse Picking code app — a standalone SPA the
+# frozen bindings can't navigate to, since those only know the model-driven app's URL shape.
 #
 # Expects: $PublisherPrefix from parent scope.
 #
@@ -49,6 +51,36 @@ Expand-LabTemplate -Path "11-tests-ui/WarehouseItemNavigation.feature" `
     -Destination "src/Tests.UI/Features/WarehouseItemNavigation.feature" `
     -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
 Write-Host "  ✓ Feature scenario written" -ForegroundColor Green
+
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#                       Warehouse Picking Feature (code app)
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#
+# The frozen bindings under Support/Bindings/ only cover the model-driven app (they navigate
+# via main.aspx?appname=..., a URL the code app — a standalone SPA — doesn't have). This
+# scenario needs its own steps, kept in StepDefinitions/ to signal "ours, not
+# template-shipped" — same split the pp-test-ui template itself uses for genux/custom pages.
+
+txc workspace component create pp-test-ui-feature `
+    --param "name=WarehousePicking" `
+    --output "src/Tests.UI"
+
+# pp-test-ui-feature only scaffolds an empty "Feature: WarehousePicking" stub — Reqnroll
+# generates the .feature.cs designer file from it at build time, nothing to remove here.
+# We overwrite the stub with the real scenarios below via Expand-LabTemplate, same as
+# WarehouseItemNavigation above.
+
+# Full source: .lab-scripts/templates/11-tests-ui/WarehousePicking.feature
+Expand-LabTemplate -Path "11-tests-ui/WarehousePicking.feature" `
+    -Destination "src/Tests.UI/Features/WarehousePicking.feature" `
+    -Tokens @{ TEST_USER = $testUser }
+
+New-Item -ItemType Directory -Path "src/Tests.UI/StepDefinitions" -Force | Out-Null
+# Full source: .lab-scripts/templates/11-tests-ui/WarehousePickingSteps.cs
+Expand-LabTemplate -Path "11-tests-ui/WarehousePickingSteps.cs" `
+    -Destination "src/Tests.UI/StepDefinitions/WarehousePickingSteps.cs"
+
+Write-Host "  ✓ Feature scenario written: WarehousePicking.feature + custom steps" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Configure appsettings.json

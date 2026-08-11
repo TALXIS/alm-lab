@@ -182,7 +182,7 @@ export default function WarehouseItemDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-3xl font-bold" data-testid="item-detail-qty">
               {item.__PREFIX___availablequantity}
             </div>
           </CardContent>
@@ -239,7 +239,7 @@ export default function WarehouseItemDetailPage() {
             <ArrowRightLeft className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-lg font-semibold">Transactions</h2>
           </div>
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
+          <Button size="sm" data-testid="new-transaction-button" onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Transaction
           </Button>
@@ -333,7 +333,7 @@ export default function WarehouseItemDetailPage() {
             <div className="space-y-2">
               <Label>Transaction Type *</Label>
               <Select value={txType} onValueChange={setTxType}>
-                <SelectTrigger>
+                <SelectTrigger data-testid="tx-type-trigger">
                   <SelectValue placeholder="Select transaction type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -349,7 +349,7 @@ export default function WarehouseItemDetailPage() {
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createTxMutation.isPending}>
+              <Button type="submit" data-testid="submit-transaction" disabled={createTxMutation.isPending}>
                 {createTxMutation.isPending ? "Creating..." : "Create"}
               </Button>
             </DialogFooter>

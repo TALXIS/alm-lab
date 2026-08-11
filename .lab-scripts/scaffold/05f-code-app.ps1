@@ -58,15 +58,16 @@ Write-Host "  ✓ ProjectReference: Apps.WarehousePicking → Solutions.UI" -For
 #                                     Data Sources
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #
-# A code app talks to Dataverse through declared data sources. txc generates them from the
-# table metadata already sitting in src/Solutions.DataModel — no live environment needed:
-# typed models and services under src/generated, schema files under .power, and the data
-# source registration in power.config.json that the solution build packs with the app.
+# A code app talks to Dataverse through declared data sources. txc generates them from
+# the table metadata already sitting in src/Solutions.DataModel — no live environment
+# needed: typed models and services under src/generated, schema files under .power, and
+# the data source registration in power.config.json that the solution build packs with
+# the app.
 
 Write-Host "`n── Code App Data Sources ──" -ForegroundColor Cyan
 
-# ModelSolutionPath is resolved from the --output folder (the template runs its post-actions
-# there), so it points at the data model project relative to the code app project.
+# ModelSolutionPath is resolved from the --output folder (the template runs its
+# post-actions there), so it points at the data model project relative to the code app.
 # One pp-app-code-data invocation per table — three tables, three data sources.
 
 # Warehouse Items — items list page, item detail page, item lookup in transaction forms
@@ -94,17 +95,20 @@ if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source ${PublisherPrefix}_ware
 Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouselocation" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#                                   UI implementation
+#                                    Pages (picking UI)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #
-# The pp-app-code template ships a placeholder home page. Replace it with the warehouse UI:
-# router + layout + three pages wired to the generated services (react-query + shadcn/ui).
-# The generated TS names derive from EntitySetName (e.g. Almlab_warehouseitemsService),
-# hence the PascalCase prefix token next to the plain publisher prefix.
+# The base pp-app-code template already scaffolds a working starter (router, layout, a
+# counter-demo home page, providers for theme/toast/react-query). We add the real
+# warehouse screens on top of it: an items list, an item detail page with its
+# transactions, a global transactions ledger, and a locations list — then wire them into
+# the router/nav and drop the now-superseded demo page.
 # Full sources: .lab-scripts/templates/05f-code-app/
 
-Write-Host "`n── Code App UI ──" -ForegroundColor Cyan
+Write-Host "`n── Code App Pages ──" -ForegroundColor Cyan
 
+# Pascal-cased prefix for generated identifiers (Almlab_warehouseitemsService etc.) —
+# txc's codegen title-cases just the first character of the publisher prefix.
 $prefixPascal = [char]::ToUpper($PublisherPrefix[0]) + $PublisherPrefix.Substring(1)
 $appSrc = "src/Apps.WarehousePicking/src"
 $uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
@@ -124,7 +128,7 @@ foreach ($file in @(
     Write-Host "  ✓ $($file.Target)" -ForegroundColor Green
 }
 
-# The router no longer references the template's placeholder home page
+# Drop the now-superseded counter-demo home page — the router no longer references it
 Remove-Item "$appSrc/pages/home.tsx" -ErrorAction SilentlyContinue
 
 Write-Host "  ℹ Local preview: cd src/Apps.WarehousePicking && npm run dev" -ForegroundColor DarkGray

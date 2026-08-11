@@ -186,7 +186,7 @@ export default function WarehouseItemsPage() {
               ))
             ) : items && items.length > 0 ? (
               items.map((item: __PASCAL___warehouseitems) => (
-                <TableRow key={item.__PREFIX___warehouseitemid}>
+                <TableRow key={item.__PREFIX___warehouseitemid} data-testid="warehouse-item-row">
                   <TableCell>
                     <Link
                       to={`/items/${item.__PREFIX___warehouseitemid}`}
