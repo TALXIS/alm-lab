@@ -40,6 +40,7 @@ try {
 
     # Building the code app runs npm install + vite build, so this takes a couple of minutes
     dotnet build --nologo --verbosity quiet
+    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
 
     # The build workflow now needs Node to build the code app — refresh the copy CP05 installed
     if (Test-Path ".github/workflows") {

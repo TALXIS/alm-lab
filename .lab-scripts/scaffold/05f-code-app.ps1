@@ -32,18 +32,18 @@ txc workspace component create pp-app-code `
     --output "src/Apps.WarehousePicking" `
     --param "DisplayName=Warehouse Picking" `
     --param "AppName=$appName"
-if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Apps.WarehousePicking scaffold failed" -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Apps.WarehousePicking scaffold failed" -ForegroundColor Red; throw "Apps.WarehousePicking scaffold failed" }
 
 Write-Host "  ✓ Apps.WarehousePicking project created" -ForegroundColor Green
 Write-Host "  ℹ CanvasApp schema name: ${PublisherPrefix}_$appName" -ForegroundColor DarkGray
 
 # Add the code app project to the Visual Studio solution file (run from repo root)
 dotnet sln add src/Apps.WarehousePicking
-if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ dotnet sln add Apps.WarehousePicking failed" -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ dotnet sln add Apps.WarehousePicking failed" -ForegroundColor Red; throw "dotnet sln add Apps.WarehousePicking failed" }
 
 # Link the code app straight into Solutions.UI — no dedicated solution needed
 dotnet add "src/Solutions.UI/Solutions.UI.csproj" reference "src/Apps.WarehousePicking/Apps.WarehousePicking.csproj"
-if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ ProjectReference Apps.WarehousePicking → Solutions.UI failed" -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ ProjectReference Apps.WarehousePicking → Solutions.UI failed" -ForegroundColor Red; throw "ProjectReference Apps.WarehousePicking to Solutions.UI failed" }
 
 Write-Host "  ✓ ProjectReference: Apps.WarehousePicking → Solutions.UI" -ForegroundColor Green
 
@@ -67,7 +67,7 @@ foreach ($table in @("warehouselocation", "warehouseitem", "warehousetransaction
         --output "src/Apps.WarehousePicking" `
         --param "EntityLogicalName=$logicalName" `
         --param "ModelSolutionPath=../Solutions.DataModel"
-    if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source $logicalName failed" -ForegroundColor Red; exit 1 }
+    if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ Data source $logicalName failed" -ForegroundColor Red; throw "Data source $logicalName failed" }
 
     Write-Host "  ✓ Data source: $logicalName" -ForegroundColor Green
 }

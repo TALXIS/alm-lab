@@ -32,6 +32,7 @@ Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/11-tests-ui.ps1"
     dotnet build src/Tests.UI/Tests.UI.csproj --nologo --verbosity quiet
+    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
 } finally { Pop-Location }
 
 # Test workflow is installed for attendees to inspect, but is manual-only for now

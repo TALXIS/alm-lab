@@ -27,6 +27,7 @@ Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/04-security.ps1"
     dotnet build --nologo --verbosity quiet
+    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp08" -Message "Add warehouse security roles and entity privileges" -Body @'

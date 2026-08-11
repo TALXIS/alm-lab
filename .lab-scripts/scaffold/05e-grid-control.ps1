@@ -33,7 +33,7 @@ $gridPackage = "TALXIS.Controls.Grid.Package"
 # Form GUIDs are generated fresh in 05c and not persisted — recover them from the
 # FormXml file names, the same way 05d recovers view GUIDs.
 $locationFormFile = Get-ChildItem "src/Solutions.UI/Entities/${prefix}_warehouselocation/FormXml/main/*.xml" | Select-Object -First 1
-if (-not $locationFormFile) { Write-Host "  ✗ Warehouse Location form not found — run CP09 first" -ForegroundColor Red; exit 1 }
+if (-not $locationFormFile) { Write-Host "  ✗ Warehouse Location form not found — run CP09 first" -ForegroundColor Red; throw "Warehouse Location form not found" }
 $locationFormGuid = $locationFormFile.BaseName.Trim('{}')
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ $locationFormGuid = $locationFormFile.BaseName.Trim('{}')
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $itemViewFile = Get-ChildItem "src/Solutions.UI/Entities/${prefix}_warehouseitem/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $itemViewFile) { Write-Host "  ✗ Warehouse Item view not found — run CP09 first" -ForegroundColor Red; exit 1 }
+if (-not $itemViewFile) { Write-Host "  ✗ Warehouse Item view not found — run CP09 first" -ForegroundColor Red; throw "Warehouse Item view not found" }
 $itemViewXml  = [xml](Get-Content $itemViewFile.FullName -Raw)
 if (-not $itemViewXml.SelectSingleNode("//cell[@name='${prefix}_reorderpoint']")) {
     $cell = $itemViewXml.CreateElement("cell")
@@ -214,6 +214,6 @@ txc workspace control attach `
     --param "ClientApiFunctionName=WarehouseScripts.GridApi.onDatasetControlInitialized" `
     --force
 
-if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control attach failed" -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control attach failed" -ForegroundColor Red; throw "txc workspace control attach failed" }
 Write-Host "  ✓ talxis_TALXIS.PCF.Grid attached to the Warehouse Items subgrid" -ForegroundColor Green
 
