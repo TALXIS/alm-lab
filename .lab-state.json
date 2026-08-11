@@ -3,5 +3,7 @@
   "publisherName": "ALMLab",
   "slnxName": "WarehouseManagement",
   "packageDeployerScaffolded": true,
-  "dataModelScaffolded": true
+  "dataModelScaffolded": true,
+  "pluginsScaffolded": true,
+  "logicSolutionScaffolded": true
 }
