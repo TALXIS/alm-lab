@@ -123,16 +123,23 @@ Add-ViewColumns `
     -PrimaryIdName "${PublisherPrefix}_warehouselocationid" `
     -Columns @("${PublisherPrefix}_address", "${PublisherPrefix}_capacity", "${PublisherPrefix}_isactive")
 
-Add-DefaultViewColumns `
-    -EntityLogicalName "${PublisherPrefix}_warehouselocation" `
-    -DisplayName "Active Warehouse Locations" `
-    -Columns @("${PublisherPrefix}_address", "${PublisherPrefix}_capacity", "${PublisherPrefix}_isactive")
-
-# Capture the generated view GUID (filename without extension, strip braces)
+# Capture the lookup view's GUID (filename without extension, strip braces) BEFORE calling
+# Add-DefaultViewColumns below — that call scaffolds a second, separate view via its own
+# `pp-entity-view` invocation, which becomes the "most recently created" file the moment it
+# runs. Capturing after that call would silently grab the wrong (default, not lookup) view's
+# GUID here, which subgrids further down use as their ViewId — wiring a subgrid to a
+# querytype=0 view instead of the lookup view then triggers `txc workspace control attach`
+# (Grid overlay, later in this script) to "correct" that view back to lookup-view semantics,
+# reverting the column/querytype/isdefault work Add-DefaultViewColumns just did.
 $warehouselocationViewFile = Get-ChildItem "src/Solutions.UI/Entities/${PublisherPrefix}_warehouselocation/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $warehouselocationViewGuid = $warehouselocationViewFile.BaseName.Trim('{}')
 
 Write-Host "  ✓ View: Active Warehouse Locations (with columns) — GUID: $warehouselocationViewGuid" -ForegroundColor Green
+
+Add-DefaultViewColumns `
+    -EntityLogicalName "${PublisherPrefix}_warehouselocation" `
+    -DisplayName "Active Warehouse Locations" `
+    -Columns @("${PublisherPrefix}_address", "${PublisherPrefix}_capacity", "${PublisherPrefix}_isactive")
 
 txc workspace component create pp-entity-view `
     --output "src/Solutions.UI" `
@@ -145,16 +152,17 @@ Add-ViewColumns `
     -PrimaryIdName "${PublisherPrefix}_warehouseitemid" `
     -Columns @("${PublisherPrefix}_sku", "${PublisherPrefix}_category", "${PublisherPrefix}_availablequantity", "${PublisherPrefix}_unitprice", "${PublisherPrefix}_locationid")
 
-Add-DefaultViewColumns `
-    -EntityLogicalName "${PublisherPrefix}_warehouseitem" `
-    -DisplayName "Active Warehouse Items" `
-    -Columns @("${PublisherPrefix}_sku", "${PublisherPrefix}_category", "${PublisherPrefix}_availablequantity", "${PublisherPrefix}_unitprice", "${PublisherPrefix}_locationid")
-
-# Capture the generated view GUID
+# Capture the lookup view's GUID BEFORE Add-DefaultViewColumns — see the comment on the
+# warehouselocation capture above for why the ordering matters here.
 $warehouseitemViewFile = Get-ChildItem "src/Solutions.UI/Entities/${PublisherPrefix}_warehouseitem/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $warehouseitemViewGuid = $warehouseitemViewFile.BaseName.Trim('{}')
 
 Write-Host "  ✓ View: Active Warehouse Items (with columns) — GUID: $warehouseitemViewGuid" -ForegroundColor Green
+
+Add-DefaultViewColumns `
+    -EntityLogicalName "${PublisherPrefix}_warehouseitem" `
+    -DisplayName "Active Warehouse Items" `
+    -Columns @("${PublisherPrefix}_sku", "${PublisherPrefix}_category", "${PublisherPrefix}_availablequantity", "${PublisherPrefix}_unitprice", "${PublisherPrefix}_locationid")
 
 txc workspace component create pp-entity-view `
     --output "src/Solutions.UI" `
@@ -167,16 +175,17 @@ Add-ViewColumns `
     -PrimaryIdName "${PublisherPrefix}_warehousetransactionid" `
     -Columns @("${PublisherPrefix}_transactiontype", "${PublisherPrefix}_itemid", "${PublisherPrefix}_quantity", "${PublisherPrefix}_transactiondate", "${PublisherPrefix}_totalvalue")
 
-Add-DefaultViewColumns `
-    -EntityLogicalName "${PublisherPrefix}_warehousetransaction" `
-    -DisplayName "Active Warehouse Transactions" `
-    -Columns @("${PublisherPrefix}_transactiontype", "${PublisherPrefix}_itemid", "${PublisherPrefix}_quantity", "${PublisherPrefix}_transactiondate", "${PublisherPrefix}_totalvalue")
-
-# Capture the generated view GUID
+# Capture the lookup view's GUID BEFORE Add-DefaultViewColumns — see the comment on the
+# warehouselocation capture above for why the ordering matters here.
 $warehousetransactionViewFile = Get-ChildItem "src/Solutions.UI/Entities/${PublisherPrefix}_warehousetransaction/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $warehousetransactionViewGuid = $warehousetransactionViewFile.BaseName.Trim('{}')
 
 Write-Host "  ✓ View: Active Warehouse Transactions (with columns) — GUID: $warehousetransactionViewGuid" -ForegroundColor Green
+
+Add-DefaultViewColumns `
+    -EntityLogicalName "${PublisherPrefix}_warehousetransaction" `
+    -DisplayName "Active Warehouse Transactions" `
+    -Columns @("${PublisherPrefix}_transactiontype", "${PublisherPrefix}_itemid", "${PublisherPrefix}_quantity", "${PublisherPrefix}_transactiondate", "${PublisherPrefix}_totalvalue")
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                                  Subgrids
