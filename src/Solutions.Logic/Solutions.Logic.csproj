@@ -1,0 +1,14 @@
+<Project Sdk="TALXIS.DevKit.Build.Sdk/1.8.4">
+  <ItemGroup>
+    <ProjectReference Include="..\Plugins.Warehouse\Plugins.Warehouse.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <ProjectType>Solution</ProjectType>
+  </PropertyGroup>
+  <PropertyGroup Label="Dataverse solution metadata">
+    <PublisherName>ALMLab</PublisherName>
+    <PublisherPrefix>almlab</PublisherPrefix>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+  <Target Name="Publish" />
+</Project>
