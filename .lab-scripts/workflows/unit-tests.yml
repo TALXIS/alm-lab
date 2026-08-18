@@ -1,0 +1,21 @@
+name: unit-tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - name: Plugin unit tests (FakeXrmEasy)
+        run: dotnet test src/Tests.Plugins/Tests.Plugins.csproj --configuration Release
+      - name: Build script bundle
+        run: dotnet build src/Scripts.UI/Scripts.UI.csproj --configuration Release
+      - name: Script unit tests (Jest via dotnet test)
+        run: dotnet test src/Tests.Scripts/Tests.Scripts.csproj --configuration Release

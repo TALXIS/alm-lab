@@ -17,6 +17,14 @@
 $Global:LabRoot      = (Resolve-Path "$PSScriptRoot/../..").Path
 $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 
+# The agentbox image bakes a pinned, older txc into /usr/local/bin for fast startup and relies
+# on the devcontainer's remoteEnv/postStartCommand to shadow it with a freshly-updated global
+# tool on every container start - but that only happens under the actual devcontainer/Codespaces
+# lifecycle. Running the image directly (this repo's LOCAL-DRY-RUN.md, CI) never triggers it, so
+# every checkpoint has to assert the same PATH precedence itself, in its own process, rather than
+# relying on a single earlier checkpoint (or the devcontainer) having already done it.
+$env:PATH = "$HOME/.dotnet/tools:$env:PATH"
+
 # ── Logging ────────────────────────────────────────────────────────────────────────────────
 function Write-Step  { param([string]$m) Write-Host "`n── $m ──" -ForegroundColor Cyan }
 function Write-Ok    { param([string]$m) Write-Host "  ✓ $m" -ForegroundColor Green }
@@ -62,10 +70,31 @@ function Initialize-RandomIdentifier {
     return (Get-LabValue 'randomIdentifier')
 }
 
+# ── Template expansion ──────────────────────────────────────────────────────────────────
+# Renders a whole-file template from .lab-scripts/templates/ by replacing __TOKEN__
+# placeholders with literal values (plain string replace, no regex — so scaffold scripts
+# no longer need backtick-escaping for target languages that use $ themselves, like C#
+# interpolated strings or JS/TS template literals).
+function Expand-LabTemplate {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Destination,
+        [hashtable]$Tokens = @{}
+    )
+    $content = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot "../templates/$Path")
+    foreach ($key in $Tokens.Keys) {
+        $content = $content.Replace("__${key}__", [string]$Tokens[$key])
+    }
+    $destDir = Split-Path $Destination -Parent
+    if ($destDir -and -not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+    Set-Content -LiteralPath $Destination -Value $content -Encoding UTF8
+}
+
 # ── Checkpoint via Pull Request ─────────────────────────────────────────────────────────
 # Proper ALM: every checkpoint lands on main through a PR. We branch, commit, push, open a
 # PR, pause so you can review the diff + checks in the browser, then merge + tag for rollback.
 # Set LAB_AUTO_MERGE=1 to skip the pause (used for unattended testing).
+# Set LAB_LOCAL_MODE=1 to skip GitHub entirely — commits merge into main locally, no push/PR.
 function Save-Checkpoint {
     param(
         [Parameter(Mandatory)][string]$Id,
@@ -75,12 +104,17 @@ function Save-Checkpoint {
     Push-Location $LabRoot
     try {
         if (-not (git config user.email)) {
-            git config user.email "$(gh api user -q .id)+$(gh api user -q .login)@users.noreply.github.com"
-            git config user.name (gh api user -q .login)
+            if ($env:LAB_LOCAL_MODE) {
+                git config user.email "agent@local.test"
+                git config user.name  "alm-lab-agent"
+            } else {
+                git config user.email "$(gh api user -q .id)+$(gh api user -q .login)@users.noreply.github.com"
+                git config user.name (gh api user -q .login)
+            }
         }
         Write-Info "Syncing main..."
         git switch main --quiet 2>&1 | Out-Null
-        git pull --quiet 2>&1 | Out-Null
+        if (-not $env:LAB_LOCAL_MODE) { git pull --quiet 2>&1 | Out-Null }
         git branch -D $Id 2>&1 | Out-Null
         git switch -c $Id --quiet 2>&1 | Out-Null
         Save-LabState  # write state AFTER branch switch so lab-state.json diff is captured
@@ -88,6 +122,17 @@ function Save-Checkpoint {
         if (-not (git status --porcelain)) { Write-Info "No changes for $Id"; git switch main --quiet; return }
         Write-Info "Committing changes..."
         git commit -m "$Id`: $Message" --quiet
+
+        if ($env:LAB_LOCAL_MODE) {
+            Write-Info "LAB_LOCAL_MODE: skipping push/PR — merging '$Id' into main locally"
+            git switch main --quiet
+            git merge --no-ff --quiet -m "Merge $Id`: $Message" $Id 2>&1 | Out-Null
+            git branch -D $Id 2>&1 | Out-Null
+            git tag -f $Id 2>&1 | Out-Null
+            Write-Ok "Committed + tagged $Id locally (rollback: git reset --hard $Id) [LAB_LOCAL_MODE]"
+            return
+        }
+
         git push -u origin $Id --force --quiet 2>&1 | Out-Null
         Start-Sleep 3  # let GitHub settle the ref before opening PR
         # Always target the fork's origin repo explicitly (avoids gh resolving upstream instead)
@@ -99,6 +144,8 @@ function Save-Checkpoint {
         Write-Info "Waiting for build checks..."
         gh pr checks $Id -R $forkRepo --watch
         Write-Info "Merging..."
+        # --admin bypasses the CP03/CP12 ruleset so the lab can merge unattended; on a real
+        # team nobody bypasses - the gate applies to everyone, automation included.
         gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
         git switch main --quiet; git pull --quiet
         git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null

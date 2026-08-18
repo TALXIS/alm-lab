@@ -14,6 +14,10 @@
 #   2. TALXIS CLI (txc)    — Power Platform environments and deploy
 #   3. Azure CLI (az)      — Entra app registrations and OIDC federation
 #
+# Auth hygiene: stale credentials are how deployments end up in the wrong tenant or the
+# wrong environment. That is why we clear the injected GITHUB_TOKEN below and keep exactly
+# one explicit auth profile per CLI - when in doubt, sign out everywhere and start clean.
+#
 # Run:  .lab-scripts/CP01-check-machine-setup.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
@@ -23,23 +27,36 @@ $ErrorActionPreference = "Stop"
 Write-Step "CP01 — Machine setup + sign-in"
 
 # ── 1. Tool check ────────────────────────────────────────────────────────────────────────
+# MinVersion is optional — set it when a tool's version, not just its presence, matters for
+# the lab's npm-based builds (Scripts.UI, code apps, PCF).
 $tools = [ordered]@{
-    "dotnet" = "dotnet --version"     # .NET SDK — builds solutions, plugins, packages
-    "git"    = "git --version"        # version control
-    "gh"     = "gh --version"         # GitHub CLI — repo, PRs, secrets, workflows
-    "pac"    = "pac help"             # Power Platform CLI
-    "txc"    = "txc --version"        # TALXIS CLI — scaffolding, env, deploy
-    "az"     = "az version"           # Azure CLI — app registration + OIDC
+    "dotnet" = @{ Cmd = "dotnet --version" }     # .NET SDK — builds solutions, plugins, packages
+    "git"    = @{ Cmd = "git --version" }        # version control
+    "gh"     = @{ Cmd = "gh --version" }         # GitHub CLI — repo, PRs, secrets, workflows
+    "pac"    = @{ Cmd = "pac help" }             # Power Platform CLI
+    "txc"    = @{ Cmd = "txc --version" }        # TALXIS CLI — scaffolding, env, deploy
+    "az"     = @{ Cmd = "az version" }           # Azure CLI — app registration + OIDC
+    "node"   = @{ Cmd = "node --version"; MinVersion = "22.12" }  # Node.js — npm-based builds
 }
 
 $missing = @()
 foreach ($name in $tools.Keys) {
-    $cmd = $tools[$name].Split(' ')[0]
-    if (Get-Command $cmd -ErrorAction SilentlyContinue) { Write-Ok "$name available" }
-    else { Write-Err "$name NOT found"; $missing += $name }
+    $tool = $tools[$name]
+    $cmd = $tool.Cmd.Split(' ')[0]
+    if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+        Write-Err "$name NOT found"; $missing += $name; continue
+    }
+    if (-not $tool.MinVersion) { Write-Ok "$name available"; continue }
+
+    $rawVersion = (Invoke-Expression $tool.Cmd 2>$null | Select-String -Pattern '\d+\.\d+\.\d+' | Select-Object -First 1).Matches.Value
+    if ($rawVersion -and [version]$rawVersion -ge [version]$tool.MinVersion) {
+        Write-Ok "$name $rawVersion (>= $($tool.MinVersion))"
+    } else {
+        Write-Err "$name $rawVersion is older than the required $($tool.MinVersion)"; $missing += $name
+    }
 }
 if ($missing.Count -gt 0) {
-    Write-Err "Missing tools: $($missing -join ', '). Open this repo in GitHub Codespaces."
+    Write-Err "Missing or outdated tools: $($missing -join ', '). Open this repo in GitHub Codespaces."
     exit 1
 }
 
@@ -47,11 +64,41 @@ if ($missing.Count -gt 0) {
 $rid = Initialize-RandomIdentifier
 Write-Ok "Random identifier for this lab: $rid"
 
+# Both updates below hit nuget.org and can flake transiently (especially with a room full of
+# attendees doing the same thing at once) - retry once before giving up, and actually check
+# the exit code instead of trusting the command silently did what it was asked. A stale
+# template pack fails confusingly much later (e.g. "Unknown parameter" on a real parameter,
+# in CP09's code-app scaffold) instead of here, where the fix is obvious (just re-run CP01).
+function Invoke-WithRetry([string]$Description, [scriptblock]$Command) {
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        & $Command 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { return }
+        if ($attempt -eq 1) { Write-Info "  $Description failed, retrying once..." }
+    }
+    throw "$Description failed after 2 attempts (exit $LASTEXITCODE)"
+}
+
 # Ensure TALXIS CLI is latest (picks up any last-minute fixes).
 Write-Info "Updating TALXIS CLI to latest..."
-dotnet tool update --global TALXIS.CLI 2>&1 | Out-Null
-$env:PATH = "$HOME/.dotnet/tools:$env:PATH"
+Invoke-WithRetry "TALXIS CLI update" { dotnet tool update --global TALXIS.CLI }
 Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
+
+# The agentbox image bakes in a pinned txc + template pack version for fast startup, but
+# `txc workspace component create` (used by every scaffold script) reads its scaffolding
+# from the TALXIS.DevKit.Templates.Dataverse template pack, not from the CLI binary above.
+# Keep the two in lockstep so newly-scaffolded components match the CLI we just updated to.
+Write-Info "Updating TALXIS DevKit templates to latest..."
+Invoke-WithRetry "TALXIS DevKit templates update" { dotnet new install TALXIS.DevKit.Templates.Dataverse }
+Write-Ok "TALXIS DevKit templates updated"
+
+if ($env:LAB_LOCAL_MODE) {
+    Write-Step "Sign in 1/3 — GitHub"
+    Write-Info "LAB_LOCAL_MODE: skipped sign-in for GitHub"
+    Write-Step "Sign in 2/3 — Power Platform (txc)"
+    Write-Info "LAB_LOCAL_MODE: skipped sign-in for Power Platform"
+    Write-Step "Sign in 3/3 — Azure (az)"
+    Write-Info "LAB_LOCAL_MODE: skipped sign-in for Azure"
+} else {
 
 # ── 2. GitHub CLI sign-in (workflow + delete_repo scopes needed for the lab) ────────────
 Write-Step "Sign in 1/3 — GitHub"
@@ -94,11 +141,14 @@ if (-not $tenantId) {
 Set-LabValue 'tenantId' $tenantId
 Write-Ok "Azure: tenant $tenantId"
 
+}
+
 Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab credentials" -Body @'
 Verify the local toolchain and sign in to the services required to build and deploy the warehouse app. This seeds shared lab state so later checkpoints can reuse the same identities and environment metadata.
 
 ## Changes
-- verify dotnet, git, gh, pac, txc, and az are available
+- verify dotnet, git, gh, pac, txc, az, and node are available
+- update the TALXIS CLI (txc) and TALXIS DevKit template pack to latest
 - authenticate GitHub CLI, TALXIS CLI, and Azure CLI
 - persist the random identifier, tenant id, and auth profile references
 ## Testing

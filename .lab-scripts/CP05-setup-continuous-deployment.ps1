@@ -23,8 +23,17 @@ Write-Step "CP05 — Continuous Deployment (OIDC)"
 $rid     = Initialize-RandomIdentifier
 $repo    = Get-LabValue 'repo'
 $testUrl = Get-LabValue 'testEnvUrl'
-if (-not $repo) { $originUrl = git -C $LabRoot remote get-url origin 2>$null; if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $repo = $Matches[1] }; Set-LabValue 'repo' $repo }
+if (-not $repo -and -not $env:LAB_LOCAL_MODE) { $originUrl = git -C $LabRoot remote get-url origin 2>$null; if ($originUrl -match 'github\.com[:/](.+?)(?:\.git)?$') { $repo = $Matches[1] }; Set-LabValue 'repo' $repo }
 if (-not $testUrl) { Write-Err "Run CP04 first (Test environment URL missing)"; exit 1 }
+
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would verify Azure sign-in, create an Entra app"
+    Write-Info "  registration + service principal, add a federated credential trusting"
+    Write-Info "  this repo's main branch, and add the SP as a System Administrator"
+    Write-Info "  application user in the Test environment via the Dataverse OData API."
+    $tenantId = Get-LabValue 'tenantId'; if (-not $tenantId) { $tenantId = "00000000-0000-0000-0000-000000000000"; Set-LabValue 'tenantId' $tenantId }
+    $appId = Get-LabValue 'appId'; if (-not $appId) { $appId = "00000000-0000-0000-0000-000000000000"; Set-LabValue 'appId' $appId }
+} else {
 
 # Step 1: Verify Azure sign-in and tenant (done in CP01).
 $tenantId = Get-LabValue 'tenantId'
@@ -37,8 +46,13 @@ Write-Ok "Azure: tenant $tenantId"
 
 # Step 2: App registration + service principal.
 $appName = "wm-deploy-$rid"
-Set-LabValue 'appName' $appName
 $appId = Get-LabValue 'appId'
+if ($appId -and -not (az ad app show --id $appId --query id -o tsv 2>$null)) {
+    # Cached appId in lab-state no longer exists in Azure AD (e.g. deleted, or lab-state
+    # inherited from another tenant/machine) — treat as absent and recreate below.
+    Write-Warn2 "Cached appId '$appId' not found in Azure AD — recreating."
+    $appId = $null
+}
 if (-not $appId) {
     $appId = az ad app list --display-name $appName --query "[0].appId" -o tsv 2>$null
     if (-not $appId) {
@@ -50,18 +64,12 @@ if (-not $appId) {
     }
 }
 Set-LabValue 'appId' $appId
-$appObjectId = az ad app show --id $appId --query id -o tsv 2>$null
-if ($appObjectId) { Set-LabValue 'appObjectId' $appObjectId }
-$servicePrincipalObjectId = az ad sp show --id $appId --query id -o tsv 2>$null
-if (-not $servicePrincipalObjectId) {
+if (-not (az ad sp show --id $appId --query id -o tsv 2>$null)) {
     az ad sp create --id $appId | Out-Null
-    $servicePrincipalObjectId = az ad sp show --id $appId --query id -o tsv 2>$null
 }
-if ($servicePrincipalObjectId) { Set-LabValue 'servicePrincipalObjectId' $servicePrincipalObjectId }
 
 # Step 3: Federated credential trusting main of this repo.
 $fedCredentialName = "github-main"
-Set-LabValue 'federatedCredentialName' $fedCredentialName
 $fed = @{ name=$fedCredentialName; issuer="https://token.actions.githubusercontent.com";
           subject="repo:$repo`:ref:refs/heads/main"; audiences=@("api://AzureADTokenExchange") } | ConvertTo-Json
 $tmp = New-TemporaryFile; Set-Content $tmp $fed -Encoding UTF8
@@ -73,6 +81,9 @@ Remove-Item $tmp; Write-Ok "Federated credential (repo:${repo}:ref:refs/heads/ma
 # Step 4: Add SP as application user with System Administrator role in Test env.
 # We use the Dataverse OData API directly (pac admin assign-user requires a pac
 # auth profile which is not available in Codespaces; az is already authenticated).
+# NOTE: System Administrator keeps the lab simple but breaks the least-privilege rule we
+# apply to users in CP08. In production, give the deploy principal a custom role scoped to
+# what imports actually need, and never a tenant-level Power Platform admin role.
 $dvToken = (az account get-access-token --resource $testUrl --query accessToken -o tsv 2>$null)
 $dvHeaders = @{ Authorization="Bearer $dvToken"; 'Content-Type'='application/json'; 'OData-Version'='4.0' }
 $dvBase   = $testUrl.TrimEnd('/')
@@ -97,19 +108,28 @@ if (-not $alreadyAssigned) {
 }
 Write-Ok "Service principal added to Test environment as application user (System Administrator)"
 
+}
+
 # Step 5: GitHub secrets.
-gh secret set AZURE_CLIENT_ID    --repo $repo --body $appId
-gh secret set AZURE_TENANT_ID    --repo $repo --body $tenantId
-gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
-Set-LabValue 'dataverseTestUrl' $testUrl
-Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'gh secret set AZURE_CLIENT_ID/AZURE_TENANT_ID/DATAVERSE_TEST_URL'"
+} else {
+    gh secret set AZURE_CLIENT_ID    --repo $repo --body $appId
+    gh secret set AZURE_TENANT_ID    --repo $repo --body $tenantId
+    gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
+    Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
+}
 
 # Step 6: Enable GitHub Actions on the fork (forks have them disabled by default).
-gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1 | Out-Null
-Write-Ok "GitHub Actions enabled on the fork"
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'gh api -X PUT repos/<repo>/actions/permissions'"
+} else {
+    gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1 | Out-Null
+    Write-Ok "GitHub Actions enabled on the fork"
+}
 
 # Step 7: Install workflows. Pushing files under .github/workflows needs the 'workflow' scope.
-if (-not ((gh auth status 2>&1) -match 'workflow')) {
+if (-not $env:LAB_LOCAL_MODE -and -not ((gh auth status 2>&1) -match 'workflow')) {
     Write-Info "Granting GitHub CLI the 'workflow' scope (needed to push Actions)..."
     gh auth refresh -h github.com -s workflow
 }

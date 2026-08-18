@@ -8,6 +8,13 @@
 # ephemeral. We create two Dataverse sandbox environments — Dev and Test — using txc.
 # Their domains include your random identifier so they won't clash in the shared tenant.
 #
+# Why two? Dev is your personal build-and-break space; Test is the stable target the CD
+# pipeline deploys to, where the packaged app is validated before real users see it. Never
+# share a Dev environment between developers - parallel unmanaged edits overwrite each
+# other and ownership of changes gets lost. Because everything lives in source, an
+# environment is cheap to recreate; larger teams even keep a queue of pre-provisioned
+# environments with the latest CI build that developers claim when they need one.
+#
 # Sign-in uses device code: a code is shown, you open https://aka.ms/devicelogin and paste it.
 #
 # Run:  .lab-scripts/CP04-setup-runtime.ps1
@@ -36,9 +43,27 @@ function Get-ConnectionByIdOrUrl {
         Select-Object -First 1
 }
 
-# Step 1: Verify Power Platform sign-in (done in CP01).
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would sign in to Power Platform and provision real"
+    Write-Info "  Dev + Test Dataverse sandbox environments via 'txc env create'. Stubbing"
+    Write-Info "  devEnvUrl/testEnvUrl with unreachable placeholder URLs so later checkpoints"
+    Write-Info "  that only check for their presence can still run."
+    foreach ($key in @('dev', 'test')) {
+        Set-LabValue "${key}EnvUrl" "https://local-$key.stub.invalid"
+        Set-LabValue "${key}Profile" $key
+    }
+} else {
+
+# Step 1: Verify Power Platform sign-in (done in CP01). Lab-state only remembers WHICH
+# auth profile to use — it can't guarantee that profile still exists in this machine's own
+# txc session (e.g. a fresh Codespace, or a .lab-state.json inherited from another machine),
+# so re-check live rather than trusting the cached value blindly.
 $auth = Get-LabValue 'txcAuth'
-if (-not $auth) { Write-Err "Not signed in — run CP01 first"; exit 1 }
+$liveAuth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Where-Object { $_.id -eq $auth } | Select-Object -First 1)
+if (-not $auth -or -not $liveAuth) {
+    Write-Err "Not signed in on this machine (lab-state auth '$auth' not found locally) — run CP01 again."
+    exit 1
+}
 Write-Ok "Authenticated as $auth"
 
 # Step 2: Create Dev + Test sandbox environments (unique domains via $rid).
@@ -59,8 +84,6 @@ foreach ($key in $envs.Keys) {
         Write-Ok "$key environment exists: $url"
     }
 
-    Set-LabValue "${key}EnvName"   $displayName
-    Set-LabValue "${key}EnvDomain" $domain
     Set-LabValue "${key}EnvUrl" $url
 
     # Bind the existing credential to a connection+profile (no extra sign-in).
@@ -91,6 +114,8 @@ foreach ($key in $envs.Keys) {
 # Pin the dev profile as default for local deploys.
 txc config profile select dev | Out-Null
 Write-Ok "Active profile: dev"
+
+}
 
 Save-Checkpoint -Id "cp04" -Message "Provision Dev and Test Dataverse sandbox environments" -Body @'
 Create dedicated Dev and Test Dataverse sandboxes so the warehouse app can be built and validated in isolated environments. The script also wires local txc profiles to both environments for repeatable deployments.

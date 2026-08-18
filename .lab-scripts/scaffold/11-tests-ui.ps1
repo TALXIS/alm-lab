@@ -5,7 +5,9 @@
 #
 # Creates a Playwright-based BDD test project using the pp-test-ui template.
 # Includes frozen step bindings for model-driven app surfaces (forms, views,
-# command bar, navigation) and a sample feature file.
+# command bar, navigation) and a sample feature file, plus a second feature +
+# hand-authored custom steps for the Warehouse Picking code app — a standalone SPA the
+# frozen bindings can't navigate to, since those only know the model-driven app's URL shape.
 #
 # Expects: $PublisherPrefix from parent scope.
 #
@@ -16,6 +18,8 @@ Write-Host "`n── Tests.UI ──" -ForegroundColor Cyan
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Scaffold Test Project
 # ──────────────────────────────────────────────────────────────────────────────────────────
+
+if (-not (Get-LabValue 'testsUiScaffolded')) {
 
 txc workspace component create pp-test-ui `
     --output "src/Tests.UI"
@@ -42,18 +46,41 @@ Write-Host "  ✓ Sample feature: WarehouseItemNavigation.feature" -ForegroundCo
 # Write a meaningful scenario into the feature file
 # Note: replace the login step value with your actual test user account
 $testUser = if ($env:TXC_TEST_USER) { $env:TXC_TEST_USER } else { "your-user@yourtenant.onmicrosoft.com" }
-$featureContent = @"
-Feature: WarehouseItemNavigation
-
-Scenario: User can open a warehouse item from the main view
-    Given I am logged in as '$testUser'
-    And I open the '${PublisherPrefix}_warehouseapp' app
-    When I click on 'Warehouse Items' in the sitemap
-    Then I should see the 'Active Warehouse Items' view
-"@
-
-Set-Content -Path "src/Tests.UI/Features/WarehouseItemNavigation.feature" -Value $featureContent -Encoding UTF8
+# Full source: .lab-scripts/templates/11-tests-ui/WarehouseItemNavigation.feature
+Expand-LabTemplate -Path "11-tests-ui/WarehouseItemNavigation.feature" `
+    -Destination "src/Tests.UI/Features/WarehouseItemNavigation.feature" `
+    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
 Write-Host "  ✓ Feature scenario written" -ForegroundColor Green
+
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#                       Warehouse Picking Feature (code app)
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#
+# The frozen bindings under Support/Bindings/ only cover the model-driven app (they navigate
+# via main.aspx?appname=..., a URL the code app — a standalone SPA — doesn't have). This
+# scenario needs its own steps, kept in StepDefinitions/ to signal "ours, not
+# template-shipped" — same split the pp-test-ui template itself uses for genux/custom pages.
+
+txc workspace component create pp-test-ui-feature `
+    --param "name=WarehousePicking" `
+    --output "src/Tests.UI"
+
+# pp-test-ui-feature only scaffolds an empty "Feature: WarehousePicking" stub — Reqnroll
+# generates the .feature.cs designer file from it at build time, nothing to remove here.
+# We overwrite the stub with the real scenarios below via Expand-LabTemplate, same as
+# WarehouseItemNavigation above.
+
+# Full source: .lab-scripts/templates/11-tests-ui/WarehousePicking.feature
+Expand-LabTemplate -Path "11-tests-ui/WarehousePicking.feature" `
+    -Destination "src/Tests.UI/Features/WarehousePicking.feature" `
+    -Tokens @{ TEST_USER = $testUser }
+
+New-Item -ItemType Directory -Path "src/Tests.UI/StepDefinitions" -Force | Out-Null
+# Full source: .lab-scripts/templates/11-tests-ui/WarehousePickingSteps.cs
+Expand-LabTemplate -Path "11-tests-ui/WarehousePickingSteps.cs" `
+    -Destination "src/Tests.UI/StepDefinitions/WarehousePickingSteps.cs"
+
+Write-Host "  ✓ Feature scenario written: WarehousePicking.feature + custom steps" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Configure appsettings.json
@@ -75,23 +102,10 @@ Write-Host "  ✓ Feature scenario written" -ForegroundColor Green
 $envUrl = if ($env:TXC_ENVIRONMENT_URL) { $env:TXC_ENVIRONMENT_URL } else { "https://yourenv.crm4.dynamics.com" }
 # Resolve to absolute path — works cross-platform (Windows, Linux/Codespaces, macOS)
 $authStatePath = [System.IO.Path]::GetFullPath("src/Tests.UI/auth-state.json").Replace('\', '/')
-$appSettings = @"
-{
-  "TestSettings": {
-    "EnvironmentUrl": "$envUrl",
-    "AppName": "Warehouse Management",
-    "Headless": true,
-    "SlowMo": 0,
-    "Timeout": 60000,
-    "StorageStatePath": "$authStatePath",
-    "ScreenshotOnFailure": true,
-    "TracingEnabled": false,
-    "OutputPath": "TestResults"
-  }
-}
-"@
-
-Set-Content -Path "src/Tests.UI/appsettings.json" -Value $appSettings -Encoding UTF8
+# Full source: .lab-scripts/templates/11-tests-ui/appsettings.json
+Expand-LabTemplate -Path "11-tests-ui/appsettings.json" `
+    -Destination "src/Tests.UI/appsettings.json" `
+    -Tokens @{ ENV_URL = $envUrl; AUTH_STATE_PATH = $authStatePath }
 Write-Host "  ✓ appsettings.json configured" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -123,5 +137,14 @@ if (Test-Path $playwrightScript) {
     }
 } else {
     Write-Host "  ⚠ playwright.ps1 not found at $playwrightScript — run dotnet build first" -ForegroundColor Yellow
+}
+
+# Marks the whole block done — checked instead of Test-Path on the csproj so a re-run after
+# a partial failure (e.g. project created but the feature file/build didn't finish) retries
+# everything rather than silently skipping the missing work.
+Set-LabValue 'testsUiScaffolded' $true
+
+} else {
+    Write-Host "  ✓ Tests.UI (exists)" -ForegroundColor Green
 }
 

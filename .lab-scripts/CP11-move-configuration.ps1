@@ -5,6 +5,19 @@
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Reference data (e.g. warehouse locations) must travel with the app, not be re-keyed per
+# environment. The Configuration Migration Tool (CMT) via txc moves records the same way
+# solutions move metadata - and just like metadata, the records themselves can be SOURCE:
+# an authored data.xml with stable GUIDs that any environment imports identically.
+#
+# The flow, all from source control:
+#   1. Author the CMT package (schema + seed records + OPC manifest) beside the Package
+#      Deployer - records as code, reviewable in a PR (scaffold/13-config-data.ps1).
+#   2. Import it into Dev - the app instantly has data to work with.
+#   3. Round-trip: export from Dev back into the same package - any records you added
+#      by hand in the maker portal get captured as source (the data twin of
+#      'txc env solution pull' from CP10).
+#   4. Import into Test - config stays consistent across environments; in CI the package
+#      deploys alongside the solutions.
 # environment. We use the Configuration Migration Tool (CMT) via txc: export config data
 # from Dev, store the package next to the Package Deployer, and import into Test. In CI the
 # package is deployed alongside solutions, keeping config in source control too.

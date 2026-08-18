@@ -1,0 +1,19 @@
+display_name: "Warehouse test <rid>"
+location: "europe"
+environment_type: "Sandbox"
+description: "Illustrative example — Test sandbox for the warehouse app (see .lab-state.json / CP04 for the real, script-provisioned environment)."
+environment_group_id: "" # paste module.workshop_environments.id from groups/terraform output
+deployment_principal_id: "TODO-CHANGE-ME" # paste `client_id` output from identity/terraform
+dataverse:
+  language_code: "1033"
+  currency_code: "EUR"
+  domain: "wm-test-<rid>"
+security_teams: []
+environment_settings:
+  audit_and_logs:
+    plugin_trace_log_setting: "Exception"
+    audit_settings:
+      is_audit_enabled: true
+      is_read_audit_enabled: true
+      is_user_access_audit_enabled: true
+      log_retention_period_in_days: 31

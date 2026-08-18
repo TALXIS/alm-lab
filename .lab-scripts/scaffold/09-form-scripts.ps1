@@ -26,84 +26,18 @@ Write-Host "  ✓ Scripts.UI project (TypeScript → JS)" -ForegroundColor Green
 #                              TypeScript Source Files
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-$prefix = $PublisherPrefix
-
 # Form handlers — written to src/index.ts which is the rollup entry point.
 # The UMD global name in rollup.config.mjs must be "WarehouseScripts" so the
 # form event handlers can resolve WarehouseScripts.TransactionForm.onLoad etc.
-$indexScript = @"
-export class TransactionForm {
-    /**
-     * OnLoad handler for the Warehouse Transaction main form.
-     * Sets default transaction date to today if empty.
-     */
-    public static onLoad(executionContext: Xrm.Events.EventContext): void {
-        const formContext = executionContext.getFormContext();
-
-        // Default transaction date to today
-        const dateAttr = formContext.getAttribute("${prefix}_transactiondate");
-        if (dateAttr && !dateAttr.getValue()) {
-            dateAttr.setValue(new Date());
-        }
-    }
-
-    /**
-     * OnChange handler for the quantity field.
-     * Recalculates total value based on quantity x item unit price.
-     */
-    public static async onQuantityChange(executionContext: Xrm.Events.EventContext): Promise<void> {
-        const formContext = executionContext.getFormContext();
-
-        const quantity = (formContext.getAttribute("${prefix}_quantity") as Xrm.Attributes.NumberAttribute)?.getValue();
-        const itemAttr = formContext.getAttribute("${prefix}_itemid") as Xrm.Attributes.LookupAttribute;
-        const itemVal = itemAttr?.getValue() as Xrm.LookupValue[] | null;
-
-        if (quantity && itemVal && itemVal.length) {
-            try {
-                const item = await Xrm.WebApi.retrieveRecord(
-                    "${prefix}_warehouseitem",
-                    itemVal[0].id.replace(/[{}]/g, ""),
-                    "?\`$select=${prefix}_unitprice"
-                );
-                const unitPrice = item["${prefix}_unitprice"] as number;
-                if (unitPrice) {
-                    const totalValue = quantity * unitPrice;
-                    (formContext.getAttribute("${prefix}_totalvalue") as Xrm.Attributes.NumberAttribute)?.setValue(totalValue);
-                }
-            } catch {
-                // Item not found or no price — leave total value unchanged
-            }
-        }
-    }
-}
-
-export class RibbonActions {
-    /**
-     * Check Stock Levels — opens an alert showing the current stock for the selected item.
-     */
-    public static async checkStockLevels(formContext: Xrm.FormContext): Promise<void> {
-        const name = (formContext.getAttribute("${prefix}_name") as Xrm.Attributes.StringAttribute)?.getValue() ?? "Unknown";
-        const qty = (formContext.getAttribute("${prefix}_availablequantity") as Xrm.Attributes.NumberAttribute)?.getValue() ?? 0;
-        const reorder = (formContext.getAttribute("${prefix}_reorderpoint") as Xrm.Attributes.NumberAttribute)?.getValue() ?? 0;
-
-        let message = "Stock level for " + name + ": " + qty + " units.";
-        if (qty <= reorder) {
-            message += "\n⚠ Below reorder point (" + reorder + "). Consider restocking.";
-        } else {
-            message += "\n✓ Stock is above reorder point (" + reorder + ").";
-        }
-
-        await Xrm.Navigation.openAlertDialog({ text: message, title: "Stock Check" });
-    }
-}
-"@
-
-Set-Content -Path "src/Scripts.UI/src/index.ts" -Value $indexScript -Encoding UTF8
+# Full source: .lab-scripts/templates/09-form-scripts/index.ts
+Expand-LabTemplate -Path "09-form-scripts/index.ts" `
+    -Destination "src/Scripts.UI/src/index.ts" `
+    -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ src/index.ts (TransactionForm + RibbonActions)" -ForegroundColor Green
 
 # Update rollup UMD name to match the namespace expected by form event handlers
 $rollupConfig = Get-Content "src/Scripts.UI/rollup.config.mjs" -Raw
-$rollupConfig = $rollupConfig -replace "name: '${prefix}_main'", "name: 'WarehouseScripts'"
+$rollupConfig = $rollupConfig -replace "name: '${PublisherPrefix}_main'", "name: 'WarehouseScripts'"
 Set-Content -Path "src/Scripts.UI/rollup.config.mjs" -Value $rollupConfig -Encoding UTF8
 Write-Host "  ✓ rollup.config.mjs (UMD name → WarehouseScripts)" -ForegroundColor Green
 

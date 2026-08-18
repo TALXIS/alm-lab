@@ -1,0 +1,19 @@
+display_name: "Warehouse dev <rid>"
+location: "europe"
+environment_type: "Sandbox"
+description: "Illustrative example — Dev sandbox for the warehouse app (see .lab-state.json / CP04 for the real, script-provisioned environment). Replace <rid> with your actual random identifier if you ever wire this up."
+environment_group_id: "" # paste module.workshop_environments.id from groups/terraform output
+deployment_principal_id: "" # CP05 only registers the CD principal in Test, so Dev has no app user by default
+dataverse:
+  language_code: "1033"
+  currency_code: "EUR"
+  domain: "wm-dev-<rid>"
+security_teams: []
+environment_settings:
+  audit_and_logs:
+    plugin_trace_log_setting: "Exception"
+    audit_settings:
+      is_audit_enabled: true
+      is_read_audit_enabled: true
+      is_user_access_audit_enabled: true
+      log_retention_period_in_days: 31
