@@ -20,6 +20,12 @@
     "update-txc": "dotnet tool update --global TALXIS.CLI 2>/dev/null || true",
     "update-devkit-templates": "dotnet new install TALXIS.DevKit.Templates.Dataverse 2>/dev/null || dotnet new install TALXIS.DevKit.Templates.Dataverse 2>/dev/null || true"
   },
+  // Runs once, at container creation - not on every start, since nothing it does is baked
+  // into the image. Registers the TALXIS/skills plugin (Skills + the txc MCP server) with
+  // whichever of Claude Code / GitHub Copilot is present in the container.
+  "postCreateCommand": {
+    "configure-agent-harness": "curl -fsSL --max-time 20 https://talxis.com/agentbox-harness | timeout 90 bash || true"
+  },
   "customizations": {
     "codespaces": {
       "openFiles": ["README.md"]
