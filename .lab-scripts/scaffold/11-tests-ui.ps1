@@ -53,6 +53,42 @@ Expand-LabTemplate -Path "11-tests-ui/WarehouseItemNavigation.feature" `
 Write-Host "  ✓ Feature scenario written" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
+#                  Warehouse Locations / Transactions Navigation (sitemap coverage)
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#
+# Same frozen navigation vocabulary as WarehouseItemNavigation above — these two entities
+# also have their own sitemap subarea and view (see scaffold/05b-sitemap.ps1 and
+# 05d-views-subgrids.ps1), so they get the same coverage rather than being left untested.
+
+txc workspace component create pp-test-ui-feature `
+    --param "name=WarehouseLocationNavigation" `
+    --output "src/Tests.UI"
+# Full source: .lab-scripts/templates/11-tests-ui/WarehouseLocationNavigation.feature
+Expand-LabTemplate -Path "11-tests-ui/WarehouseLocationNavigation.feature" `
+    -Destination "src/Tests.UI/Features/WarehouseLocationNavigation.feature" `
+    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
+Write-Host "  ✓ Sample feature: WarehouseLocationNavigation.feature" -ForegroundColor Green
+
+txc workspace component create pp-test-ui-feature `
+    --param "name=WarehouseTransactionNavigation" `
+    --output "src/Tests.UI"
+# Full source: .lab-scripts/templates/11-tests-ui/WarehouseTransactionNavigation.feature
+Expand-LabTemplate -Path "11-tests-ui/WarehouseTransactionNavigation.feature" `
+    -Destination "src/Tests.UI/Features/WarehouseTransactionNavigation.feature" `
+    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
+Write-Host "  ✓ Sample feature: WarehouseTransactionNavigation.feature" -ForegroundColor Green
+
+# One cross-area scenario as a lightweight sitemap regression check — same steps, chained.
+txc workspace component create pp-test-ui-feature `
+    --param "name=WarehouseCrossAreaNavigation" `
+    --output "src/Tests.UI"
+# Full source: .lab-scripts/templates/11-tests-ui/WarehouseCrossAreaNavigation.feature
+Expand-LabTemplate -Path "11-tests-ui/WarehouseCrossAreaNavigation.feature" `
+    -Destination "src/Tests.UI/Features/WarehouseCrossAreaNavigation.feature" `
+    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
+Write-Host "  ✓ Sample feature: WarehouseCrossAreaNavigation.feature" -ForegroundColor Green
+
+# ──────────────────────────────────────────────────────────────────────────────────────────
 #                       Warehouse Picking Feature (code app)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #

@@ -47,7 +47,7 @@ Add browser-based regression coverage so key warehouse scenarios can be validate
 
 ## Changes
 - add src/Tests.UI with Reqnroll and Playwright test assets
-- create a sample warehouse navigation feature and appsettings.json
+- create sample warehouse navigation features (Items, Locations, Transactions) covering every sitemap area and view, plus a cross-area regression scenario, and appsettings.json
 - add a Warehouse Picking feature covering the code app's picking flow (blocked over-pick,
   successful pick updates qty on hand), with hand-authored custom steps in StepDefinitions/
   since the frozen model-driven bindings can't navigate to a standalone SPA
