@@ -141,14 +141,36 @@ function Save-Checkpoint {
         $url = gh pr create -R $forkRepo --base main --head $Id --title "$Id`: $Message" --body $prBody 2>&1
         if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
         if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
+        # GitHub needs a moment to register the check runs for a freshly pushed branch.
+        # Without this wait, 'gh pr checks --watch' returns "no checks reported" immediately
+        # and we would merge (or try to) before CI has even started.
         Write-Info "Waiting for build checks..."
+        for ($i = 0; $i -lt 30; $i++) {
+            $probe = gh pr checks $Id -R $forkRepo 2>&1
+            if ($probe -notmatch 'no checks reported') { break }
+            Start-Sleep 5
+        }
         gh pr checks $Id -R $forkRepo --watch
+
         Write-Info "Merging..."
-        # --admin bypasses the CP03/CP12 ruleset so the lab can merge unattended; on a real
-        # team nobody bypasses - the gate applies to everyone, automation included.
-        gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
+        # --admin asks GitHub to bypass the CP03/CP12 ruleset so the lab can merge unattended;
+        # on a real team nobody bypasses - the gate applies to everyone, automation included.
+        # Note that a ruleset with no bypass actors refuses this, which is exactly why the
+        # exit code below is checked: a merge that did not happen must not report success.
+        $mergeOutput = gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Err "Merge of $Id failed - the PR is still open:"
+            Write-Host $mergeOutput
+            Write-Err "Resolve it on GitHub (or re-run once checks pass), then re-run this checkpoint."
+            exit 1
+        }
         git switch main --quiet; git pull --quiet
-        git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
+        # Fully-qualified refspecs: the just-merged local branch still shares this name, and a
+        # bare 'git push origin cp13' is ambiguous between refs/heads and refs/tags ("matches
+        # more than one"), which silently left every checkpoint tag unpushed.
+        git tag -f $Id 2>&1 | Out-Null
+        git push -f origin "refs/tags/${Id}:refs/tags/${Id}" --quiet 2>&1 | Out-Null
+        git branch -D $Id 2>&1 | Out-Null
         Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
     } finally { Pop-Location }
 }

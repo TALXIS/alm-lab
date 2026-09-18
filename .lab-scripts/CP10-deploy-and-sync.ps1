@@ -123,6 +123,13 @@ if (-not $autoMode) {
 # Step 3: Pull environment changes back to source.
 # txc env solution pull downloads the unmanaged solution(s) from Dev into the source tree.
 # This is how manual customizations in the maker portal get committed as source.
+#
+# Caveat: this only works while Dev still holds an UNMANAGED layer of the solution. The
+# package built above installs managed solutions, so an environment that has only ever
+# received that package answers this pull with 'Managed solutions cannot be exported'
+# (0x80048036). Dev is meant to be the one environment where the unmanaged layer lives -
+# if you hit that error, the app was installed here as managed and there is nothing
+# unmanaged to bring back.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Info "Pulling solution changes from Dev back to source..."
@@ -130,7 +137,7 @@ $solutions = @("Solutions.Security")  # The one we asked them to modify
 foreach ($sol in $solutions) {
     $solPath = Join-Path $LabRoot "src/$sol"
     if (Test-Path $solPath) {
-        txc env solution pull --folder $solPath --profile $devProfile
+        txc env solution pull $solPath --profile $devProfile
         if ($LASTEXITCODE -ne 0) { Write-Warn2 "Pull for $sol returned non-zero (may be OK if no changes)" }
     }
 }
