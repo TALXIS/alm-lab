@@ -29,3 +29,7 @@ Thumbs.db
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl
+
+# Node dependencies (restored with npm ci; note the blanket [Bb]in/ rule above would
+# otherwise commit these without each package's bin/ folder, leaving dangling .bin symlinks)
+node_modules/

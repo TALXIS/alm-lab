@@ -8,6 +8,8 @@
     <Project Path="src/Solutions.Logic/Solutions.Logic.csproj" />
     <Project Path="src/Solutions.Security/Solutions.Security.csproj" />
     <Project Path="src/Solutions.UI/Solutions.UI.csproj" />
+    <Project Path="src/Tests.Plugins/Tests.Plugins.csproj" />
+    <Project Path="src/Tests.Scripts/Tests.Scripts.csproj" />
     <Project Path="src/Tests.UI/Tests.UI.csproj" />
   </Folder>
 </Solution>

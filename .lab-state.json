@@ -26,5 +26,7 @@
   "configDataDirectory": "/Users/metju/Developer/repos/alm-lab/src/Packages.Main/Data",
   "configDataSchemaPath": "/Users/metju/Developer/repos/alm-lab/src/Packages.Main/Data/data_schema.xml",
   "configDataFilePath": "/Users/metju/Developer/repos/alm-lab/src/Packages.Main/Data/data.xml",
+  "pluginsTestsScaffolded": true,
+  "scriptsTestsScaffolded": true,
   "testsUiScaffolded": true
 }
