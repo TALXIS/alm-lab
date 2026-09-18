@@ -1,0 +1,40 @@
+<entities>
+  <entity name="almlab_warehouselocation" displayname="Warehouse Location"
+          primaryidfield="almlab_warehouselocationid" primarynamefield="almlab_name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Location" name="almlab_warehouselocationid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="almlab_name" type="string" customfield="true" />
+      <field displayname="Address" name="almlab_address" type="string" customfield="true" />
+      <field displayname="Capacity" name="almlab_capacity" type="number" customfield="true" />
+      <field displayname="Is Active" name="almlab_isactive" type="bool" customfield="true" />
+    </fields>
+  </entity>
+  <entity name="almlab_warehouseitem" displayname="Warehouse Item"
+          primaryidfield="almlab_warehouseitemid" primarynamefield="almlab_name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Item" name="almlab_warehouseitemid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="almlab_name" type="string" customfield="true" />
+      <field displayname="SKU" name="almlab_sku" type="string" customfield="true" />
+      <field displayname="Available Quantity" name="almlab_availablequantity" type="number" customfield="true" />
+      <field displayname="Category" name="almlab_category" type="optionsetvalue" customfield="true" />
+      <field displayname="Is Perishable" name="almlab_isperishable" type="bool" customfield="true" />
+      <field displayname="Unit Price" name="almlab_unitprice" type="money" customfield="true" />
+      <field displayname="Reorder Point" name="almlab_reorderpoint" type="number" customfield="true" />
+      <field displayname="Location" name="almlab_locationid" type="entityreference" lookupType="almlab_warehouselocation" customfield="true" />
+    </fields>
+  </entity>
+  <entity name="almlab_warehousetransaction" displayname="Warehouse Transaction"
+          primaryidfield="almlab_warehousetransactionid" primarynamefield="almlab_name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Transaction" name="almlab_warehousetransactionid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="almlab_name" type="string" customfield="true" />
+      <field displayname="Item" name="almlab_itemid" type="entityreference" lookupType="almlab_warehouseitem" customfield="true" />
+      <field displayname="Quantity" name="almlab_quantity" type="number" customfield="true" />
+      <field displayname="Transaction Type" name="almlab_transactiontype" type="optionsetvalue" customfield="true" />
+      <field displayname="Reference Number" name="almlab_referencenumber" type="string" customfield="true" />
+    </fields>
+  </entity>
+</entities>

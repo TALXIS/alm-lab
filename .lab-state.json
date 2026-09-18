@@ -22,5 +22,8 @@
   "logicSolutionScaffolded": true,
   "securityScaffolded": true,
   "appId": "7b46e1d9-6c62-410a-95a4-02fd95f835c8",
-  "uiSolutionScaffolded": true
+  "uiSolutionScaffolded": true,
+  "configDataDirectory": "/Users/metju/Developer/repos/alm-lab/src/Packages.Main/Data",
+  "configDataSchemaPath": "/Users/metju/Developer/repos/alm-lab/src/Packages.Main/Data/data_schema.xml",
+  "configDataFilePath": "/Users/metju/Developer/repos/alm-lab/src/Packages.Main/Data/data.xml"
 }
