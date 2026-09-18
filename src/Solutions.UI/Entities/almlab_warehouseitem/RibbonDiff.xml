@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RibbonDiffXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CustomActions>
+    <CustomAction Id="almlab.almlab_warehouseitem.Button.checkstocklevels.CustomAction" Location="Mscrm.Form.almlab_warehouseitem.MainTab.Save.Controls._children" Sequence="31">
+      <CommandUIDefinition>
+        <Button Alt="$LocLabels:almlab.almlab_warehouseitem.Button.checkstocklevels.Alt" Command="almlab.almlab_warehouseitem.Command.checkstocklevels" Id="almlab.almlab_warehouseitem.Button.checkstocklevels" LabelText="$LocLabels:almlab.almlab_warehouseitem.Button.checkstocklevels.LabelText" Sequence="31" TemplateAlias="o1" ToolTipTitle="$LocLabels:almlab.almlab_warehouseitem.Button.checkstocklevels.ToolTipTitle" ToolTipDescription="$LocLabels:almlab.almlab_warehouseitem.Button.checkstocklevels.ToolTipDescription" />
+      </CommandUIDefinition>
+    </CustomAction>
+  </CustomActions>
+  <Templates>
+    <RibbonTemplates Id="Mscrm.Templates">
+    </RibbonTemplates>
+  </Templates>
+  <CommandDefinitions>
+    <CommandDefinition Id="almlab.almlab_warehouseitem.Command.checkstocklevels">
+      <EnableRules />
+      <DisplayRules />
+      <Actions>
+        <JavaScriptFunction FunctionName="WarehouseScripts.RibbonActions.checkStockLevels" Library="$webresource:almlab_main.js">
+          <CrmParameter Value="PrimaryControl" />
+        </JavaScriptFunction>
+      </Actions>
+    </CommandDefinition>
+  </CommandDefinitions>
+  <RuleDefinitions>
+    <TabDisplayRules />
+    <DisplayRules />
+    <EnableRules />
+  </RuleDefinitions>
+  <LocLabels>
+    <LocLabel Id="almlab.almlab_warehouseitem.Button.checkstocklevels.Alt">
+      <Titles>
+        <Title description="Check Stock Levels" languagecode="1033" />
+      </Titles>
+    </LocLabel>
+    <LocLabel Id="almlab.almlab_warehouseitem.Button.checkstocklevels.LabelText">
+      <Titles>
+        <Title description="Check Stock Levels" languagecode="1033" />
+      </Titles>
+    </LocLabel>
+    <LocLabel Id="almlab.almlab_warehouseitem.Button.checkstocklevels.ToolTipDescription">
+      <Titles>
+        <Title description="Check Stock Levels" languagecode="1033" />
+      </Titles>
+    </LocLabel>
+    <LocLabel Id="almlab.almlab_warehouseitem.Button.checkstocklevels.ToolTipTitle">
+      <Titles>
+        <Title description="Check Stock Levels" languagecode="1033" />
+      </Titles>
+    </LocLabel>
+  </LocLabels>
+</RibbonDiffXml>

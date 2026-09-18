@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AppModule>
+  <UniqueName>almlab_warehouseapp</UniqueName>
+  <IntroducedVersion>1.0</IntroducedVersion>
+  <WebResourceId>953b9fac-1e5e-e611-80d6-00155ded156f</WebResourceId>
+  <OptimizedFor>
+  </OptimizedFor>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <FormFactor>1</FormFactor>
+  <ClientType>4</ClientType>
+  <NavigationType>0</NavigationType>
+  <AppModuleComponents>
+    <AppModuleComponent type="62" schemaName="almlab_warehouseapp" />
+    <AppModuleComponent type="1" schemaName="almlab_warehouselocation" />
+    <AppModuleComponent type="1" schemaName="almlab_warehouseitem" />
+    <AppModuleComponent type="1" schemaName="almlab_warehousetransaction" />
+    <AppModuleComponent type="60" id="{0ed84eae-03d3-43ec-9cc1-62acf1896c7d}" />
+    <AppModuleComponent type="60" id="{85437b6c-8532-435f-85d1-0b91a9be665c}" />
+    <AppModuleComponent type="60" id="{cec239bf-f97a-4dc5-82bc-8077149f8f2e}" />
+  </AppModuleComponents>
+  <AppModuleRoleMaps>
+    <Role id="{979144c2-989b-41a5-a146-6b3ea4130e8c}" />
+  </AppModuleRoleMaps>
+  <LocalizedNames>
+    <LocalizedName description="warehouseapp" languagecode="1033" />
+  </LocalizedNames>
+  <appsettings>
+    <appsetting settingdefinitionid.uniquename="AppChannel">
+      <iscustomizable>1</iscustomizable>
+      <value>1</value>
+    </appsetting>
+  </appsettings>
+</AppModule>

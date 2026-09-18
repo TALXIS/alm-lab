@@ -1,0 +1,216 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{0ed84eae-03d3-43ec-9cc1-62acf1896c7d}</formid>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form shownavigationbar="false" headerdensity="HighWithControls" showImage="false">
+      <tabs>
+        <tab verticallayout="true" id="{a0ecb838-f0d6-4498-aaf4-0334c9bd165b}" IsUserDefined="1" name="general" labelid="{6be7469a-bb4f-491e-b2b1-ef1a97c7a4c7}">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="true" showbar="false" IsUserDefined="0" id="{32b140b6-d1ce-4609-8a79-54c99b14ad53}" labelid="{4cdbb906-3a3d-4ac3-943c-bf6cb67a4ce6}" name="general">
+                  <labels>
+                    <label description="GENERAL" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{E2AE8220-990F-4BA8-9227-A6F0B4B30772}" labelid="{9B42E9E1-459E-4DD5-BF9C-3DE2998185AB}">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="almlab_name" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{B6DBBABD-D776-42B4-9417-B430321F63E8}" labelid="{58E84742-AB93-43C1-9769-199A6FA4E00F}">
+                        <labels>
+                          <label description="Capacity" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_capacity" classid="{C3EFE0C3-0EC6-42be-8349-CBD9079DFD8E}" datafieldname="almlab_capacity" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{3A37B53D-DCD1-46D0-A32E-5FFC9BD6C9AC}" labelid="{4610BD94-5BA6-4ECC-B965-3CC95ABDE27F}">
+                        <labels>
+                          <label description="Address" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_address" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="almlab_address" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{C447C58D-BF14-4529-9F24-BFE7C36536A2}" labelid="{9D55977A-221B-46E5-9A94-95766D6CC7E1}">
+                        <labels>
+                          <label description="Is Active" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_isactive" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="almlab_isactive" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{BE36AB11-32D6-48DA-A201-58C2E35AB54B}" labelid="{EA65AB17-CAA0-4632-93E1-CD87416FFBB0}">
+                        <labels>
+                          <label description="Notes" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_notes" classid="{E0DECE4B-6FC8-4a8f-A065-082708572369}" datafieldname="almlab_notes" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell locklevel="0" id="{51289F4A-4A81-4469-B4D5-6C6852F0D7E0}" rowspan="4" colspan="1" auto="false" showlabel="false">
+                        <labels>
+                          <label description="Warehouse Items" languagecode="1033" />
+                        </labels>
+                        <control indicationOfSubgrid="true" id="subgrid" classid="{E7A81278-8635-4D9E-8D4D-59480B391C5B}" uniqueid="{AE365251-E86F-4F25-A5D4-1EB64AF1FD3F}">
+                          <parameters>
+                            <RecordsPerPage>4</RecordsPerPage>
+                            <AutoExpand>Fixed</AutoExpand>
+                            <EnableQuickFind>false</EnableQuickFind>
+                            <EnableViewPicker>false</EnableViewPicker>
+                            <EnableChartPicker>true</EnableChartPicker>
+                            <ChartGridMode>All</ChartGridMode>
+                            <TargetEntityType>almlab_warehouseitem</TargetEntityType>
+                            <ViewId>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</ViewId>
+                            <ViewIds>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</ViewIds>
+                            <RelationshipName>almlab_almlab_warehouselocation_almlab_warehouseitem_locationid</RelationshipName>
+                          </parameters>
+                        </control>
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{5a5e6878-6d94-463a-82ae-acbfd1e661cd}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{d37cea5f-b5b2-4503-8180-1a3acdea7cac}" showlabel="false" labelid="{f3671a25-1e86-4a13-a29b-d3b32af3eaba}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{4c07397f-2886-4bb9-8db7-9393653681d6}" showlabel="false" labelid="{d42b6d86-aa75-4610-93c5-eb0cc002533f}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{29181196-9b17-4017-9abb-f9e0ece4a28d}" showlabel="false" labelid="{25fb5441-283b-4cf8-8cb9-f673ae1623d1}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{b4409b7b-ae10-41c7-8dcf-d75f32041094}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{0c01b763-3956-444b-a526-eea96babe332}" showlabel="false" labelid="{ee825352-5447-4274-a022-a44b58efb4ab}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{82ac9129-e699-4018-87b1-7e69a3eeeaad}" showlabel="false" labelid="{7dc4e40e-a448-45f1-aa77-e929518503c7}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{ad484db1-c5dc-4c1c-82be-b523e2013888}" showlabel="false" labelid="{1ab74241-6dd9-4055-830c-2216284d0636}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <controlDescriptions>
+        <controlDescription forControl="{AE365251-E86F-4F25-A5D4-1EB64AF1FD3F}">
+          <customControl id="{E7A81278-8635-4D9E-8D4D-59480B391C5B}">
+            <parameters />
+          </customControl>
+          <customControl formFactor="0" name="talxis_TALXIS.PCF.Grid">
+            <parameters>
+              <data-set name="Grid">
+                <ViewId>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</ViewId>
+                <TargetEntityType>almlab_warehouseitem</TargetEntityType>
+                <IsUserView>false</IsUserView>
+                <EnableViewPicker>false</EnableViewPicker>
+                <RelationshipName>almlab_almlab_warehouselocation_almlab_warehouseitem_locationid</RelationshipName>
+                <FilteredViewIds>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</FilteredViewIds>
+              </data-set>
+              <Columns type="Multiple" static="true">[ { "name": "almlab_category", "grouping": { "isGrouped": true } }, { "name": "almlab_availablequantity", "aggregation": { "aggregationFunction": "sum" } }, { "name": "almlab_reorderpoint", "isHidden": true } ]</Columns>
+              <EnableGrouping type="Enum" static="true">true</EnableGrouping>
+              <EnableAggregation type="Enum" static="true">true</EnableAggregation>
+              <EnableOptionSetColors type="Enum" static="true">true</EnableOptionSetColors>
+              <ClientApiWebresourceName type="SingleLine.Text" static="true">almlab_main.js</ClientApiWebresourceName>
+              <ClientApiFunctionName type="SingleLine.Text" static="true">WarehouseScripts.GridApi.onDatasetControlInitialized</ClientApiFunctionName>
+            </parameters>
+          </customControl>
+          <customControl formFactor="1" name="talxis_TALXIS.PCF.Grid">
+            <parameters>
+              <data-set name="Grid">
+                <ViewId>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</ViewId>
+                <TargetEntityType>almlab_warehouseitem</TargetEntityType>
+                <IsUserView>false</IsUserView>
+                <EnableViewPicker>false</EnableViewPicker>
+                <RelationshipName>almlab_almlab_warehouselocation_almlab_warehouseitem_locationid</RelationshipName>
+                <FilteredViewIds>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</FilteredViewIds>
+              </data-set>
+              <Columns type="Multiple" static="true">[ { "name": "almlab_category", "grouping": { "isGrouped": true } }, { "name": "almlab_availablequantity", "aggregation": { "aggregationFunction": "sum" } }, { "name": "almlab_reorderpoint", "isHidden": true } ]</Columns>
+              <EnableGrouping type="Enum" static="true">true</EnableGrouping>
+              <EnableAggregation type="Enum" static="true">true</EnableAggregation>
+              <EnableOptionSetColors type="Enum" static="true">true</EnableOptionSetColors>
+              <ClientApiWebresourceName type="SingleLine.Text" static="true">almlab_main.js</ClientApiWebresourceName>
+              <ClientApiFunctionName type="SingleLine.Text" static="true">WarehouseScripts.GridApi.onDatasetControlInitialized</ClientApiFunctionName>
+            </parameters>
+          </customControl>
+          <customControl formFactor="2" name="talxis_TALXIS.PCF.Grid">
+            <parameters>
+              <data-set name="Grid">
+                <ViewId>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</ViewId>
+                <TargetEntityType>almlab_warehouseitem</TargetEntityType>
+                <IsUserView>false</IsUserView>
+                <EnableViewPicker>false</EnableViewPicker>
+                <RelationshipName>almlab_almlab_warehouselocation_almlab_warehouseitem_locationid</RelationshipName>
+                <FilteredViewIds>{ea2148e7-9d91-45a9-8d1a-3a94360cf6df}</FilteredViewIds>
+              </data-set>
+              <Columns type="Multiple" static="true">[ { "name": "almlab_category", "grouping": { "isGrouped": true } }, { "name": "almlab_availablequantity", "aggregation": { "aggregationFunction": "sum" } }, { "name": "almlab_reorderpoint", "isHidden": true } ]</Columns>
+              <EnableGrouping type="Enum" static="true">true</EnableGrouping>
+              <EnableAggregation type="Enum" static="true">true</EnableAggregation>
+              <EnableOptionSetColors type="Enum" static="true">true</EnableOptionSetColors>
+              <ClientApiWebresourceName type="SingleLine.Text" static="true">almlab_main.js</ClientApiWebresourceName>
+              <ClientApiFunctionName type="SingleLine.Text" static="true">WarehouseScripts.GridApi.onDatasetControlInitialized</ClientApiFunctionName>
+            </parameters>
+          </customControl>
+        </controlDescription>
+      </controlDescriptions>
+      <DisplayConditions Order="1" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+      <formLibraries>
+        <Library name="almlab_main.js" libraryUniqueId="{1ea1e663-4973-4df3-9b98-0ce89d3aabb8}" />
+      </formLibraries>
+      <events>
+        <event name="onload" application="false" active="true">
+          <Handlers>
+            <Handler libraryName="$webresource:almlab_main.js" functionName="WarehouseScripts.LocationForm.onLoad" passExecutionContext="true" enabled="true" handlerUniqueId="{09468524-d8f0-46c0-a0e4-fe476e4cbef2}" parameters="" />
+          </Handlers>
+        </event>
+      </events>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Generated Form" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Main form" languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

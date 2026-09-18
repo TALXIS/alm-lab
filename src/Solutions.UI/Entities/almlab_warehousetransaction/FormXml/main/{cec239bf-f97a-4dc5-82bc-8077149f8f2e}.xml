@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{cec239bf-f97a-4dc5-82bc-8077149f8f2e}</formid>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form shownavigationbar="false" headerdensity="HighWithControls" showImage="false">
+      <tabs>
+        <tab verticallayout="true" id="{0f5b5078-2b24-411d-8c2f-f966059868e8}" IsUserDefined="1" name="general" labelid="{c3c18eae-48d6-4c8e-81cc-7e8a484448c1}">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="true" showbar="false" IsUserDefined="0" id="{49ee8941-61f9-4f37-9510-2c5088e8717d}" labelid="{3b9914da-60c8-4b35-ade2-8c6e77e09265}" name="general">
+                  <labels>
+                    <label description="GENERAL" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{0CF85CD5-A8AD-4AC3-9FCC-C5DFB86F5823}" labelid="{D3453088-3D54-4D0F-8D55-A3C053870A1B}">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="almlab_name" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{897866A4-2012-4A39-8845-57D16E7BA2E8}" labelid="{E907AD43-DBC8-4F1B-9326-3B5962E3D8B6}">
+                        <labels>
+                          <label description="Item" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_itemid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="almlab_itemid" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{D662E093-1C0E-4EE6-A300-1524B3C36088}" labelid="{3ED8B47C-F72D-4842-8C01-63C711E4916B}">
+                        <labels>
+                          <label description="Quantity" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_quantity" classid="{C3EFE0C3-0EC6-42be-8349-CBD9079DFD8E}" datafieldname="almlab_quantity" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{7648B0EB-C2DF-4E25-A71A-BCBCF1B14C58}" labelid="{FDFDE2FD-1827-422E-A941-DDF7B22D1415}">
+                        <labels>
+                          <label description="Transaction Type" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_transactiontype" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="almlab_transactiontype" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{77456ED9-A12C-4444-8E44-671B529F47EC}" labelid="{044B8BD3-2953-49A1-9595-B3507E458B71}">
+                        <labels>
+                          <label description="Transaction Date" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_transactiondate" classid="{5B773807-9FB2-42db-97C3-7A91EFF8ADFF}" datafieldname="almlab_transactiondate" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{A5FE9040-CD0C-4CED-9445-50BE15ED00C4}" labelid="{E9382F63-5FEF-4EEE-9F27-D49903589653}">
+                        <labels>
+                          <label description="Notes" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_notes" classid="{E0DECE4B-6FC8-4a8f-A065-082708572369}" datafieldname="almlab_notes" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{DEA9D373-CE12-46FB-93A0-640F5B0F8E8E}" labelid="{6A73E7F3-44D2-4D50-9612-2B8AE91B58F1}">
+                        <labels>
+                          <label description="Total Value" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_totalvalue" classid="{533B9E00-756B-4312-95A0-DC888637AC78}" datafieldname="almlab_totalvalue" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{AA11D915-B3AE-4AF0-B5C8-05C0FF852F55}" labelid="{FF202635-87A1-42AD-AAED-926F0BD0D305}">
+                        <labels>
+                          <label description="Is Processed" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_isprocessed" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="almlab_isprocessed" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{D9F2DD61-509A-47C0-8778-5F1E02DEDF87}" labelid="{4BA59511-51BB-470F-A3AB-2884E8E36EEE}">
+                        <labels>
+                          <label description="Processed By" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_processedby" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="almlab_processedby" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{7C7E8490-B645-4B10-A6D3-F34BCA549B76}" labelid="{B0B33428-8978-4DF0-9569-D163E2DE7854}">
+                        <labels>
+                          <label description="Reference Number" languagecode="1033" />
+                        </labels>
+                        <control id="almlab_referencenumber" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="almlab_referencenumber" disabled="false" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{f517bf17-c53e-4f89-9645-09cc6fd9a5aa}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{62467ada-68ff-413e-9de6-f8669914b090}" showlabel="false" labelid="{69426b5e-2527-489e-9a43-eceaa9b85c84}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{b569b341-9bc9-477b-8d7d-b964d73df5be}" showlabel="false" labelid="{9cf7aa1d-84b0-41e6-9694-795e8d5b6111}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{27c2c569-9a7d-49cf-bec4-fc104d6377db}" showlabel="false" labelid="{62314d4c-ebe8-47fa-a31c-93463fef6d68}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{1eeaa681-89b9-4171-92a2-c74574c64e2f}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{275076a5-bb37-41cc-b12b-38e8c90ac5b4}" showlabel="false" labelid="{01d4793e-a10c-4839-90e3-353d883a636e}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{3737d211-a569-4af4-9e41-8d6245f470a5}" showlabel="false" labelid="{75465f74-11d9-4d7e-8a75-a181b529c8da}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{1e245c8a-ab0b-4992-8e97-a5c679f09e18}" showlabel="false" labelid="{5c3b5621-b117-494a-9454-6437d71c8938}">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <DisplayConditions Order="1" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+      <formLibraries>
+        <Library name="almlab_main.js" libraryUniqueId="{73f8f9f3-a263-46af-9718-26b37b89d277}" />
+      </formLibraries>
+      <events>
+        <event name="onload" application="false" active="true">
+          <Handlers>
+            <Handler libraryName="$webresource:almlab_main.js" functionName="WarehouseScripts.TransactionForm.onLoad" passExecutionContext="true" enabled="true" handlerUniqueId="{b63be6fc-82d8-4e27-95e0-07e5e2af7293}" parameters="" />
+          </Handlers>
+        </event>
+        <event name="onchange" application="false" active="true" attribute="almlab_quantity">
+          <Handlers>
+            <Handler libraryName="$webresource:almlab_main.js" functionName="WarehouseScripts.TransactionForm.onQuantityChange" passExecutionContext="true" enabled="true" handlerUniqueId="{58a161a7-b135-42ef-ae1b-fde4296779e6}" parameters="" />
+          </Handlers>
+        </event>
+      </events>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Generated Form" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Main form" languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>
