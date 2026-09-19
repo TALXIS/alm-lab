@@ -133,15 +133,20 @@ Write-Host "  ✓ Feature scenario written: WarehousePicking.feature + custom st
 #
 # NOTE: StorageStatePath must be an absolute path — relative paths resolve from the test
 #       binary output directory (bin/Debug/<tfm>/) and are silently ignored by Playwright.
-#       Set TXC_STORAGE_STATE_PATH env var at test run time for a portable override.
+#       It is therefore left EMPTY here rather than baked in: appsettings.json is committed,
+#       and an absolute path from whoever ran this checkpoint last is wrong on every other
+#       machine (and leaks their home directory). Set TXC_STORAGE_STATE_PATH at run time, or
+#       put your own absolute path in appsettings.json locally without committing it.
+#       With it empty the browser starts signed out: the unit tests still pass, the browser
+#       scenarios stop at the Microsoft sign-in page.
 
-$envUrl = if ($env:TXC_ENVIRONMENT_URL) { $env:TXC_ENVIRONMENT_URL } else { "https://yourenv.crm4.dynamics.com" }
-# Resolve to absolute path — works cross-platform (Windows, Linux/Codespaces, macOS)
-$authStatePath = [System.IO.Path]::GetFullPath("src/Tests.UI/auth-state.json").Replace('\', '/')
+# The Dev environment this lab just provisioned is the right default target - falling back to
+# a placeholder URL only guarantees the first test run fails.
+$envUrl = if ($env:TXC_ENVIRONMENT_URL) { $env:TXC_ENVIRONMENT_URL } else { Get-LabValue 'devEnvUrl' "https://yourenv.crm4.dynamics.com" }
 # Full source: .lab-scripts/templates/11-tests-ui/appsettings.json
 Expand-LabTemplate -Path "11-tests-ui/appsettings.json" `
     -Destination "src/Tests.UI/appsettings.json" `
-    -Tokens @{ ENV_URL = $envUrl; AUTH_STATE_PATH = $authStatePath }
+    -Tokens @{ ENV_URL = $envUrl; AUTH_STATE_PATH = ""; PREFIX = $PublisherPrefix }
 Write-Host "  ✓ appsettings.json configured" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────

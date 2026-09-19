@@ -30,6 +30,10 @@ Reqnroll/
 # Playwright
 .playwright/
 playwright-auth-state.encrypted
+# A saved Playwright storage state is a live signed-in session (cookies and tokens) - never
+# commit one. Point TestSettings:StorageStatePath or TXC_STORAGE_STATE_PATH at it instead.
+auth-state.json
+*auth-state.json
 
 # NuGet
 *.nupkg

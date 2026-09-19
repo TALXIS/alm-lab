@@ -25,8 +25,26 @@
       "openFiles": ["README.md"]
     },
     "vscode": {
-      "extensions": ["ms-vscode.powershell"],
+      "extensions": [
+        "ms-vscode.powershell",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "Orta.vscode-jest",
+        "cucumberopen.cucumber-official"
+      ],
       "settings": {
+        "dotnet.defaultSolution": "WarehouseManagement.slnx",
+        "jest.virtualFolders": [
+          {
+            "name": "Scripts",
+            "rootPath": "src/Tests.Scripts",
+            "runMode": "on-demand"
+          }
+        ],
+        "jest.nodeEnv": {
+          "JETS_CORE": "${workspaceFolder}/src/Tests.Scripts/jest-core",
+          "WEBRES_PATH": "../Scripts.UI/build/almlab_main.js"
+        },
         "terminal.integrated.defaultProfile.linux": "pwsh",
         "terminal.integrated.profiles.linux": {
           "pwsh": {

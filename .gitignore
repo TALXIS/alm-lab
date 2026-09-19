@@ -24,6 +24,12 @@ Thumbs.db
 # Claude Code session worktrees (nested git checkouts, not project content)
 .claude/
 
+# Companion legacy solution. C# Dev Kit has a bug where Test Explorer discovers nothing from a
+# .slnx even though `dotnet test` on the same file works (vscode-dotnettools#2925). If your
+# Testing panel is still empty after reloading, generate one locally and point
+# dotnet.defaultSolution at it - the lab itself always builds the .slnx.
+WarehouseManagement.sln
+
 # Terraform (see infra/README.md — state is local-only, no remote backend)
 .terraform/
 *.tfstate

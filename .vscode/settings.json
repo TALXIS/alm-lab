@@ -1,0 +1,42 @@
+{
+  // ── .NET tests (src/Tests.Plugins, src/Tests.UI) ──────────────────────────────────────
+  // C# Dev Kit does not reliably auto-detect the XML solution format, so name it explicitly.
+  // If the Testing panel is still empty after a window reload, see the note at the bottom.
+  "dotnet.defaultSolution": "WarehouseManagement.slnx",
+
+  // ── Jest tests (src/Tests.Scripts) ────────────────────────────────────────────────────
+  // The project is a Jest suite wearing a .csproj, so the .NET provider finds nothing in it.
+  // Point the Jest extension at the subfolder and give it the two environment variables the
+  // RunJest target in Tests.Scripts.csproj passes: JETS_CORE locates the shared Xrm mocks and
+  // WEBRES_PATH the built script bundle. Run `dotnet build src/Scripts.UI/Scripts.UI.csproj`
+  // first - the tests load that bundle, so they fail if it has never been built.
+  "jest.virtualFolders": [
+    {
+      "name": "Scripts",
+      "rootPath": "src/Tests.Scripts",
+      "runMode": "on-demand"
+    }
+  ],
+  "jest.nodeEnv": {
+    "JETS_CORE": "${workspaceFolder}/src/Tests.Scripts/jest-core",
+    "WEBRES_PATH": "../Scripts.UI/build/almlab_main.js"
+  },
+
+  // Claude Code keeps session worktrees here - a second full checkout of this repo, solution
+  // file and all. Hide it so project scans and search don't pick up the duplicate.
+  "files.exclude": {
+    "**/.claude/worktrees": true
+  },
+  "search.exclude": {
+    "**/.claude/worktrees": true,
+    "**/node_modules": true,
+    "**/bin": true,
+    "**/obj": true
+  },
+  "files.watcherExclude": {
+    "**/.claude/worktrees/**": true,
+    "**/node_modules/**": true,
+    "**/bin/**": true,
+    "**/obj/**": true
+  }
+}
