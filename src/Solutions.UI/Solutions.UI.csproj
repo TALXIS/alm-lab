@@ -1,4 +1,31 @@
-<Project Sdk="TALXIS.DevKit.Build.Sdk/1.8.4">
+<Project>
+  <!-- Explicit SDK imports instead of the Sdk="..." attribute so the GenPages import at the
+       bottom lands AFTER the SDK's own targets.
+
+       TALXIS.DevKit.Build.Dataverse.Solution 1.8.4 ships
+       tasks/TALXIS.DevKit.Build.Dataverse.Solution.GenPages.targets but never imports it:
+       Solution.targets imports Data, ScriptLibraries, CodeApps, Plugin, WorkflowActivity,
+       OverridePAC and Pack, and omits GenPages. Without the import below, a referenced GenPage
+       project compiles but nothing stages it into the solution metadata.
+
+       Order matters: imported from the project body this would register before the SDK's own
+       targets, so CopyGenPagesToMetadata would run before the metadata working directory is
+       populated and fail with "Customizations.xml not found".
+
+       With the import in place the DevKit stages a complete uxagentprojects/<id>/ tree
+       (uxagentproject.xml plus page.tsx, page.compiled and config.json as uxagentprojectfile
+       entries) and adds the <uxagentprojects /> node to Other/Customizations.xml.
+
+       KNOWN LIMITATION: that staged tree still does not reach the packed .zip. SolutionPackager
+       has no knowledge of the uxagentproject component type - neither Microsoft's
+       SolutionPackagerLib (used by this build) nor the copy bundled with txc contains a single
+       reference to it - so it silently drops the folder at pack time. Verified by packing the
+       staged folder directly: CanvasApps survive, uxagentprojects do not. Until the packager
+       supports the type, a generative page has to be created in the environment first (e.g.
+       'pac model genpage upload') and then added to this solution with
+       'txc env solution component add'. -->
+  <Import Project="Sdk.props" Sdk="TALXIS.DevKit.Build.Sdk" Version="1.8.4" />
+
   <ItemGroup>
     <ProjectReference Include="..\Apps.WarehousePicking\Apps.WarehousePicking.csproj" />
     <ProjectReference Include="..\Scripts.UI\Scripts.UI.csproj" />
@@ -13,4 +40,12 @@
     <Version>1.0.0</Version>
   </PropertyGroup>
   <Target Name="Publish" />
+
+  <Import Project="Sdk.targets" Sdk="TALXIS.DevKit.Build.Sdk" Version="1.8.4" />
+
+  <PropertyGroup>
+    <_TalxisGenPagesTargets>$(NuGetPackageRoot)talxis.devkit.build.dataverse.solution/1.8.4/tasks/TALXIS.DevKit.Build.Dataverse.Solution.GenPages.targets</_TalxisGenPagesTargets>
+  </PropertyGroup>
+  <Import Project="$(_TalxisGenPagesTargets)" Condition="Exists('$(_TalxisGenPagesTargets)')" />
+
 </Project>
