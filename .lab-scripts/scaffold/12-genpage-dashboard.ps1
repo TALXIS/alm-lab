@@ -45,6 +45,26 @@ Expand-LabTemplate -Path "12-genpage-dashboard/page.tsx" `
     -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ page.tsx customized as warehouse dashboard" -ForegroundColor Green
 
+# The DevKit transpiles page.tsx by handing the file straight to tsc, which makes tsc ignore
+# tsconfig.json and fall back to classic module resolution — bare specifiers like 'react' and
+# '@fluentui/react-components' are then never looked up in node_modules and every import fails
+# with TS2792. The transpile still emits JS, but MSBuild turns tsc's output into build errors,
+# so the solution won't build without these ambient declarations. page.tsx references this file
+# with a triple-slash directive. See the file header for the full explanation.
+Expand-LabTemplate -Path "12-genpage-dashboard/genpage-ambient.d.ts" `
+    -Destination "src/GenPages.Dashboard/genpage-ambient.d.ts"
+Write-Host "  ✓ genpage-ambient.d.ts written (tsc module resolution shim)" -ForegroundColor Green
+
+# genpage.config.json ships as the page's config.json inside the solution. The scaffold leaves
+# dataSources empty; the page reads two tables, so register them or the deployed page has no
+# data to query.
+$genPageConfig = @{
+    dataSources = @("${PublisherPrefix}_warehouseitem", "${PublisherPrefix}_warehouselocation")
+    model       = ""
+} | ConvertTo-Json -Depth 5
+Set-Content -LiteralPath "src/GenPages.Dashboard/genpage.config.json" -Value $genPageConfig -Encoding UTF8
+Write-Host "  ✓ genpage.config.json data sources registered" -ForegroundColor Green
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                       Add ProjectReference from Solutions.UI
 # ──────────────────────────────────────────────────────────────────────────────────────────

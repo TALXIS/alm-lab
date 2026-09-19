@@ -33,8 +33,8 @@ import type { GeneratedComponentProps } from './RuntimeTypes';
 // Items with no reorder point of their own fall back to this before they count as low.
 const LOW_STOCK_THRESHOLD = 10;
 
-const ITEM_ENTITY = '__PREFIX___warehouseitem';
-const LOCATION_ENTITY = '__PREFIX___warehouselocation';
+const ITEM_ENTITY = 'almlab_warehouseitem';
+const LOCATION_ENTITY = 'almlab_warehouselocation';
 
 // Cache + in-flight keys live on `window` so the genpage host's double-mount shares one
 // round-trip instead of firing the query twice. Keyed per page + query, never per entity.
@@ -47,13 +47,13 @@ const FORMATTED = '@OData.Community.Display.V1.FormattedValue';
 // Annotations (choice labels, lookup display names) arrive as sibling keys on the row,
 // so the row type carries an index signature alongside the verified columns.
 interface WarehouseItem {
-  __PREFIX___warehouseitemid: string;
-  __PREFIX___name: string;
-  __PREFIX___sku: string;
-  __PREFIX___availablequantity: number;
-  __PREFIX___reorderpoint: number | null;
-  __PREFIX___category: number | null;
-  ___PREFIX___locationid_value: string | null;
+  almlab_warehouseitemid: string;
+  almlab_name: string;
+  almlab_sku: string;
+  almlab_availablequantity: number;
+  almlab_reorderpoint: number | null;
+  almlab_category: number | null;
+  _almlab_locationid_value: string | null;
   [key: string]: unknown;
 }
 
@@ -63,7 +63,7 @@ interface DashboardData {
 }
 
 const isLowStock = (item: WarehouseItem): boolean =>
-  item.__PREFIX___availablequantity <= (item.__PREFIX___reorderpoint ?? LOW_STOCK_THRESHOLD);
+  item.almlab_availablequantity <= (item.almlab_reorderpoint ?? LOW_STOCK_THRESHOLD);
 
 // Choice and lookup columns are numeric/GUID on the row; the label is on the annotation.
 const displayValue = (item: WarehouseItem, column: string): string => {
@@ -158,19 +158,19 @@ const GeneratedComponent = (props: GeneratedComponentProps) => {
       inflight = Promise.all([
         dataApi.queryTable<WarehouseItem>(ITEM_ENTITY, {
           select: [
-            '__PREFIX___warehouseitemid',
-            '__PREFIX___name',
-            '__PREFIX___sku',
-            '__PREFIX___category',
-            '__PREFIX___availablequantity',
-            '__PREFIX___reorderpoint',
-            '___PREFIX___locationid_value',
+            'almlab_warehouseitemid',
+            'almlab_name',
+            'almlab_sku',
+            'almlab_category',
+            'almlab_availablequantity',
+            'almlab_reorderpoint',
+            '_almlab_locationid_value',
           ],
-          orderBy: '__PREFIX___availablequantity asc',
+          orderBy: 'almlab_availablequantity asc',
           pageSize: 100,
         }),
         dataApi.queryTable(LOCATION_ENTITY, {
-          select: ['__PREFIX___warehouselocationid'],
+          select: ['almlab_warehouselocationid'],
           pageSize: 100,
         }),
       ])
@@ -300,33 +300,33 @@ const GeneratedComponent = (props: GeneratedComponentProps) => {
                 {data.items.map((item) => {
                   const low = isLowStock(item);
                   return (
-                    <TableRow key={item.__PREFIX___warehouseitemid}>
+                    <TableRow key={item.almlab_warehouseitemid}>
                       <TableCell>
-                        <TableCellLayout>{item.__PREFIX___name}</TableCellLayout>
+                        <TableCellLayout>{item.almlab_name}</TableCellLayout>
                       </TableCell>
                       <TableCell>
-                        <TableCellLayout>{item.__PREFIX___sku}</TableCellLayout>
+                        <TableCellLayout>{item.almlab_sku}</TableCellLayout>
                       </TableCell>
                       <TableCell>
                         <TableCellLayout>
-                          {displayValue(item, '__PREFIX___category')}
+                          {displayValue(item, 'almlab_category')}
                         </TableCellLayout>
                       </TableCell>
                       <TableCell>
                         <TableCellLayout>
-                          {displayValue(item, '___PREFIX___locationid_value')}
+                          {displayValue(item, '_almlab_locationid_value')}
                         </TableCellLayout>
                       </TableCell>
                       <TableCell>
                         <TableCellLayout>
                           <Text className={low ? styles.lowStock : undefined}>
-                            {item.__PREFIX___availablequantity}
+                            {item.almlab_availablequantity}
                           </Text>
                         </TableCellLayout>
                       </TableCell>
                       <TableCell>
                         <TableCellLayout>
-                          {item.__PREFIX___reorderpoint ?? '—'}
+                          {item.almlab_reorderpoint ?? '—'}
                         </TableCellLayout>
                       </TableCell>
                       <TableCell>
@@ -349,3 +349,4 @@ const GeneratedComponent = (props: GeneratedComponentProps) => {
 };
 
 export default GeneratedComponent;
+

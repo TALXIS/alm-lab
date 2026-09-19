@@ -37,6 +37,7 @@ try {
     . "$PSScriptRoot/scaffold/09-form-scripts.ps1"
     . "$PSScriptRoot/scaffold/10-ribbon.ps1"
     . "$PSScriptRoot/scaffold/05e-grid-control.ps1"
+    . "$PSScriptRoot/scaffold/12-genpage-dashboard.ps1"
 
     # Building the code app runs npm install + vite build, so this takes a couple of minutes
     dotnet build --nologo --verbosity quiet
@@ -61,6 +62,7 @@ Build the model-driven warehouse experience so users can navigate inventory data
 - register the three warehouse tables as code app data sources (typed models + services)
 - implement the code app UI: items list, item detail with its transactions, a transactions list and a locations list (with per-location item counts), all querying Dataverse through the generated services; locations also resolve the item's location lookup
 - add Node setup to the build workflow so the code app builds in CI
+- add src/GenPages.Dashboard, a generative page (React + Fluent UI V9) showing inventory summary cards and a low-stock inventory table, referenced into Solutions.UI and surfaced as a Dashboard subarea in the sitemap
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the UI, TALXIS Grid, and code app included
 '@

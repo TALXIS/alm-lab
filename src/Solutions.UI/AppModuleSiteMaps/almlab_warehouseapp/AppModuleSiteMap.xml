@@ -26,6 +26,11 @@
             <Title LCID="1033" Title="Warehouse Transactions" />
           </Titles>
         </SubArea>
+        <SubArea Id="subarea_96e51d68" GenPageId="4fbc80db-7dd1-48eb-992a-ef3d2268c5a5" VectorIcon="/_imgs/TableIconsFluentV9/document_one_page_sparkle.svg" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA">
+          <Titles>
+            <Title LCID="1033" Title="Dashboard" />
+          </Titles>
+        </SubArea>
       </Group>
     </Area>
   </SiteMap>

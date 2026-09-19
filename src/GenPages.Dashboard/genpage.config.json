@@ -1,0 +1,7 @@
+{
+  "dataSources": [
+    "almlab_warehouseitem",
+    "almlab_warehouselocation"
+  ],
+  "model": ""
+}

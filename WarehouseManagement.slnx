@@ -12,4 +12,7 @@
     <Project Path="src/Tests.Scripts/Tests.Scripts.csproj" />
     <Project Path="src/Tests.UI/Tests.UI.csproj" />
   </Folder>
+  <Folder Name="/src/GenPages.Dashboard/">
+    <Project Path="src/GenPages.Dashboard/warehousedashboard.csproj" />
+  </Folder>
 </Solution>

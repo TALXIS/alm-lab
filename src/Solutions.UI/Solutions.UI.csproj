@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Apps.WarehousePicking\Apps.WarehousePicking.csproj" />
     <ProjectReference Include="..\Scripts.UI\Scripts.UI.csproj" />
+    <ProjectReference Include="..\GenPages.Dashboard\warehousedashboard.csproj" />
   </ItemGroup>
   <PropertyGroup>
     <ProjectType>Solution</ProjectType>
