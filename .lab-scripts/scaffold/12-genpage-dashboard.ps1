@@ -99,8 +99,29 @@ txc workspace component create pp-sitemap-subarea `
     --param "Title=Dashboard" `
     --param "EntityLogicalName=${PublisherPrefix}_warehouseitem" `
     --param "GenPageId=$genPageId" `
-    --param "GroupTitle=Management" `
+    --param "GroupTitle=Overview" `
     --param "AreaTitle=Warehouse" `
     --param "AppName=${PublisherPrefix}_warehouseapp"
 
 Write-Host "  ✓ Sitemap subarea: Dashboard (genpage)" -ForegroundColor Green
+
+# The subarea lands in a new "Overview" group, but txc appends that group after the existing
+# ones, so the dashboard would sit below the entity lists. Move the group holding the
+# generative page to the top of its area - an overview page is the first thing a user should
+# see, not the last.
+$siteMapPath = "src/Solutions.UI/AppModuleSiteMaps/${PublisherPrefix}_warehouseapp/AppModuleSiteMap.xml"
+if (Test-Path $siteMapPath) {
+    $siteMapXml = New-Object System.Xml.XmlDocument
+    $siteMapXml.PreserveWhitespace = $true
+    $siteMapXml.Load((Resolve-Path $siteMapPath).Path)
+
+    $areaNode = $siteMapXml.SelectSingleNode("//AppModuleSiteMap/SiteMap/Area")
+    $genPageGroup = $siteMapXml.SelectSingleNode("//AppModuleSiteMap/SiteMap/Area/Group[SubArea/@GenPageId]")
+
+    if ($areaNode -and $genPageGroup -and $areaNode.FirstChild -ne $genPageGroup) {
+        [void]$areaNode.RemoveChild($genPageGroup)
+        [void]$areaNode.InsertBefore($genPageGroup, $areaNode.FirstChild)
+        $siteMapXml.Save((Resolve-Path $siteMapPath).Path)
+        Write-Host "  ✓ Overview group moved to the top of the Warehouse area" -ForegroundColor Green
+    }
+}

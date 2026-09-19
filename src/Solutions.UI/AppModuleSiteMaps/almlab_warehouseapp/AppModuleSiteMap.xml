@@ -7,6 +7,16 @@
   <ShowRecents>True</ShowRecents>
   <SiteMap IntroducedVersion="7.0.0.0">
     <Area Id="area_63cbb9c2" ResourceId="SitemapDesigner.Warehouse" DescriptionResourceId="SitemapDesigner.Warehouse" ShowGroups="true" IntroducedVersion="7.0.0.0">
+      <Group Id="group_7d4e9f21" ResourceId="SitemapDesigner.Overview" DescriptionResourceId="SitemapDesigner.Overview" IntroducedVersion="7.0.0.0" IsProfile="false" ToolTipResourseId="SitemapDesigner.Unknown">
+        <Titles>
+          <Title LCID="1033" Title="Overview" />
+        </Titles>
+        <SubArea Id="subarea_96e51d68" GenPageId="4fbc80db-7dd1-48eb-992a-ef3d2268c5a5" VectorIcon="/_imgs/TableIconsFluentV9/document_one_page_sparkle.svg" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA">
+          <Titles>
+            <Title LCID="1033" Title="Dashboard" />
+          </Titles>
+        </SubArea>
+      </Group>
       <Group Id="group_3cf0bbee" ResourceId="SitemapDesigner.Management" DescriptionResourceId="SitemapDesigner.Management" IntroducedVersion="7.0.0.0" IsProfile="false" ToolTipResourseId="SitemapDesigner.Unknown">
         <Titles>
           <Title LCID="1033" Title="Management" />
@@ -24,11 +34,6 @@
         <SubArea Id="subarea_35da39bd" Icon="/_imgs/imagestrips/transparent_spacer.gif" Entity="almlab_warehousetransaction" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA">
           <Titles>
             <Title LCID="1033" Title="Warehouse Transactions" />
-          </Titles>
-        </SubArea>
-        <SubArea Id="subarea_96e51d68" GenPageId="4fbc80db-7dd1-48eb-992a-ef3d2268c5a5" VectorIcon="/_imgs/TableIconsFluentV9/document_one_page_sparkle.svg" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA">
-          <Titles>
-            <Title LCID="1033" Title="Dashboard" />
           </Titles>
         </SubArea>
       </Group>
