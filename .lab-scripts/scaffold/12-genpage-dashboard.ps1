@@ -11,6 +11,21 @@
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
+# KNOWN LIMITATION (TALXIS DevKit P12): the page below is scaffolded, referenced into
+# Solutions.UI and given a sitemap subarea, but it will NOT reach the environment through the
+# deployment package. SolutionPackager has no support for the uxagentproject component type
+# (SolutionPackagerLib contains no reference to it, against 14 for CanvasApp), so it silently
+# drops the staged uxagentprojects/ folder at pack time. TALXIS's own reference implementation
+# in docs-patterns-practices/bdd-agent-v2 comments the GenPage ProjectReference out for the
+# same reason. Until that is fixed the Dashboard subarea points at a page the environment does
+# not have, and the page has to be pushed separately:
+#
+#   pac model genpage upload --app-id <appid> --page-id <GenPageId from the csproj> \
+#     --code-file src/GenPages.Dashboard/page.tsx --name "Warehouse Dashboard" \
+#     --data-sources "<prefix>_warehouseitem,<prefix>_warehouselocation" --prompt "..."
+#
+# Passing the scaffolded GenPageId keeps the sitemap subarea and the uploaded page in sync.
+
 Write-Host "`n── Generative Page: Warehouse Dashboard ──" -ForegroundColor Cyan
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
