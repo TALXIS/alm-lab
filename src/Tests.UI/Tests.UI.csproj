@@ -25,6 +25,23 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
+  <!--
+    Features/Discovered/ is where the black-box exploration agent drops what it finds. It is
+    unvetted by construction: nothing there has step bindings, so Reqnroll's default glob
+    (ReqnrollFeatureFile Include="**\*.feature", in its .props) compiles each one into a test
+    that fails on the first undefined step. Five of them turned a green suite red the first time
+    the agent actually ran.
+
+    Removing them here works because the glob is in a .props, which is imported before this file.
+    They stay listed as None so they are still visible in the IDE and in source control - they
+    are the point of the exercise, they just are not tests until a human promotes one into
+    Features/ and binds it.
+  -->
+  <ItemGroup>
+    <ReqnrollFeatureFile Remove="Features/Discovered/**/*.feature" />
+    <None Include="Features/Discovered/**/*.feature" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -41,6 +41,30 @@ try {
     Expand-LabTemplate -Path "16-bdd-explorer/EXPLORATION-NOTES.md" `
         -Destination "src/Tests.UI/Features/Discovered/EXPLORATION-NOTES.md"
     Write-Ok "Features/Discovered/ scaffolded"
+
+    # Keep Discovered/ out of the compiled suite. Reqnroll's .props globs **\*.feature into
+    # ReqnrollFeatureFile, so anything the agent drops here becomes a test with no bindings and
+    # fails on its first undefined step - turning a green suite red the moment the agent is
+    # actually run. The Remove works from the project body because that glob lives in a .props,
+    # which is imported first.
+    $csproj = "src/Tests.UI/Tests.UI.csproj"
+    $content = Get-Content -Raw -LiteralPath $csproj
+    if ($content -notmatch 'ReqnrollFeatureFile Remove') {
+        $marker = "</Project>"
+        $exclusion = @"
+  <!-- Features/Discovered/ is unvetted agent output: readable Gherkin, no bindings, not tests
+       until a human promotes one into Features/ and binds it. None keeps them visible. -->
+  <ItemGroup>
+    <ReqnrollFeatureFile Remove="Features/Discovered/**/*.feature" />
+    <None Include="Features/Discovered/**/*.feature" />
+  </ItemGroup>
+
+</Project>
+"@
+        $content = $content.Replace($marker, $exclusion)
+        Set-Content -LiteralPath $csproj -Value $content -Encoding UTF8
+        Write-Ok "Tests.UI.csproj: Discovered/ excluded from the compiled suite"
+    }
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp16" -Message "Add black-box exploration agent forbidden from reading source" -Body @'
