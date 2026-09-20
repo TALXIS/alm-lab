@@ -41,10 +41,6 @@
             "runMode": "on-demand"
           }
         ],
-        "jest.nodeEnv": {
-          "JETS_CORE": "${workspaceFolder}/src/Tests.Scripts/jest-core",
-          "WEBRES_PATH": "../Scripts.UI/build/almlab_main.js"
-        },
         "terminal.integrated.defaultProfile.linux": "pwsh",
         "terminal.integrated.profiles.linux": {
           "pwsh": {

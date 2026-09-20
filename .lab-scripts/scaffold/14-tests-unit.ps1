@@ -106,6 +106,16 @@ Expand-LabTemplate -Path "14-tests-unit/ribbonActions.test.js" `
     -Tokens @{ PREFIX = $prefix }
 Write-Host "  ✓ tests/ribbonActions.test.js" -ForegroundColor Green
 
+# The tests resolve the Xrm mock core and the built script bundle from JETS_CORE / WEBRES_PATH.
+# The RunJest target in the scaffolded csproj passes both, so 'dotnet test' works - but a bare
+# 'npx jest' or the VS Code Jest extension runs without them and every suite fails to resolve.
+# Overwrite the template's jest.config.js with one that defaults both (an explicit value still
+# wins), so all three runners behave identically.
+# Full source: .lab-scripts/templates/14-tests-unit/jest.config.js
+Expand-LabTemplate -Path "14-tests-unit/jest.config.js" `
+    -Destination "src/Tests.Scripts/jest.config.js"
+Write-Host "  ✓ jest.config.js (JETS_CORE / WEBRES_PATH defaults)" -ForegroundColor Green
+
 # Marks the block done — checked instead of Test-Path on the project directory so a re-run
 # after a partial failure retries everything rather than silently skipping missing work.
 Set-LabValue 'scriptsTestsScaffolded' $true

@@ -97,6 +97,35 @@ To pick up the lab on a fresh Codespace, VM, or after a crash:
 4. Re-run CP01 if `lab-status.ps1` flags missing/mismatched auth, then continue with
    whichever checkpoint it names as next.
 
+## Running the tests in VS Code
+
+`.vscode/extensions.json` recommends the extensions that put the three suites in the Testing
+panel: C# Dev Kit for the plugin and UI tests, and the Jest extension for `src/Tests.Scripts`
+(those tests are Jest, not .NET, so the .NET provider will never find them).
+
+The Gherkin scenarios appear as ordinary .NET tests — Reqnroll generates one `[TestMethod]` per
+scenario into a `*.feature.cs`. Those files are gitignored and produced at build time, so **build
+once before expecting scenarios to show up**.
+
+> ⚠️ **macOS + Homebrew .NET:** C# Dev Kit may insist that "a supported .NET 10 SDK is not
+> installed" no matter how new your SDK is. `/opt/homebrew/bin/dotnet` is a wrapper script that
+> sets `DOTNET_ROOT` and execs the real host under `libexec/`; the CLI is happy, but Dev Kit
+> inspects paths instead of running it, looks for an `sdk/` next to `bin/dotnet`, finds none, and
+> silently pauses every SDK-dependent operation — so the Testing panel stays empty with no error.
+> Point it at the real root and **fully restart VS Code** (a window reload is not enough, because
+> the extension host captures its environment at launch):
+>
+> ```bash
+> export DOTNET_ROOT="/opt/homebrew/opt/dotnet/libexec"
+> export PATH="/opt/homebrew/opt/dotnet/libexec:$PATH"
+> ```
+>
+> Either way `dotnet test` from a terminal works throughout — the suites are fine, only discovery
+> is affected.
+
+Browser scenarios additionally need a signed-in Playwright storage state; see
+[src/Tests.UI/README.md](src/Tests.UI/README.md).
+
 ## Developing this lab
 
 See [LOCAL-DRY-RUN.md](LOCAL-DRY-RUN.md) to run the checkpoints locally, without forking to

@@ -6,9 +6,10 @@
 
   // ── Jest tests (src/Tests.Scripts) ────────────────────────────────────────────────────
   // The project is a Jest suite wearing a .csproj, so the .NET provider finds nothing in it.
-  // Point the Jest extension at the subfolder and give it the two environment variables the
-  // RunJest target in Tests.Scripts.csproj passes: JETS_CORE locates the shared Xrm mocks and
-  // WEBRES_PATH the built script bundle. Run `dotnet build src/Scripts.UI/Scripts.UI.csproj`
+  // Point the Jest extension at the subfolder. The paths the tests need (the Xrm mock core and
+  // the built script bundle) are defaulted in src/Tests.Scripts/jest.config.js rather than set
+  // here: VS Code does not expand ${workspaceFolder} inside jest.nodeEnv, so it arrives as a
+  // literal and every suite fails to resolve. Run `dotnet build src/Scripts.UI/Scripts.UI.csproj`
   // first - the tests load that bundle, so they fail if it has never been built.
   "jest.virtualFolders": [
     {
@@ -17,10 +18,6 @@
       "runMode": "on-demand"
     }
   ],
-  "jest.nodeEnv": {
-    "JETS_CORE": "${workspaceFolder}/src/Tests.Scripts/jest-core",
-    "WEBRES_PATH": "../Scripts.UI/build/almlab_main.js"
-  },
 
   // Claude Code keeps session worktrees here - a second full checkout of this repo, solution
   // file and all. Hide it so project scans and search don't pick up the duplicate.
