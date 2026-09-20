@@ -62,21 +62,23 @@ public sealed class ViewSteps
         await Page.GetByRole(AriaRole.Columnheader, new PageGetByRoleOptions { Name = columnLabel }).ClickAsync();
     }
 
+    // Lab deviation from the frozen binding: upstream this waits for the view selector to be
+    // visible and then reads it once. The selector is already visible while the previous view is
+    // still on screen, so a scenario that moves between two views reads the old name and fails
+    // with "expected Active Warehouse Locations, but found Active Warehouse Items". Waiting for
+    // the text itself polls until it changes. The step text is unchanged.
     [Then("I should see the {string} view")]
     public async Task ThenIShouldSeeTheView(string viewName)
     {
         var viewSelector = Page.Locator("[data-id*='ViewSelector'], button[data-id*='ViewSelector']").First;
 
-        await viewSelector.WaitForAsync(new LocatorWaitForOptions
-        {
-            State = WaitForSelectorState.Visible,
-            Timeout = TestConfiguration.Timeout
-        });
-
-        var currentViewName = (await viewSelector.TextContentAsync())?.Trim() ?? string.Empty;
-        Assert.IsTrue(
-            currentViewName.Contains(viewName, StringComparison.OrdinalIgnoreCase),
-            $"Expected the current view to contain '{viewName}', but found '{currentViewName}'.");
+        await Assertions.Expect(viewSelector).ToContainTextAsync(
+            viewName,
+            new LocatorAssertionsToContainTextOptions
+            {
+                IgnoreCase = true,
+                Timeout = TestConfiguration.Timeout
+            });
     }
 
     [Then("the grid should contain {int} records")]

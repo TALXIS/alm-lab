@@ -31,7 +31,7 @@ All ten jobs in `solution-design.md` have a feature. None was skipped.
 | J1 Maintain the catalogue | `J01-maintain-the-catalogue` | Navigation only — nothing adds or edits an item |
 | J2 Maintain sites | `J02-maintain-sites` | Navigation only — retiring a site is untested |
 | J3 Reorder points and low stock | `J03-reorder-points-and-low-stock` | **No** |
-| J4 Check an item's stock position | `J04-check-an-items-stock-position` | **No** |
+| J4 Check an item's stock position | `J04-check-an-items-stock-position` | **Yes** — implemented as `Features/CheckStockPosition.feature` |
 | J5 See the whole operation | `J05-see-the-whole-operation` | **No** — the dashboard has no scenario at all |
 | J6 Correct a movement | `J06-correct-a-movement` | **No** |
 | J7 Find an item | `J07-find-an-item` | Yes — the picking app's background and item step |
@@ -39,7 +39,8 @@ All ten jobs in `solution-design.md` have a feature. None was skipped.
 | J9 Record stock coming in | `J09-record-stock-coming-in` | **No** — only outbound is exercised |
 | J10 See what is on hand | `J10-see-what-is-on-hand` | Yes — the quantity assertion after a pick |
 
-Three jobs of ten are genuinely covered. Two more are covered only as far as reaching the right
+Four jobs of ten are genuinely covered — J4 was taken from this folder and implemented, and the
+feature file moved across unchanged. Two more are covered only as far as reaching the right
 screen. **That gap is the argument for writing these first**: the implemented suite was written
 against what had been built, so it tests the things that were easy to reach from a sitemap, and
 it has no opinion at all about the dashboard, the reorder point or a delivery arriving.
