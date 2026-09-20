@@ -14,11 +14,14 @@ public sealed class NavigationSteps
         _scenarioContext = scenarioContext;
     }
 
+    // Lab deviation from the frozen binding: upstream this only records the string. Here it
+    // signs in - see Authentication/SignIn.cs. The step text is unchanged, so the frozen
+    // vocabulary (and every feature file written against it) still holds.
     [Given("I am logged in as {string}")]
-    public Task GivenIAmLoggedInAs(string profile)
+    public async Task GivenIAmLoggedInAs(string profile)
     {
         _scenarioContext["Profile"] = profile;
-        return Task.CompletedTask;
+        await Authentication.SignIn.EnsureSignedInAsync(_scenarioContext, profile);
     }
 
     [Given("I open the {string} app")]

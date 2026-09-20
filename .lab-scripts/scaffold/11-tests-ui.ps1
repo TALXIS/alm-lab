@@ -123,6 +123,85 @@ Expand-LabTemplate -Path "11-tests-ui/WarehousePickingSteps.cs" `
 
 Write-Host "  ✓ Feature scenario written: WarehousePicking.feature + custom steps" -ForegroundColor Green
 
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#                       Authentication (the "I am logged in as" step)
+# ──────────────────────────────────────────────────────────────────────────────────────────
+#
+# The pp-test-ui template's login step only records the string it is given - the scenarios then
+# need a browser session captured by hand, which is the step everyone forgets before a demo.
+# These files make the step sign in for real: persona -> account from .env, cached session per
+# account under .auth/, TOTP for MFA so a headless run works on a protected tenant. Same shape
+# as TALXIS.TestKit's LoginSteps (user alias, cookie cache, OtpToken) and as the auth script in
+# Microsoft's power-platform-playwright-samples, without needing npm in a .NET test project.
+
+New-Item -ItemType Directory -Path "src/Tests.UI/Authentication" -Force | Out-Null
+foreach ($file in @("DotEnv.cs", "TestCredentials.cs", "SignIn.cs", "Totp.cs", "AuthenticationHooks.cs")) {
+    # Full source: .lab-scripts/templates/11-tests-ui/Authentication/$file
+    Expand-LabTemplate -Path "11-tests-ui/Authentication/$file" `
+        -Destination "src/Tests.UI/Authentication/$file"
+}
+
+# Offline tests for the two parts that are pure logic and easy to get subtly wrong: the
+# persona -> variable-name mapping, and RFC 6238 (verified against the spec's own vectors).
+foreach ($file in @("TotpTests.cs", "TestCredentialsTests.cs")) {
+    # Full source: .lab-scripts/templates/11-tests-ui/$file
+    Expand-LabTemplate -Path "11-tests-ui/$file" -Destination "src/Tests.UI/Tests/$file"
+}
+
+# Full source: .lab-scripts/templates/11-tests-ui/env.example
+Expand-LabTemplate -Path "11-tests-ui/env.example" -Destination "src/Tests.UI/.env.example"
+
+# Full source: .lab-scripts/templates/11-tests-ui/Authentication.feature
+Expand-LabTemplate -Path "11-tests-ui/Authentication.feature" `
+    -Destination "src/Tests.UI/Features/Authentication.feature" `
+    -Tokens @{ PREFIX = $PublisherPrefix }
+
+# Redirect the frozen login binding at the new code. Patched rather than replaced wholesale so
+# the rest of NavigationSteps.cs stays whatever the template ships; the step *text* is
+# untouched, so the frozen vocabulary test and every feature file still hold.
+$navigationSteps = "src/Tests.UI/Support/Bindings/NavigationSteps.cs"
+$navigation = Get-Content -Raw -LiteralPath $navigationSteps
+$loginStub = @'
+    [Given("I am logged in as {string}")]
+    public Task GivenIAmLoggedInAs(string profile)
+    {
+        _scenarioContext["Profile"] = profile;
+        return Task.CompletedTask;
+    }
+'@
+$loginReal = @'
+    // Lab deviation from the frozen binding: upstream this only records the string. Here it
+    // signs in - see Authentication/SignIn.cs. The step text is unchanged, so the frozen
+    // vocabulary (and every feature file written against it) still holds.
+    [Given("I am logged in as {string}")]
+    public async Task GivenIAmLoggedInAs(string profile)
+    {
+        _scenarioContext["Profile"] = profile;
+        await Authentication.SignIn.EnsureSignedInAsync(_scenarioContext, profile);
+    }
+'@
+if ($navigation.Contains($loginStub.Replace("`r`n", "`n"))) {
+    $navigation = $navigation.Replace($loginStub.Replace("`r`n", "`n"), $loginReal.Replace("`r`n", "`n"))
+    Set-Content -LiteralPath $navigationSteps -Value $navigation -Encoding UTF8
+} elseif (-not $navigation.Contains("SignIn.EnsureSignedInAsync")) {
+    # Fail loudly: silently skipping this leaves scenarios that cannot authenticate, and the
+    # only symptom is a timeout on a Microsoft sign-in page much later.
+    throw "11-tests-ui.ps1: could not find the login stub in $navigationSteps - the pp-test-ui template changed it. Patch Authentication/SignIn.cs in by hand."
+}
+
+# .env holds a password; .auth/ holds a live session. Neither may ever be committed.
+Add-Content -LiteralPath "src/Tests.UI/.gitignore" -Value @"
+
+# Cached sessions written by the "I am logged in as" step, one file per account.
+.auth/
+
+# Credentials for that step. .env.example is the committed template.
+.env
+!.env.example
+"@
+
+Write-Host "  ✓ Authentication: .env-backed sign-in, session cache, TOTP for MFA" -ForegroundColor Green
+
 # Drop the Calculator sample that ships with the templates. This runs after every
 # pp-test-ui-feature call, not just the first: the sample reappears, and its four steps have
 # no bindings anywhere in the project, so leaving it behind means one guaranteed failing

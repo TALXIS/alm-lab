@@ -34,6 +34,12 @@ playwright-auth-state.encrypted
 # commit one. Point TestSettings:StorageStatePath or TXC_STORAGE_STATE_PATH at it instead.
 auth-state.json
 *auth-state.json
+# Cached sessions written by the "I am logged in as" step, one file per account.
+.auth/
+
+# Credentials for that step. .env.example is the committed template.
+.env
+!.env.example
 
 # NuGet
 *.nupkg

@@ -38,6 +38,44 @@ Update `appsettings.json` or environment variables:
 - `TXC_TRACING_ENABLED`
 - `TXC_OUTPUT_PATH`
 
+## Signing in
+
+`Given I am logged in as '<persona>'` does the signing in. There is no separate "capture auth"
+command to run first and forget: the step resolves the persona to an account, reuses a cached
+session if there is one, and signs in through the Microsoft login page when there is not.
+
+1. Copy `.env.example` to `.env` (gitignored) and fill in the account for each persona your
+   feature files name. `'a warehouse manager'` reads `TXC_USER_WAREHOUSE_MANAGER_USERNAME` and
+   `TXC_USER_WAREHOUSE_MANAGER_PASSWORD`; articles are dropped. `TXC_USER_USERNAME` /
+   `TXC_USER_PASSWORD` cover every persona at once.
+2. Run anything. The first scenario signs in and writes `.auth/state-<account>.json`; every
+   scenario after it starts from that file and never sees a login page. When the session
+   expires, the next scenario notices the redirect and signs in again.
+
+Real environment variables beat `.env`, so CI passes the same names as secrets.
+
+### MFA
+
+Set `TXC_USER_<PERSONA>_OTP_SECRET` (or `TXC_USER_OTP_SECRET`) to the account's authenticator
+seed — the base32 string beside the QR code — and the six-digit code is generated per run, so
+headless works on an MFA-protected tenant. This is the same approach as
+`UserConfiguration.OtpToken` in TALXIS.TestKit.
+
+A seed is a second factor sitting in a file. Use one only for a test account that has no
+standing access to anything, never for a person's account.
+
+If MFA asks for something a seed cannot answer — a push approval, a phone call — do it once
+with a browser you can see, and the cached session covers every headless run afterwards:
+
+```bash
+TXC_HEADLESS=false dotnet test --filter "TestCategory=auth"
+```
+
+### What is gitignored
+
+`.env` and `.auth/`. A storage state is a live signed-in session; it leaks exactly as badly as
+the password that produced it.
+
 ## Two-tier approach
 
 1. Standard model-driven app surfaces use the frozen bindings in `Support/Bindings/`.
