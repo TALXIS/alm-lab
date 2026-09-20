@@ -104,24 +104,51 @@ panel: C# Dev Kit for the plugin and UI tests, and the Jest extension for `src/T
 (those tests are Jest, not .NET, so the .NET provider will never find them).
 
 The Gherkin scenarios appear as ordinary .NET tests — Reqnroll generates one `[TestMethod]` per
-scenario into a `*.feature.cs`. Those files are gitignored and produced at build time, so **build
-once before expecting scenarios to show up**.
+scenario into a `*.feature.cs` at build time, so **build once before expecting scenarios to show
+up**, and rebuild after editing a `.feature` file.
 
-> ⚠️ **macOS + Homebrew .NET:** C# Dev Kit may insist that "a supported .NET 10 SDK is not
-> installed" no matter how new your SDK is. `/opt/homebrew/bin/dotnet` is a wrapper script that
-> sets `DOTNET_ROOT` and execs the real host under `libexec/`; the CLI is happy, but Dev Kit
-> inspects paths instead of running it, looks for an `sdk/` next to `bin/dotnet`, finds none, and
-> silently pauses every SDK-dependent operation — so the Testing panel stays empty with no error.
-> Point it at the real root and **fully restart VS Code** (a window reload is not enough, because
-> the extension host captures its environment at launch):
+> ⚠️ **macOS: C# Dev Kit cannot use Homebrew's .NET.** If `dotnet` came from `brew`, the Testing
+> panel stays empty and Dev Kit claims "a supported .NET 10 SDK is not installed" however new your
+> SDK is. Two separate problems hide behind that one message, and only the second is fatal:
+>
+> 1. `/opt/homebrew/bin/dotnet` is a wrapper script that sets `DOTNET_ROOT` and execs the real host
+>    under `libexec/`. Dev Kit inspects paths rather than running it, looks for an `sdk/` next to
+>    `bin/dotnet`, finds none, and refuses to select the host.
+> 2. Get past that and the server fails to load Homebrew's `libhostfxr.dylib` outright:
+>
+>    ```
+>    code signature ... not valid for use in process:
+>    mapping process and mapped file (non-platform) have different Team IDs
+>    ```
+>
+>    Dev Kit's server runs with hardened runtime and library validation, so macOS will only map
+>    libraries signed by the same Team ID. Homebrew's .NET is **ad-hoc signed**
+>    (`TeamIdentifier=not set`); Microsoft's is signed `UBF8T346G9`. Check an install with
+>    `codesign -dvvv <dotnet-root>/host/fxr/*/libhostfxr.dylib`. No configuration fixes this.
+>
+> Install a Microsoft-signed SDK without admin rights, point Dev Kit at it in your **user**
+> `settings.json` (not this repo's — the path is machine-specific), and **fully restart VS Code**;
+> a window reload is not enough, because the extension host reads this once at launch:
 >
 > ```bash
-> export DOTNET_ROOT="/opt/homebrew/opt/dotnet/libexec"
-> export PATH="/opt/homebrew/opt/dotnet/libexec:$PATH"
+> curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+> ./dotnet-install.sh --channel 10.0 --install-dir "$HOME/.dotnet" --no-path
 > ```
 >
-> Either way `dotnet test` from a terminal works throughout — the suites are fine, only discovery
-> is affected.
+> ```jsonc
+> "dotnetAcquisitionExtension.existingDotnetPath": [
+>   { "extensionId": "ms-dotnettools.csdevkit", "path": "/Users/<you>/.dotnet/dotnet" },
+>   { "extensionId": "ms-dotnettools.csharp",   "path": "/Users/<you>/.dotnet/dotnet" }
+> ]
+> ```
+>
+> `/usr/local/share/dotnet` (the official `.pkg` location) is signed correctly too, but Dev Kit's
+> floor is SDK **10.0.400** — an older official install there is refused with the same misleading
+> message. Homebrew's `dotnet` can stay the one on your `PATH`; this setting only governs the host
+> the extensions themselves run on.
+>
+> Throughout all of it `dotnet test` from a terminal works — the suites are fine, only Dev Kit's
+> discovery is affected.
 
 Browser scenarios additionally need a signed-in Playwright storage state; see
 [src/Tests.UI/README.md](src/Tests.UI/README.md).
