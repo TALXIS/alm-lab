@@ -25,7 +25,9 @@ namespace Tests.UI.Features
         
         private Microsoft.VisualStudio.TestTools.UnitTesting.TestContext _testContext;
         
-        private static string[] featureTags = ((string[])(null));
+        private static string[] featureTags = new string[] {
+                "live",
+                "codeapp"};
         
         private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "Warehouse Picking", "    As a warehouse floor worker\n    I want to pick and restock items from the cod" +
                 "e app\n    So that available quantities stay accurate and over-picking is blocked" +
@@ -119,12 +121,12 @@ namespace Tests.UI.Features
         
         public virtual async global::System.Threading.Tasks.Task FeatureBackgroundAsync()
         {
-#line 11
-    #line hidden
 #line 12
-        await testRunner.GivenAsync("I am logged in as \'your-user@yourtenant.onmicrosoft.com\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
-#line hidden
+    #line hidden
 #line 13
+        await testRunner.GivenAsync("I am logged in as \'a warehouse floor worker\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 14
         await testRunner.AndAsync("I open the warehouse picking app", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
         }
@@ -134,9 +136,11 @@ namespace Tests.UI.Features
             return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/WarehousePicking.feature.ndjson", 4);
         }
         
-        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 15, DisplayName="Not enough stock blocks the pick")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 16, DisplayName="Not enough stock blocks the pick")]
         [global::Microsoft.VisualStudio.TestTools.UnitTesting.DescriptionAttribute("Not enough stock blocks the pick")]
         [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("FeatureTitle", "Warehouse Picking")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("live")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("codeapp")]
         public async global::System.Threading.Tasks.Task NotEnoughStockBlocksThePick()
         {
             string[] tagsOfScenario = ((string[])(null));
@@ -145,7 +149,7 @@ namespace Tests.UI.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Not enough stock blocks the pick", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 15
+#line 16
     this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -155,25 +159,27 @@ namespace Tests.UI.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 11
+#line 12
     await this.FeatureBackgroundAsync();
 #line hidden
-#line 16
+#line 17
         await testRunner.GivenAsync("I open the \'Wireless Mouse\' item", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 17
+#line 18
         await testRunner.WhenAsync("I try to pick more than the available quantity", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 18
+#line 19
         await testRunner.ThenAsync("I should see an error that the requested quantity exceeds the available stock", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 20, DisplayName="A valid pick updates the available quantity")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 21, DisplayName="A valid pick updates the available quantity")]
         [global::Microsoft.VisualStudio.TestTools.UnitTesting.DescriptionAttribute("A valid pick updates the available quantity")]
         [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("FeatureTitle", "Warehouse Picking")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("live")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("codeapp")]
         public async global::System.Threading.Tasks.Task AValidPickUpdatesTheAvailableQuantity()
         {
             string[] tagsOfScenario = ((string[])(null));
@@ -182,7 +188,7 @@ namespace Tests.UI.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("A valid pick updates the available quantity", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 20
+#line 21
     this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -192,16 +198,16 @@ namespace Tests.UI.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 11
+#line 12
     await this.FeatureBackgroundAsync();
 #line hidden
-#line 21
+#line 22
         await testRunner.GivenAsync("I open the \'Office Laptop\' item", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 22
+#line 23
         await testRunner.WhenAsync("I pick a quantity of \'5\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 23
+#line 24
         await testRunner.ThenAsync("the quantity on hand should have decreased by \'5\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }

@@ -18,18 +18,20 @@ namespace Tests.UI.Features
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestClassAttribute()]
-    public partial class WarehouseCrossAreaNavigationFeature
+    public partial class WarehouseCross_AreaNavigationFeature
     {
         
         private global::Reqnroll.ITestRunner testRunner;
         
         private Microsoft.VisualStudio.TestTools.UnitTesting.TestContext _testContext;
         
-        private static string[] featureTags = ((string[])(null));
+        private static string[] featureTags = new string[] {
+                "live",
+                "mda"};
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "WarehouseCrossAreaNavigation", "    As a warehouse manager\n    I want to move between every area of the app in on" +
-                "e session\n    So that a change to one area\'s navigation can\'t silently break the" +
-                " others", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "Warehouse Cross-Area Navigation", "    As a warehouse manager\n    I want to move between the warehouse tables in one" +
+                " session\n    So that a change to one area\'s navigation can\'t silently break the " +
+                "others", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "WarehouseCrossAreaNavigation.feature"
 #line hidden
@@ -122,9 +124,11 @@ namespace Tests.UI.Features
             return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/WarehouseCrossAreaNavigation.feature.ndjson", 3);
         }
         
-        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 6, DisplayName="User can move between warehouse areas without losing app context")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 7, DisplayName="User can move between warehouse areas without losing app context")]
         [global::Microsoft.VisualStudio.TestTools.UnitTesting.DescriptionAttribute("User can move between warehouse areas without losing app context")]
-        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("FeatureTitle", "WarehouseCrossAreaNavigation")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("FeatureTitle", "Warehouse Cross-Area Navigation")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("live")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("mda")]
         public async global::System.Threading.Tasks.Task UserCanMoveBetweenWarehouseAreasWithoutLosingAppContext()
         {
             string[] tagsOfScenario = ((string[])(null));
@@ -133,7 +137,7 @@ namespace Tests.UI.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("User can move between warehouse areas without losing app context", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 6
+#line 7
 this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -143,28 +147,28 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
             else
             {
                 await this.ScenarioStartAsync();
-#line 7
-    await testRunner.GivenAsync("I am logged in as \'your-user@yourtenant.onmicrosoft.com\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
-#line hidden
 #line 8
-    await testRunner.AndAsync("I open the \'_warehouseapp\' app", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.GivenAsync("I am logged in as \'a warehouse manager\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 9
-    await testRunner.WhenAsync("I click on \'Warehouse Items\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.AndAsync("I open the \'almlab_warehouseapp\' app", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 10
-    await testRunner.ThenAsync("I should see the \'Active Warehouse Items\' view", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.WhenAsync("I click on \'Warehouse Items\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 11
-    await testRunner.WhenAsync("I click on \'Warehouse Locations\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.ThenAsync("I should see the \'Active Warehouse Items\' view", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 12
-    await testRunner.ThenAsync("I should see the \'Active Warehouse Locations\' view", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.WhenAsync("I click on \'Warehouse Locations\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 13
-    await testRunner.WhenAsync("I click on \'Warehouse Transactions\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.ThenAsync("I should see the \'Active Warehouse Locations\' view", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 14
+    await testRunner.WhenAsync("I click on \'Warehouse Transactions\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 15
     await testRunner.ThenAsync("I should see the \'Active Warehouse Transactions\' view", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }

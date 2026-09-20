@@ -27,6 +27,8 @@
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
+$PublisherPrefix = Get-LabValue 'publisherPrefix' 'almlab'
+
 Write-Step "CP13 — Automated BDD testing"
 Push-Location $LabRoot
 try {

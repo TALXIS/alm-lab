@@ -15,6 +15,14 @@
 
 Write-Host "`n── Tests.UI ──" -ForegroundColor Cyan
 
+# $PublisherPrefix comes from the calling checkpoint. Without this guard an unset variable
+# expands to "" and every template renders "'_warehouseapp'" — an app name that resolves to
+# nothing, in feature files that still build, still get committed, and only fail once someone
+# finally runs the browser scenarios. Fail here instead.
+if ([string]::IsNullOrWhiteSpace($PublisherPrefix)) {
+    throw "11-tests-ui.ps1: `$PublisherPrefix is not set. The calling checkpoint must set it (Get-LabValue 'publisherPrefix' 'almlab')."
+}
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Scaffold Test Project
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -37,19 +45,17 @@ txc workspace component create pp-test-ui-feature `
     --param "name=WarehouseItemNavigation" `
     --output "src/Tests.UI"
 
-# Remove Calculator sample that ships with both templates
-Remove-Item "src/Tests.UI/Features/Calculator.feature" -ErrorAction SilentlyContinue
-Remove-Item "src/Tests.UI/Features/Calculator.feature.cs" -ErrorAction SilentlyContinue
-
 Write-Host "  ✓ Sample feature: WarehouseItemNavigation.feature" -ForegroundColor Green
 
-# Write a meaningful scenario into the feature file
-# Note: replace the login step value with your actual test user account
-$testUser = if ($env:TXC_TEST_USER) { $env:TXC_TEST_USER } else { "your-user@yourtenant.onmicrosoft.com" }
+# Write a meaningful scenario into the feature file.
+# The "I am logged in as '<who>'" step only records a label - nothing authenticates from it
+# (the binding stores the string and returns). Real sign-in comes from the captured browser
+# session at StorageStatePath/TXC_STORAGE_STATE_PATH, so the scenarios name a role rather
+# than a UPN: business language, and nothing to re-substitute per tenant.
 # Full source: .lab-scripts/templates/11-tests-ui/WarehouseItemNavigation.feature
 Expand-LabTemplate -Path "11-tests-ui/WarehouseItemNavigation.feature" `
     -Destination "src/Tests.UI/Features/WarehouseItemNavigation.feature" `
-    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
+    -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ Feature scenario written" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -66,7 +72,7 @@ txc workspace component create pp-test-ui-feature `
 # Full source: .lab-scripts/templates/11-tests-ui/WarehouseLocationNavigation.feature
 Expand-LabTemplate -Path "11-tests-ui/WarehouseLocationNavigation.feature" `
     -Destination "src/Tests.UI/Features/WarehouseLocationNavigation.feature" `
-    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
+    -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ Sample feature: WarehouseLocationNavigation.feature" -ForegroundColor Green
 
 txc workspace component create pp-test-ui-feature `
@@ -75,7 +81,7 @@ txc workspace component create pp-test-ui-feature `
 # Full source: .lab-scripts/templates/11-tests-ui/WarehouseTransactionNavigation.feature
 Expand-LabTemplate -Path "11-tests-ui/WarehouseTransactionNavigation.feature" `
     -Destination "src/Tests.UI/Features/WarehouseTransactionNavigation.feature" `
-    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
+    -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ Sample feature: WarehouseTransactionNavigation.feature" -ForegroundColor Green
 
 # One cross-area scenario as a lightweight sitemap regression check — same steps, chained.
@@ -85,7 +91,7 @@ txc workspace component create pp-test-ui-feature `
 # Full source: .lab-scripts/templates/11-tests-ui/WarehouseCrossAreaNavigation.feature
 Expand-LabTemplate -Path "11-tests-ui/WarehouseCrossAreaNavigation.feature" `
     -Destination "src/Tests.UI/Features/WarehouseCrossAreaNavigation.feature" `
-    -Tokens @{ TEST_USER = $testUser; PREFIX = $PublisherPrefix }
+    -Tokens @{ PREFIX = $PublisherPrefix }
 Write-Host "  ✓ Sample feature: WarehouseCrossAreaNavigation.feature" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -108,8 +114,7 @@ txc workspace component create pp-test-ui-feature `
 
 # Full source: .lab-scripts/templates/11-tests-ui/WarehousePicking.feature
 Expand-LabTemplate -Path "11-tests-ui/WarehousePicking.feature" `
-    -Destination "src/Tests.UI/Features/WarehousePicking.feature" `
-    -Tokens @{ TEST_USER = $testUser }
+    -Destination "src/Tests.UI/Features/WarehousePicking.feature"
 
 New-Item -ItemType Directory -Path "src/Tests.UI/StepDefinitions" -Force | Out-Null
 # Full source: .lab-scripts/templates/11-tests-ui/WarehousePickingSteps.cs
@@ -117,6 +122,13 @@ Expand-LabTemplate -Path "11-tests-ui/WarehousePickingSteps.cs" `
     -Destination "src/Tests.UI/StepDefinitions/WarehousePickingSteps.cs"
 
 Write-Host "  ✓ Feature scenario written: WarehousePicking.feature + custom steps" -ForegroundColor Green
+
+# Drop the Calculator sample that ships with the templates. This runs after every
+# pp-test-ui-feature call, not just the first: the sample reappears, and its four steps have
+# no bindings anywhere in the project, so leaving it behind means one guaranteed failing
+# scenario in the Testing panel for every learner.
+Remove-Item "src/Tests.UI/Features/Calculator.feature" -ErrorAction SilentlyContinue
+Remove-Item "src/Tests.UI/Features/Calculator.feature.cs" -ErrorAction SilentlyContinue
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Configure appsettings.json

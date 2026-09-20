@@ -25,9 +25,11 @@ namespace Tests.UI.Features
         
         private Microsoft.VisualStudio.TestTools.UnitTesting.TestContext _testContext;
         
-        private static string[] featureTags = ((string[])(null));
+        private static string[] featureTags = new string[] {
+                "live",
+                "mda"};
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "WarehouseTransactionNavigation", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "Warehouse Transaction Navigation", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "WarehouseTransactionNavigation.feature"
 #line hidden
@@ -120,9 +122,11 @@ namespace Tests.UI.Features
             return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/WarehouseTransactionNavigation.feature.ndjson", 3);
         }
         
-        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 3, DisplayName="User can open the Warehouse Transactions view from the sitemap")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute(callerLineNumber: 4, DisplayName="User can open the Warehouse Transactions view from the sitemap")]
         [global::Microsoft.VisualStudio.TestTools.UnitTesting.DescriptionAttribute("User can open the Warehouse Transactions view from the sitemap")]
-        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("FeatureTitle", "WarehouseTransactionNavigation")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("FeatureTitle", "Warehouse Transaction Navigation")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("live")]
+        [global::Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("mda")]
         public async global::System.Threading.Tasks.Task UserCanOpenTheWarehouseTransactionsViewFromTheSitemap()
         {
             string[] tagsOfScenario = ((string[])(null));
@@ -131,7 +135,7 @@ namespace Tests.UI.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("User can open the Warehouse Transactions view from the sitemap", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 3
+#line 4
 this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -141,16 +145,16 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
             else
             {
                 await this.ScenarioStartAsync();
-#line 4
-    await testRunner.GivenAsync("I am logged in as \'your-user@yourtenant.onmicrosoft.com\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
-#line hidden
 #line 5
-    await testRunner.AndAsync("I open the \'_warehouseapp\' app", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.GivenAsync("I am logged in as \'a warehouse manager\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 6
-    await testRunner.WhenAsync("I click on \'Warehouse Transactions\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.AndAsync("I open the \'almlab_warehouseapp\' app", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 7
+    await testRunner.WhenAsync("I click on \'Warehouse Transactions\' in the sitemap", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 8
     await testRunner.ThenAsync("I should see the \'Active Warehouse Transactions\' view", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }

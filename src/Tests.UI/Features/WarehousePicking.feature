@@ -1,3 +1,4 @@
+@live @codeapp
 Feature: Warehouse Picking
     As a warehouse floor worker
     I want to pick and restock items from the code app
@@ -9,7 +10,7 @@ Feature: Warehouse Picking
     # from these same records, so the absolute quantity drifts across lab runs.
 
     Background:
-        Given I am logged in as 'your-user@yourtenant.onmicrosoft.com'
+        Given I am logged in as 'a warehouse floor worker'
         And I open the warehouse picking app
 
     Scenario: Not enough stock blocks the pick
@@ -21,4 +22,3 @@ Feature: Warehouse Picking
         Given I open the 'Office Laptop' item
         When I pick a quantity of '5'
         Then the quantity on hand should have decreased by '5'
-
