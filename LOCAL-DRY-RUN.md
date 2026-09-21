@@ -35,3 +35,27 @@ needed on a plain internet-connected host.
 - `.lab-state.json` has stub/placeholder values instead of real environment URLs or IDs
 - checkpoint output only shows `LAB_LOCAL_MODE: skipped — would...` lines for the
   infrastructure-touching parts — no unexpected errors
+
+
+
+## Running the black-box explorer
+
+`playwright-cli` scopes browser sessions to the working directory, so establish the session from
+the repo root first and have the agent run every command from there too.
+
+```bash
+playwright-cli -s=explorer open
+playwright-cli -s=explorer state-load "$PWD/src/Tests.UI/.auth/state-<account>.json"
+playwright-cli -s=explorer goto "https://apps.powerapps.com/play/e/<env-id>/a/<app-id>"
+playwright-cli -s=explorer snapshot          # must show the item list, not a sign-in page
+```
+
+Then, pasting the agent definition into the prompt rather than pointing at the file — the agent is
+forbidden from reading this repo, and reading its own brief would be the first violation:
+
+```
+claude "You are the Warehouse BDD Explorer; your role definition follows in full. <paste
+.github/agents/bdd-warehouse-explorer.agent.md>. A signed-in session named 'explorer' is already
+open. Prefix EVERY playwright-cli command with: cd <repo root> && . Never run open, close or
+state-load. Write to src/Tests.UI/Features/Discovered/."
+```
