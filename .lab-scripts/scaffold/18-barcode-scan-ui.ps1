@@ -42,23 +42,54 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         Write-Host "  ✓ warehouse-item-detail.tsx (already wired)" -ForegroundColor Green
     } else {
         $importAnchor = 'import { ArrowLeft, Plus, Package, ArrowRightLeft, MapPin } from "lucide-react";'
-        $importReplacement = "$importAnchor`nimport BarcodeScanDialog from `"@/components/BarcodeScanDialog`";"
+        $importReplacement = @"
+$importAnchor
+import BarcodeScanDialog from "@/components/BarcodeScanDialog";
+import { ${prefixPascal}_productsService } from "@/generated/services/${prefixPascal}_productsService";
+"@
         $detailPage = $detailPage.Replace($importAnchor, $importReplacement)
+
+        # The linked-product lookup is a hook, so it has to run on every render alongside the
+        # page's other hooks - it can't be declared further down next to the JSX that uses it,
+        # since that JSX sits after the itemLoading/!item early returns.
+        $mutationAnchor = '  const createTxMutation = useMutation({'
+        $mutationReplacement = @"
+  const linkedProductId = item?._${PublisherPrefix}_productid_value;
+  const { data: linkedProduct } = useQuery({
+    queryKey: ["linkedProduct", linkedProductId],
+    queryFn: async () => {
+      const result = await ${prefixPascal}_productsService.get(linkedProductId!);
+      return result.data;
+    },
+    enabled: !!linkedProductId,
+  });
+
+$mutationAnchor
+"@
+        $detailPage = $detailPage.Replace($mutationAnchor, $mutationReplacement)
 
         $cardsAnchor = '      <div className="grid gap-4 md:grid-cols-4">'
         $cardsReplacement = @"
-      <BarcodeScanDialog
-        itemId={id!}
-        currentProductId={item._${PublisherPrefix}_productid_value}
-        onLinked={() => queryClient.refetchQueries({ queryKey: ["warehouseItem", id] })}
-      />
+      <div className="flex items-center justify-between">
+        <BarcodeScanDialog
+          itemId={id!}
+          currentProductId={linkedProductId}
+          onLinked={() => queryClient.refetchQueries({ queryKey: ["warehouseItem", id] })}
+        />
+        {linkedProduct && (
+          <div className="flex items-center gap-2 text-sm" data-testid="linked-product-name">
+            <span className="text-muted-foreground">Linked product:</span>
+            <span className="font-medium">{linkedProduct.${PublisherPrefix}_name}</span>
+          </div>
+        )}
+      </div>
 
 $cardsAnchor
 "@
         $detailPage = $detailPage.Replace($cardsAnchor, $cardsReplacement)
 
         Set-Content -Path $detailPagePath -Value $detailPage -Encoding UTF8 -NoNewline
-        Write-Host "  ✓ warehouse-item-detail.tsx (Scan Barcode button wired)" -ForegroundColor Green
+        Write-Host "  ✓ warehouse-item-detail.tsx (Scan Barcode button + linked product wired)" -ForegroundColor Green
     }
 
     Set-LabValue 'barcodeScanUiScaffolded' $true

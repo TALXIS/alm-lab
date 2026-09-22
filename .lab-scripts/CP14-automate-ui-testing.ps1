@@ -49,8 +49,10 @@ Add browser-based regression coverage so key warehouse scenarios can be validate
 - add src/Tests.UI with Reqnroll and Playwright test assets
 - create a sample warehouse navigation feature and appsettings.json
 - add a Warehouse Picking feature covering the code app's picking flow (blocked over-pick,
-  successful pick updates qty on hand), with hand-authored custom steps in StepDefinitions/
-  since the frozen model-driven bindings can't navigate to a standalone SPA
+  successful pick updates qty on hand) and the barcode scan/lookup flow added in CP11 (manual
+  EAN entry - the scan dialog's test hook for a camera-less CI runner), with hand-authored
+  custom steps in StepDefinitions/ since the frozen model-driven bindings can't navigate to a
+  standalone SPA
 - add .github/workflows/test.yml (manual workflow_dispatch) for the UI suite
 ## Testing
 - dotnet build src/Tests.UI/Tests.UI.csproj passes and the PR workflow is ready to execute

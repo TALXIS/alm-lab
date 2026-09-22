@@ -87,6 +87,37 @@ public sealed class WarehousePickingSteps
         await Expect(Page.GetByTestId("item-detail-qty")).ToHaveTextAsync(expected, new() { Timeout = 15000 });
     }
 
+    // CI/Playwright runners have no camera - the scan dialog's manual EAN input is the test
+    // hook BarcodeScanDialog.tsx exposes for exactly this case, so this step never touches the
+    // (unavailable) camera path at all.
+    [When("I enter the barcode {string} and look it up")]
+    public async Task WhenIEnterTheBarcodeAndLookItUp(string barcode)
+    {
+        await Page.GetByTestId("scan-barcode-button").ClickAsync();
+        var eanInput = Page.GetByTestId("scan-ean-input");
+        await eanInput.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+        await eanInput.FillAsync(barcode);
+        await Page.GetByTestId("scan-lookup-button").ClickAsync();
+    }
+
+    [Then("I should see the product {string} in the scan preview")]
+    public async Task ThenIShouldSeeTheProductInTheScanPreview(string productName)
+    {
+        await Expect(Page.GetByTestId("scan-product-name")).ToHaveTextAsync(productName, new() { Timeout = 15000 });
+    }
+
+    [When("I link the scanned product to the item")]
+    public async Task WhenILinkTheScannedProductToTheItem()
+    {
+        await Page.GetByTestId("scan-link-button").ClickAsync();
+    }
+
+    [Then("the item should show {string} as its linked product")]
+    public async Task ThenTheItemShouldShowAsItsLinkedProduct(string productName)
+    {
+        await Expect(Page.GetByTestId("linked-product-name")).ToContainTextAsync(productName, new() { Timeout = 15000 });
+    }
+
     // A "pick" in the UI is a New Transaction with type Outbound — fill the dialog the same
     // way a floor worker would: name, quantity, type, submit.
     private async Task SubmitPickAsync(string quantity)
