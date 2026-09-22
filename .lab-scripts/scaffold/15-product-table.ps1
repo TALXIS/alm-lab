@@ -104,6 +104,31 @@ if (-not (Get-LabValue 'productTableScaffolded')) {
 
     Write-Host "  ✓ product.lastsyncedon (DateTime)" -ForegroundColor Green
 
+    # The scanned product's photo, proxied server-side through the connector's own custom
+    # code (Connectors.OpenFoodFacts/script.csx) and stored here as a real Dataverse column.
+    # apps.powerapps.com's CSP (img-src 'self', no data:/blob:/external domains, confirmed
+    # live) blocks the code app from rendering the raw Open Food Facts image URL directly -
+    # routing the bytes through Dataverse and rendering via the SDK's same-origin download API
+    # is the only fix that works under that CSP.
+    #
+    # File, not Image: the code app SDK's data-source generator excludes Image-type columns
+    # from the generated model entirely, and its client only exposes an upload method
+    # (uploadFileToRecord) for File-type columns - there is no upload counterpart for Image
+    # columns, only a download one. Confirmed live: an Image-type column here never appeared
+    # in the generated Product model at all. File columns support both upload and download via
+    # the SDK's (undocumented-in-generated-code but public) uploadFileToRecord/
+    # downloadFileFromRecord client methods.
+    txc workspace component create pp-entity-attribute `
+        --output "src/Solutions.DataModel" `
+        --param "EntitySchemaName=${PublisherPrefix}_product" `
+        --param "AttributeType=File" `
+        --param "RequiredLevel=none" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=productimage" `
+        --param "DisplayName=Product Image"
+
+    Write-Host "  ✓ product.productimage (File)" -ForegroundColor Green
+
     # ──────────────────────────────────────────────────────────────────────────────────────
     #                          Item → Product lookup
     # ──────────────────────────────────────────────────────────────────────────────────────

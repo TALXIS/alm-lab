@@ -36,6 +36,34 @@
           }
         }
       }
+    },
+    "/product-image": {
+      "get": {
+        "summary": "Get product image",
+        "description": "Proxies the bytes of a product image URL (as returned by GetProductByBarcode) through the connector's own server-side code. Callers whose Content-Security-Policy blocks loading the external image directly (e.g. a Power Apps code app) can call this instead and store/render the same-origin bytes.",
+        "operationId": "GetProductImage",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "imageUrl",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "The image URL returned by GetProductByBarcode.",
+            "x-ms-summary": "Image URL"
+          }
+        ],
+        "produces": ["image/jpeg", "image/png"],
+        "responses": {
+          "200": {
+            "description": "Image bytes",
+            "schema": {
+              "type": "file"
+            }
+          }
+        },
+        "x-ms-media-kind": "image"
+      }
     }
   },
   "definitions": {

@@ -19,6 +19,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ScanLine, Loader2 } from "lucide-react";
 
+// GetProductImage's binary response comes back as a base64 string in the JSON envelope (the
+// standard shape for a swagger "file" response through Power Platform custom connector code) -
+// not raw bytes, and not something the generic executeAsync<TRequest, TResponse> typing can
+// express, hence the runtime check here rather than trusting the declared type.
+function toBytes(data: unknown): Uint8Array | null {
+  if (data instanceof Uint8Array) return data;
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (typeof data === "string") {
+    try {
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 type BarcodeScanDialogProps = {
   itemId: string;
   /** The item's current __PREFIX___productid_value, if it's already linked to a Product. */
@@ -37,6 +57,12 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const [linking, setLinking] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [imgError, setImgError] = useState(false);
+  // The image proxied through the connector for the barcode just looked up - a same-origin
+  // blob: URL for preview, and the File it came from so linkProduct() can store it without
+  // re-fetching. Both null when the product has no image or the proxy call failed (imgError
+  // covers that fallback).
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
 
@@ -67,11 +93,21 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     };
   }, [open]);
 
+  // Revoke the blob: URL on unmount even if the dialog is torn down without going through
+  // resetAndClose (e.g. the parent list item disappears mid-scan).
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) URL.revokeObjectURL(previewImageUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleEan = async (barcode: string) => {
     if (!barcode) return;
     setLooking(true);
     setProduct(null);
     setImgError(false);
+    releasePreviewImage();
     try {
       const result = await OpenFoodFactsService.GetProductByBarcode(barcode);
       if (!result.success || !result.data) {
@@ -79,11 +115,53 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         return;
       }
       setProduct(result.data);
+
+      if (result.data.imageUrl) {
+        // apps.powerapps.com's CSP (img-src 'self', confirmed live) blocks an <img> pointed at
+        // the raw Open Food Facts URL directly - proxy the bytes through the connector's own
+        // server-side code instead, then render them from a same-origin blob: URL.
+        try {
+          const file = await fetchProductImageFile(result.data.imageUrl, barcode);
+          if (file) {
+            setImageFile(file);
+            setPreviewImageUrl(URL.createObjectURL(file));
+          } else {
+            setImgError(true);
+          }
+        } catch {
+          // The image is a nice-to-have on top of the product info the lookup already
+          // surfaced - don't fail the whole lookup over it, just fall back to the "no image"
+          // state the card already handles.
+          setImgError(true);
+        }
+      }
     } catch (err) {
       toast.error("Lookup failed: " + String(err));
     } finally {
       setLooking(false);
     }
+  };
+
+  const fetchProductImageFile = async (imageUrl: string, ean: string): Promise<File | null> => {
+    const result = await OpenFoodFactsService.GetProductImage(imageUrl);
+    if (!result.success || !result.data) return null;
+
+    const bytes = toBytes(result.data);
+    if (!bytes) return null;
+
+    // TS's DOM lib types BlobPart as ArrayBufferView<ArrayBuffer> specifically, but
+    // Uint8Array's own generic is the broader ArrayBufferLike (which also covers
+    // SharedArrayBuffer) - not a real mismatch here, fetch results are never
+    // SharedArrayBuffer-backed.
+    return new File([bytes as BlobPart], `${ean}.jpg`, { type: "image/jpeg" });
+  };
+
+  const releasePreviewImage = () => {
+    setImageFile(null);
+    setPreviewImageUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
   };
 
   const linkProduct = async () => {
@@ -131,6 +209,16 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})`,
       } as any);
 
+      if (imageFile) {
+        try {
+          await __PASCAL___productsService.upload(productId, "__PREFIX___productimage", imageFile);
+        } catch (err) {
+          // The product is linked either way - only the photo failed to save, so this is a
+          // warning, not a failure of the whole action.
+          toast.error("Product linked, but its image failed to save: " + String(err));
+        }
+      }
+
       toast.success("Product linked to item");
       onLinked();
       resetAndClose();
@@ -145,6 +233,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     setOpen(false);
     setEan("");
     setProduct(null);
+    releasePreviewImage();
   };
 
   return (
@@ -197,9 +286,9 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
             {product && (
               <Card>
                 <CardContent className="pt-4 flex items-center gap-4">
-                  {product.imageUrl && !imgError && (
+                  {previewImageUrl && !imgError && (
                     <img
-                      src={product.imageUrl}
+                      src={previewImageUrl}
                       alt={product.name ?? ean}
                       className="h-16 w-16 object-contain rounded"
                       onError={() => setImgError(true)}
