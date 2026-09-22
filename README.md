@@ -61,7 +61,7 @@ fork** — say yes.
 | 08 | `CP08-implement-security.ps1` | Security roles |
 | 09 | `CP09-implement-ui.ps1` | Model-driven app, sitemap, forms, views, grid PCF, warehouse picking code app |
 | 10 | `CP10-deploy-and-sync.ps1` | Deploy to Dev & pull changes back |
-| 11 | *(reserved — external data integration via custom connector, coming soon)* | |
+| 11 | `CP11-integrate-external-data.ps1` | Product table + Item lookup (step 1 of external data integration — connector and UI land in later updates) |
 | 12 | `CP12-move-configuration.ps1` | Configuration data migration (CMT) |
 | 13 | `CP13-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
 | 14 | `CP14-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |

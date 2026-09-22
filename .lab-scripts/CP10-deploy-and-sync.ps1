@@ -157,4 +157,4 @@ Deploy the full solution package to the Dev environment and demonstrate the bidi
 - warehouse app is accessible in the Dev environment
 - txc env solution pull completes without error
 '@
-Write-Host "`nNext: .lab-scripts/CP12-move-configuration.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP11-integrate-external-data.ps1" -ForegroundColor Cyan

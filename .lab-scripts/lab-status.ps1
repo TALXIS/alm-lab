@@ -37,7 +37,7 @@ $checkpoints = @(
     @{ Id = "cp08"; Keys = @() }
     @{ Id = "cp09"; Keys = @() }
     @{ Id = "cp10"; Keys = @() }
-    # cp11 is reserved for the upcoming external-data-integration checkpoint (not yet added).
+    @{ Id = "cp11"; Keys = @() }
     @{ Id = "cp12"; Keys = @("configDataDirectory", "configDataSchemaPath", "configDataFilePath") }
     @{ Id = "cp13"; Keys = @("mainRulesetId") }
     @{ Id = "cp14"; Keys = @() }

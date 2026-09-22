@@ -1,0 +1,125 @@
+#
+# ╔════════════════════════════════════════════════════════════════════════════════════════╗
+# ║                  15: Product Table — External Data Integration (Step 1)                ║
+# ╚════════════════════════════════════════════════════════════════════════════════════════╝
+#
+# Adds the Product table to the existing Solutions.DataModel and links it to Item via a
+# lookup column. Product holds externally-sourced catalog data for a barcode (from the Open
+# Food Facts connector, added in a later checkpoint update) — separate from Item, which
+# models what THIS warehouse tracks about its own stock (quantity on hand, location,
+# category). One barcode's Product data is reusable across items; it isn't itself
+# warehouse-inventory data.
+#
+# EAN would ideally be a Dataverse alternate key (so a repeated lookup upserts instead of
+# duplicating), but neither pp-entity nor pp-entity-attribute expose alternate-key creation
+# today — hand-authoring one would mean editing the unpacked solution XML directly, outside
+# the txc-scaffolded workflow every other column in this lab goes through. Left as a plain
+# required column for now; the connector-wiring checkpoint update (upsert logic in the code
+# app) is where "does this EAN already exist" actually gets enforced.
+#
+# Expects: $PublisherPrefix from parent scope.
+# ──────────────────────────────────────────────────────────────────────────────────────────
+
+Write-Host "`n── Product table ──" -ForegroundColor Cyan
+
+if (-not (Get-LabValue 'productTableScaffolded')) {
+    txc workspace component create pp-entity `
+        --output "src/Solutions.DataModel" `
+        --param "EntityType=Standard" `
+        --param "Behavior=New" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=product" `
+        --param "LogicalNamePlural=products" `
+        --param "DisplayName=Product" `
+        --param "DisplayNamePlural=Products"
+
+    Write-Host "  ✓ Entity: Product" -ForegroundColor Green
+
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                                  Product columns
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    # The entity's own auto-created primary field (Name) holds the product's display name —
+    # no separate "ProductName" column needed, same as warehouseitem/warehouselocation/
+    # warehousetransaction never define one of their own either.
+
+    txc workspace component create pp-entity-attribute `
+        --output "src/Solutions.DataModel" `
+        --param "EntitySchemaName=${PublisherPrefix}_product" `
+        --param "AttributeType=Text" `
+        --param "RequiredLevel=required" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=ean" `
+        --param "DisplayName=EAN"
+
+    Write-Host "  ✓ product.ean (Text)" -ForegroundColor Green
+
+    txc workspace component create pp-entity-attribute `
+        --output "src/Solutions.DataModel" `
+        --param "EntitySchemaName=${PublisherPrefix}_product" `
+        --param "AttributeType=Text" `
+        --param "RequiredLevel=none" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=brand" `
+        --param "DisplayName=Brand"
+
+    Write-Host "  ✓ product.brand (Text)" -ForegroundColor Green
+
+    # Open Food Facts' own "quantity" field is free text (e.g. "750g", "1L"), not a number —
+    # Text, not WholeNumber/Decimal.
+    txc workspace component create pp-entity-attribute `
+        --output "src/Solutions.DataModel" `
+        --param "EntitySchemaName=${PublisherPrefix}_product" `
+        --param "AttributeType=Text" `
+        --param "RequiredLevel=none" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=quantity" `
+        --param "DisplayName=Quantity"
+
+    Write-Host "  ✓ product.quantity (Text)" -ForegroundColor Green
+
+    txc workspace component create pp-entity-attribute `
+        --output "src/Solutions.DataModel" `
+        --param "EntitySchemaName=${PublisherPrefix}_product" `
+        --param "AttributeType=Text" `
+        --param "RequiredLevel=none" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=imageurl" `
+        --param "DisplayName=Image URL"
+
+    Write-Host "  ✓ product.imageurl (Text)" -ForegroundColor Green
+
+    txc workspace component create pp-entity-attribute `
+        --output "src/Solutions.DataModel" `
+        --param "EntitySchemaName=${PublisherPrefix}_product" `
+        --param "AttributeType=DateTime" `
+        --param "RequiredLevel=none" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=lastsyncedon" `
+        --param "DisplayName=Last Synced On"
+
+    Write-Host "  ✓ product.lastsyncedon (DateTime)" -ForegroundColor Green
+
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    #                          Item → Product lookup
+    # ──────────────────────────────────────────────────────────────────────────────────────
+    # Optional: existing Item records predate Product and won't have a match until scanned.
+
+    txc workspace component create pp-entity-attribute `
+        --output "src/Solutions.DataModel" `
+        --param "EntitySchemaName=${PublisherPrefix}_warehouseitem" `
+        --param "AttributeType=Lookup" `
+        --param "RequiredLevel=none" `
+        --param "PublisherPrefix=$PublisherPrefix" `
+        --param "LogicalName=productid" `
+        --param "DisplayName=Product" `
+        --param "LookupTarget=${PublisherPrefix}_product"
+
+    Write-Host "  ✓ warehouseitem.productid (Lookup → product)" -ForegroundColor Green
+
+    # Marks the whole block done — checked instead of Test-Path so a re-run after a partial
+    # failure (e.g. entity created but a column create failed) retries everything rather
+    # than silently skipping the missing pieces.
+    Set-LabValue 'productTableScaffolded' $true
+} else {
+    Write-Host "  ✓ Product table (exists)" -ForegroundColor Green
+}
