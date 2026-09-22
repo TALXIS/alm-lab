@@ -27,6 +27,7 @@
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
+$PublisherName = Get-LabValue 'publisherName' 'ALMLab'
 $PublisherPrefix = Get-LabValue 'publisherPrefix' 'almlab'
 
 Write-Step "CP11 — Integrate external data (step 1: data model)"
@@ -45,5 +46,48 @@ Add the data model for external product-catalog integration: a dedicated Product
 - add Item.Product lookup column, pointing to Product
 ## Testing
 - dotnet build --nologo --verbosity quiet passes from the repository root
+'@
+
+Write-Step "CP11 — Integrate external data (step 2: connector)"
+Push-Location $LabRoot
+try {
+    . "$PSScriptRoot/scaffold/16-connector.ps1"
+} finally { Pop-Location }
+
+$devUrl = Get-LabValue 'devEnvUrl'
+$devProfile = Get-LabValue 'devProfile'
+if (-not $devUrl -or -not $devProfile) { Write-Err "Dev environment not found in lab state. Run CP04 first."; exit 1 }
+
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would build Solutions.Connectors (Release) and run"
+    Write-Info "  'txc env pkg import' to deploy it to Dev ($devUrl) on its own, independently"
+    Write-Info "  of the rest of the app - the same way the Grid PCF control deploys in CP10."
+} else {
+    Write-Info "Building Solutions.Connectors (Release)..."
+    Push-Location "$LabRoot/src/Solutions.Connectors"
+    try {
+        dotnet build -c Release --nologo --verbosity quiet
+        if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.Connectors build failed"; exit 1 }
+    } finally { Pop-Location }
+
+    $connectorPkg = Get-ChildItem (Join-Path $LabRoot "src/Solutions.Connectors/bin/Release") -Filter "Solutions.Connectors.zip" -Recurse | Select-Object -First 1
+    if (-not $connectorPkg) { Write-Err "Solutions.Connectors.zip not found after build"; exit 1 }
+
+    Write-Info "Deploying Solutions.Connectors to Dev environment ($devUrl)..."
+    txc env pkg import $connectorPkg.FullName --profile $devProfile
+    if ($LASTEXITCODE -ne 0) { Write-Err "Connector package import to Dev failed"; exit 1 }
+    Write-Ok "Connectors.OpenFoodFacts deployed to Dev - try it in the maker portal's connector test pane before wiring it into the code app."
+}
+
+Save-Checkpoint -Id "cp11" -Message "Add Open Food Facts custom connector, deployed to Dev" -Body @'
+Add the Connectors.OpenFoodFacts custom connector project (GET /product/{barcode}.json, no auth, custom code for the required User-Agent header and response flattening) packaged in its own Solutions.Connectors solution, and deploy it to the Dev environment. Deployed standalone - the code app is wired to it in a later checkpoint update.
+
+## Changes
+- add Connectors.OpenFoodFacts (ProjectType=Connector): real apiDefinition.swagger.json + script.csx for the Open Food Facts API
+- add Solutions.Connectors, referencing Connectors.OpenFoodFacts
+- deploy Solutions.Connectors to Dev via txc env pkg import
+## Testing
+- dotnet build succeeds for Solutions.Connectors
+- connector appears in the Dev environment and returns real data from the maker portal's test pane for a known EAN (e.g. 3017620422003)
 '@
 Write-Host "`nNext: .lab-scripts/CP12-move-configuration.ps1" -ForegroundColor Cyan
