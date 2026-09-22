@@ -1,21 +1,14 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                  15: Product Table — External Data Integration (Step 1)                ║
+# ║                              15: Product Table                                         ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Adds the Product table to the existing Solutions.DataModel and links it to Item via a
-# lookup column. Product holds externally-sourced catalog data for a barcode (from the Open
-# Food Facts connector, added in a later checkpoint update) — separate from Item, which
-# models what THIS warehouse tracks about its own stock (quantity on hand, location,
-# category). One barcode's Product data is reusable across items; it isn't itself
-# warehouse-inventory data.
+# Adds a Product table to Solutions.DataModel and links it to Item via a lookup column.
+# Product holds externally-sourced catalog data for a barcode, separate from Item, which
+# models this warehouse's own stock.
 #
-# EAN would ideally be a Dataverse alternate key (so a repeated lookup upserts instead of
-# duplicating), but neither pp-entity nor pp-entity-attribute expose alternate-key creation
-# today — hand-authoring one would mean editing the unpacked solution XML directly, outside
-# the txc-scaffolded workflow every other column in this lab goes through. Left as a plain
-# required column for now; the connector-wiring checkpoint update (upsert logic in the code
-# app) is where "does this EAN already exist" actually gets enforced.
+# No alternate key on EAN — pp-entity/pp-entity-attribute don't support scaffolding one —
+# so lookups upsert in application code instead (handled where the connector is wired in).
 #
 # Expects: $PublisherPrefix from parent scope.
 # ──────────────────────────────────────────────────────────────────────────────────────────

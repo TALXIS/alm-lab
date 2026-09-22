@@ -19,10 +19,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ScanLine, Loader2 } from "lucide-react";
 
-// GetProductImage's binary response comes back as a base64 string in the JSON envelope (the
-// standard shape for a swagger "file" response through Power Platform custom connector code) -
-// not raw bytes, and not something the generic executeAsync<TRequest, TResponse> typing can
-// express, hence the runtime check here rather than trusting the declared type.
+// A binary connector response comes back as a base64 string in the JSON envelope, not raw
+// bytes - not something the generic executeAsync<TRequest, TResponse> typing can express.
 function toBytes(data: unknown): Uint8Array | null {
   if (data instanceof Uint8Array) return data;
   if (data instanceof ArrayBuffer) return new Uint8Array(data);
@@ -57,10 +55,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const [linking, setLinking] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [imgError, setImgError] = useState(false);
-  // The image proxied through the connector for the barcode just looked up - a same-origin
-  // blob: URL for preview, and the File it came from so linkProduct() can store it without
-  // re-fetching. Both null when the product has no image or the proxy call failed (imgError
-  // covers that fallback).
+  // The image proxied through the connector for the barcode just looked up: a same-origin
+  // blob: URL for preview, and the File it came from so linkProduct() can store it.
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -117,9 +113,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
       setProduct(result.data);
 
       if (result.data.imageUrl) {
-        // apps.powerapps.com's CSP (img-src 'self', confirmed live) blocks an <img> pointed at
-        // the raw Open Food Facts URL directly - proxy the bytes through the connector's own
-        // server-side code instead, then render them from a same-origin blob: URL.
+        // A code app's CSP can block an <img> pointed at an external URL - proxy the bytes
+        // through the connector instead, then render them from a same-origin blob: URL.
         try {
           const file = await fetchProductImageFile(result.data.imageUrl, barcode);
           if (file) {
@@ -129,9 +124,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
             setImgError(true);
           }
         } catch {
-          // The image is a nice-to-have on top of the product info the lookup already
-          // surfaced - don't fail the whole lookup over it, just fall back to the "no image"
-          // state the card already handles.
+          // The image is a nice-to-have on top of the product info already surfaced - fall
+          // back to the "no image" state rather than failing the whole lookup over it.
           setImgError(true);
         }
       }
@@ -149,10 +143,6 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     const bytes = toBytes(result.data);
     if (!bytes) return null;
 
-    // TS's DOM lib types BlobPart as ArrayBufferView<ArrayBuffer> specifically, but
-    // Uint8Array's own generic is the broader ArrayBufferLike (which also covers
-    // SharedArrayBuffer) - not a real mismatch here, fetch results are never
-    // SharedArrayBuffer-backed.
     return new File([bytes as BlobPart], `${ean}.jpg`, { type: "image/jpeg" });
   };
 

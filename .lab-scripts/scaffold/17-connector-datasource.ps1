@@ -1,35 +1,15 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║        17: Wire the Open Food Facts Connector into the Code App (Step 3)               ║
+# ║                      17: Wire Connector into Code App                                  ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# `pp-app-code-data` only knows how to generate data sources for Dataverse tables (it reads
-# Entity.xml straight from Solutions.DataModel - no live environment needed, which is why
-# CP09's scaffold could call it for warehouseitem/warehousetransaction/warehouselocation
-# without anyone being signed in yet). There is no equivalent template-side generator for a
-# *connector* operation today - that's `pa app add data-source --connector`, a live-tenant
-# command: it needs a real Connection (created via `pa connection create`) bound to the
-# connector actually deployed in CP11 step 2, and it writes that binding into
-# power.config.json, which only the Power Apps CLI is meant to touch (see
-# https://learn.microsoft.com/power-apps/developer/code-apps/architecture - "Your app logic
-# doesn't need to interact with the power.config.json file").
+# Registers the connector as a code app data source. Unlike Dataverse tables (generated
+# offline from Entity.xml), a connector operation has no offline generator — the typed
+# model/service files are written directly here, and the live Connection + power.config.json
+# binding are created via the real `pa` CLI commands below, gated behind LAB_LOCAL_MODE like
+# every other live-environment step in this lab.
 #
-# So this step does the two things split by that boundary:
-#   - The typed model/service/data-source-info files are static, derivable straight from the
-#     connector's own already-committed swagger - written here directly, the same way
-#     `pa app add data-source --connector` would, so `npm run build` is green with or
-#     without a live environment. Grounded in the actual `@microsoft/power-apps` SDK types
-#     (`IDataOperation.connectorOperation`) and a real generated Dataverse-table service
-#     (pp-app-code-data's own output) for the surrounding shape - not guessed.
-#   - Creating the live Connection and writing it into power.config.json is left to the real
-#     `pa` commands below, gated behind LAB_LOCAL_MODE like every other live-environment step
-#     in this lab. Run this step for real once you have a Dev environment with the connector
-#     deployed (CP11 step 2) to get a working runtime binding - re-running
-#     `pa app add data-source --connector` afterwards will regenerate the files below with
-#     whatever the live command actually produces, which is the authoritative version.
-#
-# Expects: Apps.WarehousePicking already scaffolded with its 3 Dataverse data sources
-# (CP09/scaffold/05f-code-app.ps1) and Connectors.OpenFoodFacts deployed (CP11 step 2).
+# Expects: Apps.WarehousePicking already scaffolded (CP09) and the connector deployed (step 2).
 # Expects: $PublisherPrefix from parent scope.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 

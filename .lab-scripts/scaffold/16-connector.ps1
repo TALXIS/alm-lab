@@ -1,19 +1,15 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║            16: Open Food Facts Connector — External Data Integration (Step 2)           ║
+# ║                            16: Custom Connector                                        ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Scaffolds Connectors.OpenFoodFacts (a Power Platform custom connector project) and
-# Solutions.Connectors (a dedicated solution packaging it) via the pp-connector/pp-solution
-# templates. The template's own placeholder apiDefinition.swagger.json/script.csx are then
-# overwritten with the real Open Food Facts operation and transform logic - the template only
-# knows how to scaffold a connector project's shape, not what any particular API looks like.
+# Scaffolds Connectors.OpenFoodFacts (a custom connector project) and Solutions.Connectors
+# (a dedicated solution packaging it) via the pp-connector/pp-solution templates, then fills
+# in the operation and transform logic for this connector's own API.
 #
-# Solutions.Connectors is deliberately its own solution, not ProjectReferenced into
-# Packages.Main alongside DataModel/Logic/UI/Security - it deploys and can be tested
-# independently of the rest of the app, the same way the Grid PCF control package does in
-# CP10, matching what the maker portal's connector test pane already lets you do without a
-# code app in the loop at all.
+# Solutions.Connectors is its own solution rather than ProjectReferenced into Packages.Main,
+# so it deploys and can be tested independently of the rest of the app — same as the Grid
+# PCF control package in CP10.
 #
 # Expects: $PublisherPrefix, $PublisherName from parent scope.
 # ──────────────────────────────────────────────────────────────────────────────────────────

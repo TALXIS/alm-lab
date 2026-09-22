@@ -1,22 +1,19 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║              18: Barcode Scan UI — External Data Integration (Step 4)                  ║
+# ║                            18: Barcode Scan UI                                         ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Adds a "Scan Barcode" button to the item detail page (CP09/scaffold/05f-code-app.ps1). It
-# opens a dialog that decodes a barcode with the device camera (@zxing/browser, installed in
-# step 3) or accepts one typed in manually, looks it up via the Open Food Facts connector,
-# and on confirmation upserts a Product record and links it to the item.
+# Adds a "Scan Barcode" button to the item detail page (CP09). It opens a dialog that decodes
+# a barcode with the device camera (@zxing/browser) or accepts one typed in manually, looks
+# it up via the connector, and on confirmation upserts a Product record and links it to the
+# item.
 #
-# BarcodeScanDialog.tsx is a new, standalone component - not baked into the CP09 template,
-# since it depends on the connector wiring that doesn't exist until this checkpoint. The item
-# detail page itself, though, already exists in every learner's repo by the time they reach
-# CP11 (CP09 created it) - so getting the button onto it means patching the real file in
-# place, the same way CP09's own scaffold/09-form-scripts.ps1 patches rollup.config.mjs
-# after generating it, rather than trying to re-template the whole page.
+# BarcodeScanDialog.tsx is a new, standalone component, patched onto the existing item detail
+# page rather than baked into the CP09 template, since it depends on connector wiring that
+# doesn't exist until this checkpoint.
 #
-# Expects: Apps.WarehousePicking's item detail page (CP09) and the OpenFoodFacts connector
-# data source (CP11 step 3, scaffold/17-connector-datasource.ps1) already in place.
+# Expects: Apps.WarehousePicking's item detail page (CP09) and the connector data source
+# (step 3, scaffold/17-connector-datasource.ps1) already in place.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Host "`n── Barcode Scan UI ──" -ForegroundColor Cyan

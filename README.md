@@ -44,11 +44,6 @@ fork** — say yes.
 
 ## Checkpoints
 
-> ⚠️ **Breaking renumbering**: checkpoints 11-14 shifted to 12-15 to make room for a new
-> checkpoint 11 (external data integration via a custom connector). If you're mid-lab on an
-> old checkout, re-pull `main` before continuing — your local `cp11`-`cp14` git tags refer to
-> what are now `cp12`-`cp15`.
-
 | # | Script | Goal |
 |---|--------|------|
 | 01 | `CP01-check-machine-setup.ps1` | Verify all tools are installed |

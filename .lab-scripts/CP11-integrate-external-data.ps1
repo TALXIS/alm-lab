@@ -6,22 +6,16 @@
 #
 # Teaches the full round trip: external API -> custom connector -> code app -> Dataverse.
 # A warehouse worker scans a product's barcode in the WarehousePicking code app; the app
-# calls a custom connector (Open Food Facts, a public product database, no API key) to look
-# up the product's name, brand, quantity, and image; the result is upserted into a
-# dedicated Product table and linked to the scanned Item.
+# calls a custom connector to look up the product's catalog data; the result is upserted
+# into a dedicated Product table and linked to the scanned Item.
 #
 # This checkpoint lands in stages, each its own reviewable update:
 #   1. Data model: the Product table and the Item -> Product lookup column.
-#   2. The Connectors.OpenFoodFacts custom connector project, deployed to Dev.
+#   2. The custom connector project, deployed to Dev.
 #   3. Wiring the connector and the Product table into the WarehousePicking code app.
 #   4. Barcode-scanning UI that ties the whole flow together.
 # All four run in this one script, each closed out by its own Save-Checkpoint - the PR/commit
 # history is what makes them individually reviewable, not separate files to run by hand.
-#
-# Why a dedicated Product table instead of new columns on Item: Item already models what
-# THIS warehouse tracks about its own stock (quantity on hand, location, category) - Product
-# models externally-sourced catalog data for a barcode (name, brand, image) that's reusable
-# across items and isn't itself warehouse-inventory data.
 #
 # Run:  .lab-scripts/CP11-integrate-external-data.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
