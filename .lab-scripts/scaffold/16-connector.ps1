@@ -29,6 +29,10 @@ if (-not (Get-LabValue 'connectorScaffolded')) {
         --param "Description=Look up product data by barcode from the Open Food Facts public database." `
         --param "TransformScript=true" `
         --param "AuthType=NoAuth"
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path "src/Connectors.OpenFoodFacts/Connectors.OpenFoodFacts.csproj")) {
+        Write-Err "Connectors.OpenFoodFacts scaffold failed - re-run this step."
+        exit 1
+    }
 
     Write-Host "  ✓ Connectors.OpenFoodFacts project" -ForegroundColor Green
 
@@ -52,6 +56,10 @@ if (-not (Get-LabValue 'connectorScaffolded')) {
         --param "PublisherName=$PublisherName" `
         --param "PublisherPrefix=$PublisherPrefix" `
         --param "GeneratePluginAssembly=false"
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path "src/Solutions.Connectors/Solutions.Connectors.csproj")) {
+        Write-Err "Solutions.Connectors scaffold failed - re-run this step."
+        exit 1
+    }
 
     Write-Host "  ✓ Solutions.Connectors" -ForegroundColor Green
 

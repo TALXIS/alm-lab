@@ -11,11 +11,12 @@
 # dedicated Product table and linked to the scanned Item.
 #
 # This checkpoint lands in stages, each its own reviewable update:
-#   1. Data model: the Product table and the Item -> Product lookup column (this step).
+#   1. Data model: the Product table and the Item -> Product lookup column.
 #   2. The Connectors.OpenFoodFacts custom connector project, deployed to Dev.
 #   3. Wiring the connector and the Product table into the WarehousePicking code app.
 #   4. Barcode-scanning UI that ties the whole flow together.
-# Steps 2-4 aren't in the repo yet — this update only adds the data model they'll build on.
+# All four run in this one script, each closed out by its own Save-Checkpoint - the PR/commit
+# history is what makes them individually reviewable, not separate files to run by hand.
 #
 # Why a dedicated Product table instead of new columns on Item: Item already models what
 # THIS warehouse tracks about its own stock (quantity on hand, location, category) - Product
@@ -89,5 +90,49 @@ Add the Connectors.OpenFoodFacts custom connector project (GET /product/{barcode
 ## Testing
 - dotnet build succeeds for Solutions.Connectors
 - connector appears in the Dev environment and returns real data from the maker portal's test pane for a known EAN (e.g. 3017620422003)
+'@
+
+Write-Step "CP11 — Integrate external data (step 3: wire connector + Product into the code app)"
+Push-Location $LabRoot
+try {
+    . "$PSScriptRoot/scaffold/17-connector-datasource.ps1"
+    Push-Location "$LabRoot/src/Apps.WarehousePicking"
+    try {
+        npm run build
+        if ($LASTEXITCODE -ne 0) { Write-Err "npm run build failed"; exit 1 }
+    } finally { Pop-Location }
+} finally { Pop-Location }
+
+Save-Checkpoint -Id "cp11" -Message "Wire the Product table and Open Food Facts connector into the code app" -Body @'
+Register the Product table as a code app data source alongside the existing 3, and wire the Open Food Facts connector: typed model/service files plus a dataSourcesInfo.ts entry for its GetProductByBarcode operation, so the app can call it. Binding a live Dev connection (pa connection create + pa app add data-source --connector) is a separate, LAB_LOCAL_MODE-gated step here - run it once you have the connector deployed to get a working runtime connection.
+
+## Changes
+- add a Product data source to Apps.WarehousePicking (pp-app-code-data)
+- add OpenFoodFactsModel.ts / OpenFoodFactsService.ts and a dataSourcesInfo.ts entry for the connector
+- add @zxing/browser (camera barcode decoding) as a dependency
+## Testing
+- npm run build succeeds in src/Apps.WarehousePicking
+'@
+
+Write-Step "CP11 — Integrate external data (step 4: barcode scan UI)"
+Push-Location $LabRoot
+try {
+    . "$PSScriptRoot/scaffold/18-barcode-scan-ui.ps1"
+    Push-Location "$LabRoot/src/Apps.WarehousePicking"
+    try {
+        npm run build
+        if ($LASTEXITCODE -ne 0) { Write-Err "npm run build failed"; exit 1 }
+    } finally { Pop-Location }
+} finally { Pop-Location }
+
+Save-Checkpoint -Id "cp11" -Message "Add barcode scan UI to the item detail page" -Body @'
+Add a "Scan Barcode" button to the item detail page. It opens a dialog that decodes a barcode with the device camera (or accepts one typed in manually), looks it up via the Open Food Facts connector, and on confirmation upserts a Product record (matched by EAN) and links it to the item.
+
+## Changes
+- add components/BarcodeScanDialog.tsx
+- wire it into pages/warehouse-item-detail.tsx
+## Testing
+- npm run build succeeds in src/Apps.WarehousePicking
+- manual: npm run dev, open an item, Scan Barcode, type a known EAN (e.g. 3017620422003), confirm the lookup preview and Link to Item
 '@
 Write-Host "`nNext: .lab-scripts/CP12-move-configuration.ps1" -ForegroundColor Cyan
