@@ -9,7 +9,7 @@ Feature: Warehouse Picking
     # from these same records, so the absolute quantity drifts across lab runs.
 
     Background:
-        Given I am logged in as '__TEST_USER__'
+        Given I am logged in as 'a warehouse floor worker'
         And I open the warehouse picking app
 
     Scenario: Not enough stock blocks the pick
