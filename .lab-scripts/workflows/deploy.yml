@@ -28,7 +28,7 @@ jobs:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           DATAVERSE_TEST_URL: ${{ secrets.DATAVERSE_TEST_URL }}
         run: |
-          txc config auth add-federated --name ci --tenant $AZURE_TENANT_ID --application-id $AZURE_CLIENT_ID
+          txc config auth add-federated --alias ci --tenant $AZURE_TENANT_ID --application-id $AZURE_CLIENT_ID
           txc config connection create test --provider Dataverse --url $DATAVERSE_TEST_URL
           txc config profile create --name ci --auth ci --connection test
 
