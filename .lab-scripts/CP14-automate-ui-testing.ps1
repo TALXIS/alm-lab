@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                       CP13: Automate testing                                           ║
+# ║                       CP14: Automate testing                                           ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Quality gate: a Reqnroll + Playwright BDD UI test project. We scaffold it and add a manual
@@ -16,18 +16,18 @@
 # display text (which breaks with localization), and never hard-sleep - wait for a
 # specific element instead.
 #
-# UI tests are the top of the pyramid, not the whole pyramid: CP14 adds the fast layers
+# UI tests are the top of the pyramid, not the whole pyramid: CP15 adds the fast layers
 # underneath (FakeXrmEasy plugin tests and Jest script tests). See
 # TALXIS/docs-patterns-practices (bdd-agent-v2) for AI agents that plan, bind and heal
 # BDD tests.
 #
-# Run:  .lab-scripts/CP13-automate-ui-testing.ps1
+# Run:  .lab-scripts/CP14-automate-ui-testing.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
-Write-Step "CP13 — Automated BDD testing"
+Write-Step "CP14 — Automated BDD testing"
 Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/11-tests-ui.ps1"
@@ -42,7 +42,7 @@ $wf = Join-Path $LabRoot ".github/workflows"
 New-Item -ItemType Directory -Path $wf -Force | Out-Null
 Copy-Item "$PSScriptRoot/workflows/test.yml" $wf -Force
 
-Save-Checkpoint -Id "cp13" -Message "Add UI BDD test project and PR validation workflow" -Body @'
+Save-Checkpoint -Id "cp14" -Message "Add UI BDD test project and PR validation workflow" -Body @'
 Add browser-based regression coverage so key warehouse scenarios can be validated. This introduces the Playwright test project and a manual test workflow; running it live needs a captured Playwright auth state (see the scaffold script comments for the capture steps).
 
 ## Changes
@@ -55,4 +55,4 @@ Add browser-based regression coverage so key warehouse scenarios can be validate
 ## Testing
 - dotnet build src/Tests.UI/Tests.UI.csproj passes and the PR workflow is ready to execute
 '@
-Write-Host "`nNext: .lab-scripts/CP14-implement-unit-tests.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP15-implement-unit-tests.ps1" -ForegroundColor Cyan

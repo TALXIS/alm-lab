@@ -44,6 +44,11 @@ fork** — say yes.
 
 ## Checkpoints
 
+> ⚠️ **Breaking renumbering**: checkpoints 11-14 shifted to 12-15 to make room for a new
+> checkpoint 11 (external data integration via a custom connector). If you're mid-lab on an
+> old checkout, re-pull `main` before continuing — your local `cp11`-`cp14` git tags refer to
+> what are now `cp12`-`cp15`.
+
 | # | Script | Goal |
 |---|--------|------|
 | 01 | `CP01-check-machine-setup.ps1` | Verify all tools are installed |
@@ -56,10 +61,11 @@ fork** — say yes.
 | 08 | `CP08-implement-security.ps1` | Security roles |
 | 09 | `CP09-implement-ui.ps1` | Model-driven app, sitemap, forms, views, grid PCF, warehouse picking code app |
 | 10 | `CP10-deploy-and-sync.ps1` | Deploy to Dev & pull changes back |
-| 11 | `CP11-move-configuration.ps1` | Configuration data migration (CMT) |
-| 12 | `CP12-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
-| 13 | `CP13-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |
-| 14 | `CP14-implement-unit-tests.ps1` | Plugin (FakeXrmEasy) + script (Jest) unit tests |
+| 11 | *(reserved — external data integration via custom connector, coming soon)* | |
+| 12 | `CP12-move-configuration.ps1` | Configuration data migration (CMT) |
+| 13 | `CP13-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
+| 14 | `CP14-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |
+| 15 | `CP15-implement-unit-tests.ps1` | Plugin (FakeXrmEasy) + script (Jest) unit tests |
 
 Run a checkpoint:
 

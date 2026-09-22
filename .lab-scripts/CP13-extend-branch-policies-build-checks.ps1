@@ -1,20 +1,20 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║            CP12: Extend branch policies with build checks                              ║
+# ║            CP13: Extend branch policies with build checks                              ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # A PR should only merge if it builds. We extend the main ruleset to require the 'build'
 # status check (dotnet build, which runs TALXIS workspace validation). Now broken solutions
 # can't reach main.
 #
-# Run:  .lab-scripts/CP12-extend-branch-policies-build-checks.ps1
+# Run:  .lab-scripts/CP13-extend-branch-policies-build-checks.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
-Write-Step "CP12 — Require build check on PRs"
+Write-Step "CP13 — Require build check on PRs"
 
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would resolve the repo via 'gh repo view' and PUT"
@@ -46,7 +46,7 @@ Write-Ok "Ruleset now requires 'build' to pass"
 
 }
 
-Save-Checkpoint -Id "cp12" -Message "Require build status checks before merging into main" -Body @'
+Save-Checkpoint -Id "cp13" -Message "Require build status checks before merging into main" -Body @'
 Tighten the main branch rules so pull requests must pass the build before they can merge. This turns the warehouse solution build into an enforceable quality gate for every change.
 
 ## Changes
@@ -56,4 +56,4 @@ Tighten the main branch rules so pull requests must pass the build before they c
 ## Testing
 - ruleset update succeeds and the build check is registered as a required status
 '@
-Write-Host "`nNext: .lab-scripts/CP13-automate-ui-testing.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP14-automate-ui-testing.ps1" -ForegroundColor Cyan

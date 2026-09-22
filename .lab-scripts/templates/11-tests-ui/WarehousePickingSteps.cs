@@ -16,7 +16,7 @@ namespace Tests.UI.StepDefinitions;
 public sealed class WarehousePickingSteps
 {
     // The code app has no fixed deployed URL in this lab — attendees run it locally. Point at
-    // the Vite dev server the CP11 "try it live" pause tells you to start with `npm run dev`.
+    // the Vite dev server the CP12 "try it live" pause tells you to start with `npm run dev`.
     // Override with TXC_CODEAPP_URL once the app is actually deployed and you want to test
     // that URL instead.
     private const string DefaultCodeAppUrl = "http://localhost:5173";
@@ -25,7 +25,7 @@ public sealed class WarehousePickingSteps
     private IPage Page => (IPage)_scenarioContext[Hooks.PageKey];
 
     // Captured from the UI when the item is opened, not assumed from the CMT seed data —
-    // this is a real, shared Dataverse environment with no test fixture/teardown, and CP11's
+    // this is a real, shared Dataverse environment with no test fixture/teardown, and CP12's
     // own "try it live" walkthrough picks from these same records, so the absolute quantity
     // drifts across lab runs. Every assertion below is relative to this captured baseline.
     private int _startingQuantity;
