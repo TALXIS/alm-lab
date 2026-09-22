@@ -23,6 +23,10 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
     $prefixPascal = [char]::ToUpper($PublisherPrefix[0]) + $PublisherPrefix.Substring(1)
     $uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
 
+    Expand-LabTemplate -Path "18-barcode-scan-ui/binary.ts" `
+        -Destination "$appSrc/utils/binary.ts"
+    Write-Host "  ✓ utils/binary.ts" -ForegroundColor Green
+
     Expand-LabTemplate -Path "18-barcode-scan-ui/BarcodeScanDialog.tsx" `
         -Destination "$appSrc/components/BarcodeScanDialog.tsx" `
         -Tokens $uiTokens
@@ -35,8 +39,7 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
 
     $detailPagePath = "$appSrc/pages/warehouse-item-detail.tsx"
     if (-not (Test-Path $detailPagePath)) {
-        Write-Err "$detailPagePath not found - run CP09 first."
-        exit 1
+        throw "$detailPagePath not found - run CP09 first."
     }
     $detailPage = Get-Content $detailPagePath -Raw
 
@@ -50,6 +53,7 @@ import BarcodeScanDialog from "@/components/BarcodeScanDialog";
 import LinkedProductImage from "@/components/LinkedProductImage";
 import { ${prefixPascal}_productsService } from "@/generated/services/${prefixPascal}_productsService";
 "@
+        if (-not $detailPage.Contains($importAnchor)) { throw "warehouse-item-detail.tsx: import anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($importAnchor, $importReplacement)
 
         # The linked-product lookup is a hook, so it has to run on every render alongside the
@@ -69,6 +73,7 @@ import { ${prefixPascal}_productsService } from "@/generated/services/${prefixPa
 
 $mutationAnchor
 "@
+        if (-not $detailPage.Contains($mutationAnchor)) { throw "warehouse-item-detail.tsx: mutation anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($mutationAnchor, $mutationReplacement)
 
         $cardsAnchor = '      <div className="grid gap-4 md:grid-cols-4">'
@@ -90,6 +95,7 @@ $mutationAnchor
 
 $cardsAnchor
 "@
+        if (-not $detailPage.Contains($cardsAnchor)) { throw "warehouse-item-detail.tsx: cards anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($cardsAnchor, $cardsReplacement)
 
         Set-Content -Path $detailPagePath -Value $detailPage -Encoding UTF8 -NoNewline

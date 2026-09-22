@@ -27,13 +27,12 @@ if (-not (Get-LabValue 'productDataSourceScaffolded')) {
         --output "src/Apps.WarehousePicking" `
         --param "EntityLogicalName=${PublisherPrefix}_product" `
         --param "ModelSolutionPath=../Solutions.DataModel"
-    if ($LASTEXITCODE -ne 0) { Write-Err "Data source ${PublisherPrefix}_product failed"; exit 1 }
+    if ($LASTEXITCODE -ne 0) { throw "Data source ${PublisherPrefix}_product failed" }
     # Belt-and-braces: confirm the file actually landed, not just that txc exited 0 - a silent
     # no-op here would otherwise only surface much later as a confusing TypeScript error.
     $productServicePath = "src/Apps.WarehousePicking/src/generated/services/${prefixPascal}_productsService.ts"
     if (-not (Test-Path $productServicePath)) {
-        Write-Err "pp-app-code-data reported success but $productServicePath was not written - re-run this step."
-        exit 1
+        throw "pp-app-code-data reported success but $productServicePath was not written - re-run this step."
     }
     Write-Host "  ✓ Data source: ${PublisherPrefix}_product" -ForegroundColor Green
     Set-LabValue 'productDataSourceScaffolded' $true
@@ -49,11 +48,10 @@ txc workspace component create pp-app-code-data `
     --output "src/Apps.WarehousePicking" `
     --param "EntityLogicalName=${PublisherPrefix}_warehouseitem" `
     --param "ModelSolutionPath=../Solutions.DataModel"
-if ($LASTEXITCODE -ne 0) { Write-Err "Refreshing ${PublisherPrefix}_warehouseitem data source failed"; exit 1 }
+if ($LASTEXITCODE -ne 0) { throw "Refreshing ${PublisherPrefix}_warehouseitem data source failed" }
 $warehouseitemModelPath = "src/Apps.WarehousePicking/src/generated/models/${prefixPascal}_warehouseitemsModel.ts"
 if (-not ((Get-Content $warehouseitemModelPath -Raw) -match "${PublisherPrefix}_productid")) {
-    Write-Err "$warehouseitemModelPath still missing ${PublisherPrefix}_productid after refresh - re-run this step."
-    exit 1
+    throw "$warehouseitemModelPath still missing ${PublisherPrefix}_productid after refresh - re-run this step."
 }
 
 # Re-running pp-app-code-data for a table that already has a data source regenerates its
@@ -73,8 +71,7 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
     $dataSourcesInfoPath = "$appRoot/.power/schemas/appschemas/dataSourcesInfo.ts"
 
     if (-not (Test-Path $dataSourcesInfoPath)) {
-        Write-Err "dataSourcesInfo.ts not found at $dataSourcesInfoPath - run CP09 first."
-        exit 1
+        throw "dataSourcesInfo.ts not found at $dataSourcesInfoPath - run CP09 first."
     }
 
     $newEntry = @'
@@ -89,6 +86,16 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
         "parameters": [
           { "name": "barcode", "in": "path", "required": true, "type": "string" }
         ]
+      },
+      "GetProductImage": {
+        "path": "/product-image",
+        "method": "GET",
+        "parameters": [
+          { "name": "imageUrl", "in": "query", "required": true, "type": "string" }
+        ],
+        "responseInfo": {
+          "200": { "type": "file" }
+        }
       }
     }
   }
@@ -108,7 +115,7 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
         for ($i = $lines.Count - 1; $i -ge 0; $i--) {
             if ($lines[$i].TrimStart() -eq '};') { $closingIdx = $i; break }
         }
-        if ($closingIdx -eq -1) { Write-Err "Could not find closing '};' in $dataSourcesInfoPath"; exit 1 }
+        if ($closingIdx -eq -1) { throw "Could not find closing '};' in $dataSourcesInfoPath" }
 
         $lastEntryClose = -1
         for ($i = $closingIdx - 1; $i -ge 0; $i--) {
@@ -142,28 +149,29 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
     Push-Location $appRoot
     try {
         npm install @zxing/browser --save --silent
-        if ($LASTEXITCODE -ne 0) { Write-Err "npm install @zxing/browser failed"; exit 1 }
+        if ($LASTEXITCODE -ne 0) { throw "npm install @zxing/browser failed" }
     } finally { Pop-Location }
     Write-Host "  ✓ @zxing/browser installed" -ForegroundColor Green
 
+    $connectorSchemaName = "${PublisherPrefix}_connectorsopenfoodfacts"
     if ($env:LAB_LOCAL_MODE) {
         Write-Info "LAB_LOCAL_MODE: skipped — would run 'pa connection create --connector"
-        Write-Info "  almlab_connectorsopenfoodfacts' then 'pa app add data-source --connector"
-        Write-Info "  almlab_connectorsopenfoodfacts --connection-id <id>' from src/Apps.WarehousePicking"
+        Write-Info "  $connectorSchemaName' then 'pa app add data-source --connector"
+        Write-Info "  $connectorSchemaName --connection-id <id>' from src/Apps.WarehousePicking"
         Write-Info "  to bind a real Dev connection into power.config.json."
     } else {
         Push-Location $appRoot
         try {
             Write-Info "Creating a connection to the Open Food Facts connector..."
-            $connectionJson = pa connection create --connector "almlab_connectorsopenfoodfacts" --display-name "Open Food Facts" --json
-            if ($LASTEXITCODE -ne 0) { Write-Err "pa connection create failed"; exit 1 }
+            $connectionJson = pa connection create --connector $connectorSchemaName --display-name "Open Food Facts" --json
+            if ($LASTEXITCODE -ne 0) { throw "pa connection create failed" }
             $connectionId = ($connectionJson | ConvertFrom-Json).connectionId
-            if (-not $connectionId) { Write-Err "Could not parse connectionId from 'pa connection create' output"; exit 1 }
+            if (-not $connectionId) { throw "Could not parse connectionId from 'pa connection create' output" }
             Write-Ok "Connection created: $connectionId"
 
             Write-Info "Adding the connector as a data source..."
-            pa app add data-source --connector "almlab_connectorsopenfoodfacts" --connection-id $connectionId
-            if ($LASTEXITCODE -ne 0) { Write-Err "pa app add data-source failed"; exit 1 }
+            pa app add data-source --connector $connectorSchemaName --connection-id $connectionId
+            if ($LASTEXITCODE -ne 0) { throw "pa app add data-source failed" }
             Write-Ok "Connector wired into power.config.json - re-run 'npm run build' to confirm"
         } finally { Pop-Location }
     }

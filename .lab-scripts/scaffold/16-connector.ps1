@@ -26,8 +26,7 @@ if (-not (Get-LabValue 'connectorScaffolded')) {
         --param "TransformScript=true" `
         --param "AuthType=NoAuth"
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path "src/Connectors.OpenFoodFacts/Connectors.OpenFoodFacts.csproj")) {
-        Write-Err "Connectors.OpenFoodFacts scaffold failed - re-run this step."
-        exit 1
+        throw "Connectors.OpenFoodFacts scaffold failed - re-run this step."
     }
 
     Write-Host "  ✓ Connectors.OpenFoodFacts project" -ForegroundColor Green
@@ -53,27 +52,28 @@ if (-not (Get-LabValue 'connectorScaffolded')) {
         --param "PublisherPrefix=$PublisherPrefix" `
         --param "GeneratePluginAssembly=false"
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path "src/Solutions.Connectors/Solutions.Connectors.csproj")) {
-        Write-Err "Solutions.Connectors scaffold failed - re-run this step."
-        exit 1
+        throw "Solutions.Connectors scaffold failed - re-run this step."
     }
 
     Write-Host "  ✓ Solutions.Connectors" -ForegroundColor Green
 
-    cd src/Solutions.Connectors
-    dotnet add reference ../Connectors.OpenFoodFacts/Connectors.OpenFoodFacts.csproj
-    cd ../..
+    Push-Location src/Solutions.Connectors
+    try {
+        dotnet add reference ../Connectors.OpenFoodFacts/Connectors.OpenFoodFacts.csproj
+    } finally { Pop-Location }
 
     Write-Host "  ✓ ProjectReference: Connectors.OpenFoodFacts → Solutions.Connectors" -ForegroundColor Green
 
     Write-Host "  → Building Solutions.Connectors..." -ForegroundColor White
-    cd src/Solutions.Connectors
-    dotnet build --nologo --verbosity quiet
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  ✓ Solutions.Connectors build succeeded" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠ Solutions.Connectors build had issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
-    }
-    cd ../..
+    Push-Location src/Solutions.Connectors
+    try {
+        dotnet build --nologo --verbosity quiet
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Solutions.Connectors build succeeded" -ForegroundColor Green
+        } else {
+            Write-Host "  ⚠ Solutions.Connectors build had issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+        }
+    } finally { Pop-Location }
 
     Set-LabValue 'connectorScaffolded' $true
 } else {

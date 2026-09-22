@@ -18,32 +18,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ScanLine, Loader2 } from "lucide-react";
-
-// A binary connector response comes back as a base64 string in the JSON envelope, not raw
-// bytes - not something the generic executeAsync<TRequest, TResponse> typing can express.
-function toBytes(data: unknown): Uint8Array | null {
-  if (data instanceof Uint8Array) return data;
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-  if (typeof data === "string") {
-    try {
-      const binary = atob(data);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return bytes;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-// A code app's CSP allows img-src 'self' data: but not blob: - render fetched image bytes as
-// a data: URI, not an object URL.
-function bytesToDataUrl(bytes: Uint8Array, mimeType: string): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return `data:${mimeType};base64,${btoa(binary)}`;
-}
+import { toBytes, bytesToDataUrl } from "@/utils/binary";
 
 type BarcodeScanDialogProps = {
   itemId: string;
@@ -54,8 +29,9 @@ type BarcodeScanDialogProps = {
 
 // A camera scan and a manually-typed EAN both end up going through the same handleEan path -
 // there's exactly one place that decides what a barcode means. The manual input is also the
-// only way to drive this in CI/Playwright, which has no camera: see 18-tests-ui for how the
-// test hook types into #scanEan and clicks #scanLookupButton directly, skipping the camera.
+// only way to drive this in CI/Playwright, which has no camera: see 11-tests-ui for how the
+// test hook types into the scan-ean-input and clicks scan-lookup-button directly, skipping
+// the camera.
 export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }: BarcodeScanDialogProps) {
   const [open, setOpen] = useState(false);
   const [ean, setEan] = useState("");
@@ -68,13 +44,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   // preview, and the bytes it came from so linkProduct() can upload them without re-fetching.
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [imageBytes, setImageBytes] = useState<Uint8Array | null>(null);
-  // A plain useRef here raced against the dialog's own mount: the decoder could start before
-  // the <video> was actually attached, silently handed `undefined` and falling back to zxing's
-  // own hidden, unmounted video element - which still decodes fine (explaining barcodes
-  // reading correctly) but is never the element on screen (explaining the permanently black
-  // rectangle, confirmed across multiple browsers - not a per-browser autoplay quirk). A
-  // callback ref (backed by state, so it retriggers the effect) guarantees the effect only
-  // ever runs once the real element exists.
+  // A callback ref, not useRef: the decode effect must not start before the <video> is
+  // actually mounted, and state (unlike a ref) retriggers the effect once it is.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   // A camera decode and a manual lookup can resolve in either order - once one of them has
@@ -86,8 +57,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     if (!open || !videoEl) return;
     productFoundRef.current = false;
 
-    // React's `muted` JSX attribute doesn't reliably set the underlying DOM property in every
-    // browser; set it directly too, since some autoplay policies check the property.
+    // React's `muted` JSX attribute doesn't reliably set the underlying DOM property; some
+    // browsers require the property itself for autoplay to work.
     videoEl.muted = true;
 
     const reader = new BrowserMultiFormatReader();
@@ -183,9 +154,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
 
       if (!productId) {
         // createRecordAsync's response shape for the new record's id isn't reliable across
-        // hosts (confirmed empirically: the live Power Apps player's create response didn't
-        // carry __PREFIX___productid in .data) - re-query by the same EAN filter used above
-        // instead of trusting the create call's own return value.
+        // hosts - re-query by the same EAN filter used above instead of trusting the create
+        // call's own return value.
         await __PASCAL___productsService.create({
           __PREFIX___name: product.name || ean,
           __PREFIX___ean: ean,

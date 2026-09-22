@@ -72,6 +72,8 @@ public class Script : ScriptBase
         return response;
     }
 
+    // Forwards a caller-supplied absolute URL unvalidated - an open-proxy shape, deliberately
+    // left simplified here since this is a NoAuth teaching connector with low blast radius.
     private async Task<HttpResponseMessage> GetProductImageAsync()
     {
         var imageUrl = GetQueryParameter(this.Context.Request.RequestUri, "imageUrl");

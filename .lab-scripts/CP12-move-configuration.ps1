@@ -109,7 +109,7 @@ Package warehouse reference data so environments stay consistent as the app move
 ## Changes
 - add src/Packages.Main/Data/data_schema.xml covering the four warehouse tables (including Product)
 - add src/Packages.Main/Data/data.xml with seed locations, products, items, and transactions
-  (Wireless Mouse is pre-linked to a seeded Nutella product record)
+  (two grocery items are pre-linked to the seeded Nutella/Coca-Cola product records)
 - add the [Content_Types].xml OPC manifest required by the CMT package format
 - import the package into Dev and Test; export captures manual Dev records as source
 - pause after the Dev import so you can run the Warehouse Picking code app locally

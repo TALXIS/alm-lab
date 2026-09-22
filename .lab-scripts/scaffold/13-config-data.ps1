@@ -33,7 +33,7 @@ Expand-LabTemplate -Path "13-config-data/data.xml" `
     -Destination "$dataDir/data.xml" `
     -Tokens @{ PREFIX = $prefix }
 
-Write-Host "  ✓ data.xml (2 locations, 2 products, 3 items, 2 transactions)" -ForegroundColor Green
+Write-Host "  ✓ data.xml (2 locations, 2 products, 5 items, 2 transactions)" -ForegroundColor Green
 
 # OPC content-types manifest — CMT packages are Open Packaging Convention archives and
 # need it next to the data files.

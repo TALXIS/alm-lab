@@ -1,16 +1,9 @@
 import { useEffect, useState } from "react";
 import { getClient } from "@microsoft/power-apps/data";
 import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
+import { bytesToDataUrl } from "@/utils/binary";
 
 const client = getClient(dataSourcesInfo);
-
-// A code app's CSP allows img-src 'self' data: but not blob: - render downloaded bytes as a
-// data: URI, not an object URL.
-function bytesToDataUrl(bytes: Uint8Array, mimeType: string): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return `data:${mimeType};base64,${btoa(binary)}`;
-}
 
 type LinkedProductImageProps = {
   productId: string;

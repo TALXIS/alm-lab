@@ -65,7 +65,6 @@
         <field name="__PREFIX___unitprice" value="19.99" />
         <field name="__PREFIX___reorderpoint" value="10" />
         <field name="__PREFIX___locationid" value="2592a040-83b7-464e-ac3e-faff2031398c" lookupentity="__PREFIX___warehouselocation" lookupentityname="Main Warehouse" />
-        <field name="__PREFIX___productid" value="611e6410-7c90-4c63-abf7-825af79eb636" lookupentity="__PREFIX___product" lookupentityname="Nutella" />
       </record>
       <record id="e42c5c02-0cd1-4fe5-b6ef-c2c620f1bfcf">
         <field name="__PREFIX___warehouseitemid" value="e42c5c02-0cd1-4fe5-b6ef-c2c620f1bfcf" />
@@ -77,6 +76,30 @@
         <field name="__PREFIX___unitprice" value="249.50" />
         <field name="__PREFIX___reorderpoint" value="15" />
         <field name="__PREFIX___locationid" value="f9c0881c-258f-42eb-b58b-84f2d37cda0e" lookupentity="__PREFIX___warehouselocation" lookupentityname="Overflow Storage" />
+      </record>
+      <record id="0552ebd4-dbf7-47ed-bf92-fae96f36fe7c">
+        <field name="__PREFIX___warehouseitemid" value="0552ebd4-dbf7-47ed-bf92-fae96f36fe7c" />
+        <field name="__PREFIX___name" value="Nutella Hazelnut Spread 400g" />
+        <field name="__PREFIX___sku" value="FOD-004" />
+        <field name="__PREFIX___availablequantity" value="200" />
+        <field name="__PREFIX___category" value="100000002" />
+        <field name="__PREFIX___isperishable" value="True" />
+        <field name="__PREFIX___unitprice" value="4.99" />
+        <field name="__PREFIX___reorderpoint" value="40" />
+        <field name="__PREFIX___locationid" value="2592a040-83b7-464e-ac3e-faff2031398c" lookupentity="__PREFIX___warehouselocation" lookupentityname="Main Warehouse" />
+        <field name="__PREFIX___productid" value="611e6410-7c90-4c63-abf7-825af79eb636" lookupentity="__PREFIX___product" lookupentityname="Nutella" />
+      </record>
+      <record id="cbe58fd5-4622-418d-ac8b-04d8041c8c65">
+        <field name="__PREFIX___warehouseitemid" value="cbe58fd5-4622-418d-ac8b-04d8041c8c65" />
+        <field name="__PREFIX___name" value="Coca-Cola 330ml Can (24-pack)" />
+        <field name="__PREFIX___sku" value="FOD-005" />
+        <field name="__PREFIX___availablequantity" value="150" />
+        <field name="__PREFIX___category" value="100000002" />
+        <field name="__PREFIX___isperishable" value="True" />
+        <field name="__PREFIX___unitprice" value="12.99" />
+        <field name="__PREFIX___reorderpoint" value="30" />
+        <field name="__PREFIX___locationid" value="2592a040-83b7-464e-ac3e-faff2031398c" lookupentity="__PREFIX___warehouselocation" lookupentityname="Main Warehouse" />
+        <field name="__PREFIX___productid" value="ff3dfa41-6780-44bb-8dfe-a6a48a5d10f9" lookupentity="__PREFIX___product" lookupentityname="Coca-Cola" />
       </record>
     </records>
     <m2mrelationships />
