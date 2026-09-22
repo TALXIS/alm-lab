@@ -5,12 +5,12 @@
 #
 # Adds a "Scan Barcode" button to the item detail page (CP09). It opens a dialog that decodes
 # a barcode with the device camera (@zxing/browser) or accepts one typed in manually, looks
-# it up via the connector, and on confirmation upserts a Product record and links it to the
-# item.
+# it up via the connector, and on confirmation upserts a Product record, links it to the item,
+# and shows its image (once linked) via a new LinkedProductImage component.
 #
-# BarcodeScanDialog.tsx is a new, standalone component, patched onto the existing item detail
-# page rather than baked into the CP09 template, since it depends on connector wiring that
-# doesn't exist until this checkpoint.
+# Both components are new, standalone files, patched onto the existing item detail page rather
+# than baked into the CP09 template, since they depend on connector wiring that doesn't exist
+# until this checkpoint.
 #
 # Expects: Apps.WarehousePicking's item detail page (CP09) and the connector data source
 # (step 3, scaffold/17-connector-datasource.ps1) already in place.
@@ -28,6 +28,11 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         -Tokens $uiTokens
     Write-Host "  ✓ components/BarcodeScanDialog.tsx" -ForegroundColor Green
 
+    Expand-LabTemplate -Path "18-barcode-scan-ui/LinkedProductImage.tsx" `
+        -Destination "$appSrc/components/LinkedProductImage.tsx" `
+        -Tokens $uiTokens
+    Write-Host "  ✓ components/LinkedProductImage.tsx" -ForegroundColor Green
+
     $detailPagePath = "$appSrc/pages/warehouse-item-detail.tsx"
     if (-not (Test-Path $detailPagePath)) {
         Write-Err "$detailPagePath not found - run CP09 first."
@@ -42,6 +47,7 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         $importReplacement = @"
 $importAnchor
 import BarcodeScanDialog from "@/components/BarcodeScanDialog";
+import LinkedProductImage from "@/components/LinkedProductImage";
 import { ${prefixPascal}_productsService } from "@/generated/services/${prefixPascal}_productsService";
 "@
         $detailPage = $detailPage.Replace($importAnchor, $importReplacement)
@@ -75,6 +81,7 @@ $mutationAnchor
         />
         {linkedProduct && (
           <div className="flex items-center gap-2 text-sm" data-testid="linked-product-name">
+            <LinkedProductImage productId={linkedProductId!} />
             <span className="text-muted-foreground">Linked product:</span>
             <span className="font-medium">{linkedProduct.${PublisherPrefix}_name}</span>
           </div>

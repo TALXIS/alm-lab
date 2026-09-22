@@ -61,9 +61,14 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const [imageFile, setImageFile] = useState<File | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
+  // A camera decode and a manual lookup can resolve in either order - once one of them has
+  // already produced a product, a late/stray camera decode (e.g. a misread off a bad frame)
+  // must not silently overwrite it.
+  const productFoundRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
+    productFoundRef.current = false;
 
     const reader = new BrowserMultiFormatReader();
     let cancelled = false;
@@ -71,7 +76,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     reader
       .decodeFromVideoDevice(undefined, videoRef.current ?? undefined, (result, _err, controls) => {
         controlsRef.current = controls;
-        if (cancelled || !result) return;
+        if (cancelled || !result || productFoundRef.current) return;
         const text = result.getText();
         controls.stop();
         setEan(text);
@@ -90,12 +95,17 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   }, [open]);
 
   // Revoke the blob: URL on unmount even if the dialog is torn down without going through
-  // resetAndClose (e.g. the parent list item disappears mid-scan).
+  // resetAndClose (e.g. the parent list item disappears mid-scan). A ref, not the state
+  // value itself, so the cleanup always sees the latest URL rather than the one from
+  // whichever render this effect was set up on.
+  const previewImageUrlRef = useRef<string | null>(null);
+  useEffect(() => {
+    previewImageUrlRef.current = previewImageUrl;
+  }, [previewImageUrl]);
   useEffect(() => {
     return () => {
-      if (previewImageUrl) URL.revokeObjectURL(previewImageUrl);
+      if (previewImageUrlRef.current) URL.revokeObjectURL(previewImageUrlRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEan = async (barcode: string) => {
@@ -111,6 +121,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         return;
       }
       setProduct(result.data);
+      productFoundRef.current = true;
 
       if (result.data.imageUrl) {
         // A code app's CSP can block an <img> pointed at an external URL - proxy the bytes
