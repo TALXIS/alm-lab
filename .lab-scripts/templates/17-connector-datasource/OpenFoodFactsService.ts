@@ -24,4 +24,15 @@ export class OpenFoodFactsService {
     });
     return result;
   }
+
+  public static async GetProductImage(imageUrl: string): Promise<IOperationResult<unknown>> {
+    const result = await OpenFoodFactsService.client.executeAsync<{ imageUrl: string }, unknown>({
+      connectorOperation: {
+        tableName: OpenFoodFactsService.dataSourceName,
+        operationName: 'GetProductImage',
+        parameters: { imageUrl },
+      },
+    });
+    return result;
+  }
 }

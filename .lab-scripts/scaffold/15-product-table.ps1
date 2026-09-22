@@ -70,6 +70,8 @@ if (-not (Get-LabValue 'productTableScaffolded')) {
 
     Write-Host "  ✓ product.quantity (Text)" -ForegroundColor Green
 
+    # 500, not the template's 100-char default - real Open Food Facts image URLs (and most
+    # CDN-hosted product images generally) routinely exceed 100 characters.
     txc workspace component create pp-entity-attribute `
         --output "src/Solutions.DataModel" `
         --param "EntitySchemaName=${PublisherPrefix}_product" `
@@ -80,10 +82,6 @@ if (-not (Get-LabValue 'productTableScaffolded')) {
         --param "DisplayName=Image URL" `
         --param "TextMaxLength=500"
 
-    # 500, not the template's 100-char default - real Open Food Facts image URLs (and most
-    # CDN-hosted product images generally) routinely exceed 100 characters; the default
-    # truncated real barcode scans, confirmed live (SQL "String or binary data would be
-    # truncated" on almlab_imageurl when linking a real product).
     Write-Host "  ✓ product.imageurl (Text, 500 chars)" -ForegroundColor Green
 
     txc workspace component create pp-entity-attribute `
@@ -97,20 +95,8 @@ if (-not (Get-LabValue 'productTableScaffolded')) {
 
     Write-Host "  ✓ product.lastsyncedon (DateTime)" -ForegroundColor Green
 
-    # The scanned product's photo, proxied server-side through the connector's own custom
-    # code (Connectors.OpenFoodFacts/script.csx) and stored here as a real Dataverse column.
-    # apps.powerapps.com's CSP (img-src 'self', no data:/blob:/external domains, confirmed
-    # live) blocks the code app from rendering the raw Open Food Facts image URL directly -
-    # routing the bytes through Dataverse and rendering via the SDK's same-origin download API
-    # is the only fix that works under that CSP.
-    #
-    # File, not Image: the code app SDK's data-source generator excludes Image-type columns
-    # from the generated model entirely, and its client only exposes an upload method
-    # (uploadFileToRecord) for File-type columns - there is no upload counterpart for Image
-    # columns, only a download one. Confirmed live: an Image-type column here never appeared
-    # in the generated Product model at all. File columns support both upload and download via
-    # the SDK's (undocumented-in-generated-code but public) uploadFileToRecord/
-    # downloadFileFromRecord client methods.
+    # File, not Image - the code app SDK excludes Image-type columns from the generated model
+    # and only File columns get an upload method (uploadFileToRecord).
     txc workspace component create pp-entity-attribute `
         --output "src/Solutions.DataModel" `
         --param "EntitySchemaName=${PublisherPrefix}_product" `
