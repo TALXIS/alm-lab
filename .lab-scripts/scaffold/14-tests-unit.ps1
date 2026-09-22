@@ -106,6 +106,16 @@ Expand-LabTemplate -Path "14-tests-unit/ribbonActions.test.js" `
     -Tokens @{ PREFIX = $prefix }
 Write-Host "  ✓ tests/ribbonActions.test.js" -ForegroundColor Green
 
+# The pp-test-script template's jest.config.js leaves JETS_CORE and WEBRES_PATH to the RunJest
+# MSBuild target, so `dotnet test` and CI pass while a bare `npx jest` - or the VS Code Jest
+# extension, which is the only way these tests appear in the Testing panel - fails every suite
+# with "Cannot find module undefined". Overwrite it with one that defaults both.
+# Full source: .lab-scripts/templates/14-tests-unit/jest.config.js
+Expand-LabTemplate -Path "14-tests-unit/jest.config.js" `
+    -Destination "src/Tests.Scripts/jest.config.js" `
+    -Tokens @{ PREFIX = $prefix }
+Write-Host "  ✓ jest.config.js (JETS_CORE/WEBRES_PATH defaults)" -ForegroundColor Green
+
 # Marks the block done — checked instead of Test-Path on the project directory so a re-run
 # after a partial failure retries everything rather than silently skipping missing work.
 Set-LabValue 'scriptsTestsScaffolded' $true
