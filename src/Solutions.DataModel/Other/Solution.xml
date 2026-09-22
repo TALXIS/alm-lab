@@ -92,6 +92,10 @@
       <RootComponent type="60" id="{a5f4c42b-44b6-42cf-85a3-4ae4cead28b3}" behavior="0" />
       <RootComponent type="60" id="{85713e7a-3f24-47e7-9cd1-b11fd8e9457b}" behavior="0" />
       <RootComponent type="60" id="{6c5ecd70-23d6-43d2-87ec-4f20eb8eb3e1}" behavior="0" />
+      <RootComponent type="1" schemaName="almlab_product" behavior="0" />
+      <RootComponent type="60" id="{5d5bbb0e-5f1b-4721-b40d-f5e8ffe4ac57}" behavior="0" />
+      <RootComponent type="60" id="{16c963be-5342-4726-83fe-7ea12d7881a5}" behavior="0" />
+      <RootComponent type="60" id="{5567f623-da9d-4c44-ac50-c1d0f68895a5}" behavior="0" />
     </RootComponents>
     <MissingDependencies />
   </SolutionManifest>

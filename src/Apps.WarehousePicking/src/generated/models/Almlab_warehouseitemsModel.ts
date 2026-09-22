@@ -31,6 +31,7 @@ export interface Almlab_warehouseitemsBase {
   almlab_isperishable?: string;
   "almlab_locationid@odata.bind"?: string;
   almlab_name: string;
+  "almlab_productid@odata.bind"?: string;
   almlab_reorderpoint?: string;
   almlab_sku: string;
   almlab_unitprice?: string;
@@ -49,6 +50,7 @@ export interface Almlab_warehouseitemsBase {
 export interface Almlab_warehouseitems extends Almlab_warehouseitemsBase {
   almlab_categoryname?: string;
   almlab_locationidname?: string;
+  almlab_productidname?: string;
   createdbyname?: string;
   createdbyyominame: string;
   createdon?: string;
@@ -68,6 +70,8 @@ export interface Almlab_warehouseitems extends Almlab_warehouseitemsBase {
   versionnumber?: string;
   almlab_locationid?: object;
   _almlab_locationid_value?: string;
+  almlab_productid?: object;
+  _almlab_productid_value?: string;
   createdby?: object;
   _createdby_value?: string;
   createdonbehalfby?: object;

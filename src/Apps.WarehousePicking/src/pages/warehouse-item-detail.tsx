@@ -41,6 +41,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Package, ArrowRightLeft, MapPin } from "lucide-react";
+import BarcodeScanDialog from "@/components/BarcodeScanDialog";
+import LinkedProductImage from "@/components/LinkedProductImage";
+import { Almlab_productsService } from "@/generated/services/Almlab_productsService";
 
 export default function WarehouseItemDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -95,6 +98,16 @@ export default function WarehouseItemDetailPage() {
       loc.almlab_name,
     ])
   );
+
+  const linkedProductId = item?._almlab_productid_value;
+  const { data: linkedProduct } = useQuery({
+    queryKey: ["linkedProduct", linkedProductId],
+    queryFn: async () => {
+      const result = await Almlab_productsService.get(linkedProductId!);
+      return result.data;
+    },
+    enabled: !!linkedProductId,
+  });
 
   const createTxMutation = useMutation({
     mutationFn: async () => {
@@ -172,6 +185,21 @@ export default function WarehouseItemDetailPage() {
             {item.almlab_sku}
           </p>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <BarcodeScanDialog
+          itemId={id!}
+          currentProductId={linkedProductId}
+          onLinked={() => queryClient.refetchQueries({ queryKey: ["warehouseItem", id] })}
+        />
+        {linkedProduct && (
+          <div className="flex items-center gap-2 text-sm" data-testid="linked-product-name">
+            <LinkedProductImage productId={linkedProductId!} />
+            <span className="text-muted-foreground">Linked product:</span>
+            <span className="font-medium">{linkedProduct.almlab_name}</span>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

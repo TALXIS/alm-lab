@@ -2,4 +2,5 @@
 <EntityRelationships xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <EntityRelationship Name="almlab_almlab_warehouselocation_almlab_warehouseitem_locationid" />
   <EntityRelationship Name="almlab_almlab_warehouseitem_almlab_warehousetransaction_itemid" />
+  <EntityRelationship Name="almlab_almlab_product_almlab_warehouseitem_productid" />
 </EntityRelationships>

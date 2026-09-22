@@ -8,10 +8,9 @@ export * as CommonModels from './models/CommonModels';
 export * as Almlab_warehouseitemsModel from './models/Almlab_warehouseitemsModel';
 export * as Almlab_warehousetransactionsModel from './models/Almlab_warehousetransactionsModel';
 export * as Almlab_warehouselocationsModel from './models/Almlab_warehouselocationsModel';
-
-
+export * as Almlab_productsModel from './models/Almlab_productsModel';
 // Services
 export * from './services/Almlab_warehouseitemsService';
 export * from './services/Almlab_warehousetransactionsService';
 export * from './services/Almlab_warehouselocationsService';
-
+export * from './services/Almlab_productsService';

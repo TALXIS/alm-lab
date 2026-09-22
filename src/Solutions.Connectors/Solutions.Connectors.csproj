@@ -1,0 +1,15 @@
+<Project Sdk="TALXIS.DevKit.Build.Sdk/1.9.0">
+  <ItemGroup>
+    <ProjectReference Include="..\Connectors.OpenFoodFacts\Connectors.OpenFoodFacts.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <ProjectType>Solution</ProjectType>
+    <GeneratePluginAssembly>false</GeneratePluginAssembly>
+  </PropertyGroup>
+  <PropertyGroup Label="Dataverse solution metadata">
+    <PublisherName>ALMLab</PublisherName>
+    <PublisherPrefix>almlab</PublisherPrefix>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+  <Target Name="Publish" />
+</Project>

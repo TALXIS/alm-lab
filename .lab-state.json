@@ -28,5 +28,9 @@
   "configDataFilePath": "/Users/metju/Developer/repos/alm-lab/src/Packages.Main/Data/data.xml",
   "pluginsTestsScaffolded": true,
   "scriptsTestsScaffolded": true,
-  "testsUiScaffolded": true
+  "testsUiScaffolded": true,
+  "productTableScaffolded": true,
+  "connectorScaffolded": true,
+  "productDataSourceScaffolded": true,
+  "barcodeScanUiScaffolded": true
 }

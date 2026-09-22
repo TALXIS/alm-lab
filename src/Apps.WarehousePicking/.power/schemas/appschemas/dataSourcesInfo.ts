@@ -25,5 +25,26 @@ export const dataSourcesInfo = {
     "primaryKey": "almlab_warehouselocationid",
     "dataSourceType": "Dataverse",
     "apis": {}
+  },
+  "almlab_products": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "almlab_productid",
+    "dataSourceType": "Dataverse",
+    "apis": {}
+  },
+  "OpenFoodFacts": {
+    "tableId": "",
+    "version": "",
+    "dataSourceType": "Connector",
+    "apis": {
+      "GetProductByBarcode": {
+        "path": "/product/{barcode}.json",
+        "method": "GET",
+        "parameters": [
+          { "name": "barcode", "in": "path", "required": true, "type": "string" }
+        ]
+      }
+    }
   }
 };

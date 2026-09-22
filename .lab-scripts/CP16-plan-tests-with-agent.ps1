@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                       CP15: Plan tests with an agent                                   ║
+# ║                       CP16: Plan tests with an agent                                   ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Conceptually this is step ONE of the BDD-agent authoring chain: give an agent a prompt,
@@ -21,13 +21,13 @@
 # Run this once to scaffold the agent + TestPlans convention; run the agent itself as
 # many times as you like afterwards, once per feature you want planned.
 #
-# Run:  .lab-scripts/CP15-plan-tests-with-agent.ps1
+# Run:  .lab-scripts/CP16-plan-tests-with-agent.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
-Write-Step "CP15 — BDD planning agent"
+Write-Step "CP16 — BDD planning agent"
 Push-Location $LabRoot
 try {
     if (-not (Test-Path "src/Tests.UI/Support/Bindings")) {
@@ -50,7 +50,7 @@ try {
     Write-Ok "TestPlans/ scaffolded"
 } finally { Pop-Location }
 
-Save-Checkpoint -Id "cp15" -Message "Add BDD planning agent and TestPlans convention" -Body @'
+Save-Checkpoint -Id "cp16" -Message "Add BDD planning agent and TestPlans convention" -Body @'
 Add the planning step of the BDD-agent authoring chain: a prompt in, .feature files out, checked against the step-binding catalog the suite can already execute so proposed scenarios stay honest about what's implemented and what still needs binding work.
 
 ## Changes
@@ -60,4 +60,4 @@ Add the planning step of the BDD-agent authoring chain: a prompt in, .feature fi
 ## Testing
 - no build changes; validate by running the agent against a scoped prompt and confirming it reuses existing step phrasing before proposing anything new
 '@
-Write-Host "`nNext: .lab-scripts/CP16-explore-blackbox-and-generate-tests.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP17-explore-blackbox-and-generate-tests.ps1" -ForegroundColor Cyan

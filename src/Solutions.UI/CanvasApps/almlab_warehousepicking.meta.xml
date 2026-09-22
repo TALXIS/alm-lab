@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>almlab_warehousepicking</Name>
-  <AppVersion>2026-09-20T09:36:46Z</AppVersion>
+  <AppVersion>2026-09-22T13:18:45Z</AppVersion>
   <Status>Ready</Status>
   <CreatedByClientVersion>0.0.0.0</CreatedByClientVersion>
   <MinClientVersion>0.0.0.0</MinClientVersion>
@@ -15,7 +15,7 @@
   <Publisher xsi:nil="true"></Publisher>
   <AuthorizationReferences>[]</AuthorizationReferences>
   <ConnectionReferences>{}</ConnectionReferences>
-  <DatabaseReferences>{"default.cds":{"databaseDetails":{"referenceType":"Environmental","environmentName":"default.cds","overrideValues":{"status":"NotSpecified","environmentVariableName":""}},"dataSources":{"warehouseitems":{"entitySetName":"almlab_warehouseitems","logicalName":"almlab_warehouseitem"},"warehousetransactions":{"entitySetName":"almlab_warehousetransactions","logicalName":"almlab_warehousetransaction"},"warehouselocations":{"entitySetName":"almlab_warehouselocations","logicalName":"almlab_warehouselocation"}}}}</DatabaseReferences>
+  <DatabaseReferences>{"default.cds":{"databaseDetails":{"referenceType":"Environmental","environmentName":"default.cds","overrideValues":{"status":"NotSpecified","environmentVariableName":""}},"dataSources":{"warehouseitems":{"entitySetName":"almlab_warehouseitems","logicalName":"almlab_warehouseitem"},"warehousetransactions":{"entitySetName":"almlab_warehousetransactions","logicalName":"almlab_warehousetransaction"},"warehouselocations":{"entitySetName":"almlab_warehouselocations","logicalName":"almlab_warehouselocation"},"products":{"entitySetName":"almlab_products","logicalName":"almlab_product"}}}}</DatabaseReferences>
   <AppComponents>[]</AppComponents>
   <AppComponentDependencies>[]</AppComponentDependencies>
   <CanConsumeAppPass>1</CanConsumeAppPass>
@@ -24,12 +24,12 @@
   <AdminControlBypassConsent>0</AdminControlBypassConsent>
   <EmbeddedApp xsi:nil="true"></EmbeddedApp>
   <IntroducedVersion>1.0</IntroducedVersion>
-  <CdsDependencies>{"cdsdependencies":[{"logicalname":"almlab_warehouseitem","componenttype":1},{"logicalname":"almlab_warehousetransaction","componenttype":1},{"logicalname":"almlab_warehouselocation","componenttype":1}]}</CdsDependencies>
+  <CdsDependencies>{"cdsdependencies":[{"logicalname":"almlab_warehouseitem","componenttype":1},{"logicalname":"almlab_warehousetransaction","componenttype":1},{"logicalname":"almlab_warehouselocation","componenttype":1},{"logicalname":"almlab_product","componenttype":1}]}</CdsDependencies>
   <IsCustomizable>1</IsCustomizable>
   <CodeAppPackageUris>
     <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/index.html_ContentType_text/html</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/power-apps.svg_ContentType_image/svg+xml</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/index-BC6UEcwZ.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/index-II2x8Oq6.css_ContentType_text/css</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/index-B9cEb5b2.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/almlab_warehousepicking_CodeAppPackages/assets/index-CZXcDTfi.css_ContentType_text/css</CodeAppPackageUri>
   </CodeAppPackageUris>
 </CanvasApp>

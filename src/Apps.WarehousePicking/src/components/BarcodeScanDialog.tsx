@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import type { IScannerControls } from "@zxing/browser";
-import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
+import { Almlab_warehouseitemsService } from "@/generated/services/Almlab_warehouseitemsService";
 // The generated services expose create/update/get, but no file-column upload - the
 // runtime client does, so reach for it directly rather than hand-editing generated code.
 import { getClient } from "@microsoft/power-apps/data";
 import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
-import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
+import { Almlab_productsService } from "@/generated/services/Almlab_productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
 import type { Product } from "@/generated/models/OpenFoodFactsModel";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ function bytesToDataUrl(bytes: Uint8Array, mimeType: string): string {
 
 type BarcodeScanDialogProps = {
   itemId: string;
-  /** The item's current __PREFIX___productid_value, if it's already linked to a Product. */
+  /** The item's current almlab_productid_value, if it's already linked to a Product. */
   currentProductId?: string;
   onLinked: () => void;
 };
@@ -178,33 +178,33 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
       // No alternate key on EAN (see .lab-scripts/scaffold/15-product-table.ps1) - a plain
       // filter-then-create instead of an upsert, so scanning the same barcode twice reuses
       // the existing Product record rather than duplicating it.
-      const existing = await __PASCAL___productsService.getAll({
-        select: ["__PREFIX___productid"],
-        filter: `__PREFIX___ean eq '${ean}'`,
+      const existing = await Almlab_productsService.getAll({
+        select: ["almlab_productid"],
+        filter: `almlab_ean eq '${ean}'`,
         top: 1,
       });
-      let productId = existing.data?.[0]?.__PREFIX___productid;
+      let productId = existing.data?.[0]?.almlab_productid;
 
       if (!productId) {
         // createRecordAsync's response shape for the new record's id isn't reliable across
         // hosts (confirmed empirically: the live Power Apps player's create response didn't
-        // carry __PREFIX___productid in .data) - re-query by the same EAN filter used above
+        // carry almlab_productid in .data) - re-query by the same EAN filter used above
         // instead of trusting the create call's own return value.
-        await __PASCAL___productsService.create({
-          __PREFIX___name: product.name || ean,
-          __PREFIX___ean: ean,
-          __PREFIX___brand: product.brand,
-          __PREFIX___quantity: product.quantity,
-          __PREFIX___imageurl: product.imageUrl,
-          __PREFIX___lastsyncedon: new Date().toISOString(),
+        await Almlab_productsService.create({
+          almlab_name: product.name || ean,
+          almlab_ean: ean,
+          almlab_brand: product.brand,
+          almlab_quantity: product.quantity,
+          almlab_imageurl: product.imageUrl,
+          almlab_lastsyncedon: new Date().toISOString(),
         } as any);
 
-        const created = await __PASCAL___productsService.getAll({
-          select: ["__PREFIX___productid"],
-          filter: `__PREFIX___ean eq '${ean}'`,
+        const created = await Almlab_productsService.getAll({
+          select: ["almlab_productid"],
+          filter: `almlab_ean eq '${ean}'`,
           top: 1,
         });
-        productId = created.data?.[0]?.__PREFIX___productid;
+        productId = created.data?.[0]?.almlab_productid;
       }
 
       if (!productId) {
@@ -212,16 +212,16 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         return;
       }
 
-      await __PASCAL___warehouseitemsService.update(itemId, {
-        "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})`,
+      await Almlab_warehouseitemsService.update(itemId, {
+        "almlab_productid@odata.bind": `/almlab_products(${productId})`,
       } as any);
 
       if (imageBytes) {
         try {
           await getClient(dataSourcesInfo).uploadFileToRecord(
-            "__PREFIX___products",
+            "almlab_products",
             productId,
-            "__PREFIX___productimage",
+            "almlab_productimage",
             `${ean}.jpg`,
             imageBytes
           );
@@ -345,3 +345,4 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     </>
   );
 }
+

@@ -1,10 +1,10 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                       CP16: Black-box exploration agent                                ║
+# ║                       CP17: Black-box exploration agent                                ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# The last step in the chain, and deliberately the opposite of CP15: that planner reads the
+# The last step in the chain, and deliberately the opposite of CP16: that planner reads the
 # bindings catalog first and reuses what already exists. This agent is FORBIDDEN from
 # reading this repository's source at all — no .feature files, no StepDefinitions, no
 # Support/Bindings, nothing. It only ever sees the running apps, the same way a real user
@@ -19,15 +19,15 @@
 # Everything this agent produces lands in Features/Discovered/, kept separate from the
 # reviewed suite. A human reviews it — promote what's real, discard what's noise — before
 # any of it is bound and added to CI. This checkpoint scaffolds that agent and the
-# Discovered/ convention; it does not invoke the agent itself, same as CP15.
+# Discovered/ convention; it does not invoke the agent itself, same as CP16.
 #
-# Run:  .lab-scripts/CP16-explore-blackbox-and-generate-tests.ps1
+# Run:  .lab-scripts/CP17-explore-blackbox-and-generate-tests.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
-Write-Step "CP16 — Black-box exploration agent"
+Write-Step "CP17 — Black-box exploration agent"
 Push-Location $LabRoot
 try {
     New-Item -ItemType Directory -Path ".github/agents" -Force | Out-Null
@@ -67,7 +67,7 @@ try {
     }
 } finally { Pop-Location }
 
-Save-Checkpoint -Id "cp16" -Message "Add black-box exploration agent forbidden from reading source" -Body @'
+Save-Checkpoint -Id "cp17" -Message "Add black-box exploration agent forbidden from reading source" -Body @'
 Add the last step of the BDD-agent chain: an agent that only ever sees the running apps, never the source, so its scenarios aren'"'"'t bounded by what the bindings catalog or the human authors already anticipated.
 
 ## Changes

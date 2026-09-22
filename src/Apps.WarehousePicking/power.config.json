@@ -24,6 +24,10 @@
         "warehouselocations": {
           "entitySetName": "almlab_warehouselocations",
           "logicalName": "almlab_warehouselocation"
+        },
+        "products": {
+          "entitySetName": "almlab_products",
+          "logicalName": "almlab_product"
         }
       },
       "environmentVariableName": ""
