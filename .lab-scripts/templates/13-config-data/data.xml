@@ -19,6 +19,29 @@
     </records>
     <m2mrelationships />
   </entity>
+  <entity name="__PREFIX___product" displayname="Product">
+    <records>
+      <record id="611e6410-7c90-4c63-abf7-825af79eb636">
+        <field name="__PREFIX___productid" value="611e6410-7c90-4c63-abf7-825af79eb636" />
+        <field name="__PREFIX___name" value="Nutella" />
+        <field name="__PREFIX___ean" value="3017620422003" />
+        <field name="__PREFIX___brand" value="Nutella, Ferrero" />
+        <field name="__PREFIX___quantity" value="400 g e" />
+        <field name="__PREFIX___imageurl" value="https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.879.400.jpg" />
+        <field name="__PREFIX___lastsyncedon" value="2026-01-15T00:00:00Z" />
+      </record>
+      <record id="ff3dfa41-6780-44bb-8dfe-a6a48a5d10f9">
+        <field name="__PREFIX___productid" value="ff3dfa41-6780-44bb-8dfe-a6a48a5d10f9" />
+        <field name="__PREFIX___name" value="Coca-Cola" />
+        <field name="__PREFIX___ean" value="5449000000996" />
+        <field name="__PREFIX___brand" value="COCA-COLA SERVICES SA/NV, Coca-Cola" />
+        <field name="__PREFIX___quantity" value="330 ml" />
+        <field name="__PREFIX___imageurl" value="https://images.openfoodfacts.org/images/products/544/900/000/0996/front_en.1129.400.jpg" />
+        <field name="__PREFIX___lastsyncedon" value="2026-01-15T00:00:00Z" />
+      </record>
+    </records>
+    <m2mrelationships />
+  </entity>
   <entity name="__PREFIX___warehouseitem" displayname="Warehouse Item">
     <records>
       <record id="6e0bd72a-0e3b-487c-b143-4c694e9e488a">
@@ -42,6 +65,7 @@
         <field name="__PREFIX___unitprice" value="19.99" />
         <field name="__PREFIX___reorderpoint" value="10" />
         <field name="__PREFIX___locationid" value="2592a040-83b7-464e-ac3e-faff2031398c" lookupentity="__PREFIX___warehouselocation" lookupentityname="Main Warehouse" />
+        <field name="__PREFIX___productid" value="611e6410-7c90-4c63-abf7-825af79eb636" lookupentity="__PREFIX___product" lookupentityname="Nutella" />
       </record>
       <record id="e42c5c02-0cd1-4fe5-b6ef-c2c620f1bfcf">
         <field name="__PREFIX___warehouseitemid" value="e42c5c02-0cd1-4fe5-b6ef-c2c620f1bfcf" />
