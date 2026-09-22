@@ -1,0 +1,31 @@
+{
+  // ── .NET tests (src/Tests.Plugins, src/Tests.UI) ──────────────────────────────────────
+  // C# Dev Kit does not reliably auto-detect the XML solution format, so name it explicitly.
+  "dotnet.defaultSolution": "WarehouseManagement.slnx",
+
+  // ── Jest tests (src/Tests.Scripts) ────────────────────────────────────────────────────
+  // The project is a Jest suite wearing a .csproj, so the .NET provider finds nothing in it.
+  // Point the Jest extension at the subfolder. The paths the tests need (the Xrm mock core and
+  // the built script bundle) are defaulted in src/Tests.Scripts/jest.config.js rather than set
+  // here: VS Code does not expand ${workspaceFolder} inside jest.nodeEnv, so it arrives as a
+  // literal and every suite fails to resolve. Run `dotnet build src/Scripts.UI/Scripts.UI.csproj`
+  // first - the tests load that bundle, so they fail if it has never been built.
+  "jest.virtualFolders": [
+    {
+      "name": "Scripts",
+      "rootPath": "src/Tests.Scripts",
+      "runMode": "on-demand"
+    }
+  ],
+
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bin": true,
+    "**/obj": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/bin/**": true,
+    "**/obj/**": true
+  }
+}
