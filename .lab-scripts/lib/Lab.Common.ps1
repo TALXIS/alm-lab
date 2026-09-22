@@ -142,13 +142,36 @@ function Save-Checkpoint {
         if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
         if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
         Write-Info "Waiting for build checks..."
+        # On a freshly pushed branch the workflows have often not registered yet, and
+        # `gh pr checks --watch` reports "no checks reported" and returns straight away -
+        # so the merge below would race the very gate this step exists to wait for.
+        $deadline = (Get-Date).AddMinutes(3)
+        while ((Get-Date) -lt $deadline) {
+            $checkStatus = gh pr checks $Id -R $forkRepo 2>&1 | Out-String
+            if ($checkStatus -notmatch 'no checks reported') { break }
+            Start-Sleep 5
+        }
         gh pr checks $Id -R $forkRepo --watch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Err "Checks did not pass for $Id - refusing to merge. See the PR above."
+            exit 1
+        }
+
         Write-Info "Merging..."
         # --admin bypasses the CP03/CP12 ruleset so the lab can merge unattended; on a real
         # team nobody bypasses - the gate applies to everyone, automation included.
         gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Err "Merge failed for $Id. The PR is still open - resolve it, then re-run this checkpoint."
+            exit 1
+        }
+
         git switch main --quiet; git pull --quiet
-        git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
+        # --delete-branch removes the remote branch; the local one lingers and then makes the
+        # tag push ambiguous, because origin has a ref of that name on both sides.
+        git branch -D $Id 2>&1 | Out-Null
+        git tag -f $Id 2>&1 | Out-Null
+        git push -f origin "refs/tags/${Id}:refs/tags/${Id}" --quiet 2>&1 | Out-Null
         Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
     } finally { Pop-Location }
 }
