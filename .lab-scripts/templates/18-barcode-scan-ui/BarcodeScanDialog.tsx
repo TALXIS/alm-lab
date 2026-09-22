@@ -36,6 +36,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const [looking, setLooking] = useState(false);
   const [linking, setLinking] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
+  const [imgError, setImgError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
 
@@ -70,6 +71,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     if (!barcode) return;
     setLooking(true);
     setProduct(null);
+    setImgError(false);
     try {
       const result = await OpenFoodFactsService.GetProductByBarcode(barcode);
       if (!result.success || !result.data) {
@@ -99,7 +101,11 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
       let productId = existing.data?.[0]?.__PREFIX___productid;
 
       if (!productId) {
-        const created = await __PASCAL___productsService.create({
+        // createRecordAsync's response shape for the new record's id isn't reliable across
+        // hosts (confirmed empirically: the live Power Apps player's create response didn't
+        // carry __PREFIX___productid in .data) - re-query by the same EAN filter used above
+        // instead of trusting the create call's own return value.
+        await __PASCAL___productsService.create({
           __PREFIX___name: product.name || ean,
           __PREFIX___ean: ean,
           __PREFIX___brand: product.brand,
@@ -107,7 +113,13 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
           __PREFIX___imageurl: product.imageUrl,
           __PREFIX___lastsyncedon: new Date().toISOString(),
         } as any);
-        productId = created.data?.__PREFIX___productid;
+
+        const created = await __PASCAL___productsService.getAll({
+          select: ["__PREFIX___productid"],
+          filter: `__PREFIX___ean eq '${ean}'`,
+          top: 1,
+        });
+        productId = created.data?.[0]?.__PREFIX___productid;
       }
 
       if (!productId) {
@@ -185,11 +197,12 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
             {product && (
               <Card>
                 <CardContent className="pt-4 flex items-center gap-4">
-                  {product.imageUrl && (
+                  {product.imageUrl && !imgError && (
                     <img
                       src={product.imageUrl}
                       alt={product.name ?? ean}
                       className="h-16 w-16 object-contain rounded"
+                      onError={() => setImgError(true)}
                     />
                   )}
                   <div>

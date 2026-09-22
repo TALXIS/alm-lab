@@ -84,9 +84,14 @@ if (-not (Get-LabValue 'productTableScaffolded')) {
         --param "RequiredLevel=none" `
         --param "PublisherPrefix=$PublisherPrefix" `
         --param "LogicalName=imageurl" `
-        --param "DisplayName=Image URL"
+        --param "DisplayName=Image URL" `
+        --param "TextMaxLength=500"
 
-    Write-Host "  ✓ product.imageurl (Text)" -ForegroundColor Green
+    # 500, not the template's 100-char default - real Open Food Facts image URLs (and most
+    # CDN-hosted product images generally) routinely exceed 100 characters; the default
+    # truncated real barcode scans, confirmed live (SQL "String or binary data would be
+    # truncated" on almlab_imageurl when linking a real product).
+    Write-Host "  ✓ product.imageurl (Text, 500 chars)" -ForegroundColor Green
 
     txc workspace component create pp-entity-attribute `
         --output "src/Solutions.DataModel" `
