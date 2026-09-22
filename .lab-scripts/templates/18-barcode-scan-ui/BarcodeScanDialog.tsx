@@ -63,6 +63,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const [linking, setLinking] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [imgError, setImgError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   // The image proxied through the connector for the barcode just looked up: a data: URI for
   // preview, and the bytes it came from so linkProduct() can upload them without re-fetching.
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -128,10 +129,15 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
       }
       setProduct(result.data);
       productFoundRef.current = true;
+      // The barcode lookup itself is what "Look Up" promises - stop its spinner here and let
+      // the (much slower, since it redirects through a different host) image fetch run with
+      // its own loading state, so the button doesn't look stuck while the photo comes in.
+      setLooking(false);
 
       if (result.data.imageUrl) {
         // A code app's CSP can block an <img> pointed at an external URL - proxy the bytes
         // through the connector instead, then render them from a data: URI.
+        setImageLoading(true);
         try {
           const bytes = await fetchProductImageBytes(result.data.imageUrl);
           if (bytes) {
@@ -144,6 +150,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
           // The image is a nice-to-have on top of the product info already surfaced - fall
           // back to the "no image" state rather than failing the whole lookup over it.
           setImgError(true);
+        } finally {
+          setImageLoading(false);
         }
       }
     } catch (err) {
@@ -284,6 +292,11 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
             {product && (
               <Card>
                 <CardContent className="pt-4 flex items-center gap-4">
+                  {imageLoading && (
+                    <div className="h-16 w-16 rounded bg-muted flex items-center justify-center shrink-0">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
                   {previewImageUrl && !imgError && (
                     <img
                       src={previewImageUrl}
