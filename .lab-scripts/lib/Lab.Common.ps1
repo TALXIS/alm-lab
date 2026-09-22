@@ -144,7 +144,7 @@ function Save-Checkpoint {
         Write-Info "Waiting for build checks..."
         gh pr checks $Id -R $forkRepo --watch
         Write-Info "Merging..."
-        # --admin bypasses the CP03/CP12 ruleset so the lab can merge unattended; on a real
+        # --admin bypasses the CP03/CP13 ruleset so the lab can merge unattended; on a real
         # team nobody bypasses - the gate applies to everyone, automation included.
         gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
         git switch main --quiet; git pull --quiet

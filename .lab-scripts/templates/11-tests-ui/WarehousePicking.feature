@@ -21,3 +21,13 @@ Feature: Warehouse Picking
         Given I open the 'Office Laptop' item
         When I pick a quantity of '5'
         Then the quantity on hand should have decreased by '5'
+
+    # 3017620422003 is a real, stable Open Food Facts barcode (Nutella) - chosen because it's
+    # unlikely to ever be removed from the public database, the same reasoning CP11's own
+    # checkpoint script comments use it for.
+    Scenario: Scanning a barcode links product data to an item
+        Given I open the 'Wireless Mouse' item
+        When I enter the barcode '3017620422003' and look it up
+        Then I should see the product 'Nutella' in the scan preview
+        When I link the scanned product to the item
+        Then the item should show 'Nutella' as its linked product

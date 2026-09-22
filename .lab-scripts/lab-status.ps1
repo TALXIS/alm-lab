@@ -37,10 +37,11 @@ $checkpoints = @(
     @{ Id = "cp08"; Keys = @() }
     @{ Id = "cp09"; Keys = @() }
     @{ Id = "cp10"; Keys = @() }
-    @{ Id = "cp11"; Keys = @("configDataDirectory", "configDataSchemaPath", "configDataFilePath") }
-    @{ Id = "cp12"; Keys = @("mainRulesetId") }
-    @{ Id = "cp13"; Keys = @() }
+    @{ Id = "cp11"; Keys = @() }
+    @{ Id = "cp12"; Keys = @("configDataDirectory", "configDataSchemaPath", "configDataFilePath") }
+    @{ Id = "cp13"; Keys = @("mainRulesetId") }
     @{ Id = "cp14"; Keys = @() }
+    @{ Id = "cp15"; Keys = @() }
 )
 
 $tags = @(git -C $LabRoot tag --list "cp*" 2>$null)

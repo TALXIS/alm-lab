@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                       CP11: Move configuration                                         ║
+# ║                       CP12: Move configuration                                         ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Reference data (e.g. warehouse locations) must travel with the app, not be re-keyed per
@@ -19,14 +19,14 @@
 #   4. Import into Test - config stays consistent across environments; in CI the package
 #      deploys alongside the solutions.
 #
-# Run:  .lab-scripts/CP11-move-configuration.ps1
+# Run:  .lab-scripts/CP12-move-configuration.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 $PublisherPrefix = Get-LabValue 'publisherPrefix' 'almlab'
 
-Write-Step "CP11 — Configuration data (CMT)"
+Write-Step "CP12 — Configuration data (CMT)"
 Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/13-config-data.ps1"
@@ -103,12 +103,13 @@ try {
     }
 } finally { Pop-Location }
 
-Save-Checkpoint -Id "cp11" -Message "Add configuration data package for environment promotion" -Body @'
+Save-Checkpoint -Id "cp12" -Message "Add configuration data package for environment promotion" -Body @'
 Package warehouse reference data so environments stay consistent as the app moves through ALM stages. The CMT package is authored as source (seed records with stable GUIDs), imported into Dev, round-tripped back from Dev, and imported into Test.
 
 ## Changes
-- add src/Packages.Main/Data/data_schema.xml covering the three warehouse tables
-- add src/Packages.Main/Data/data.xml with seed locations, items, and transactions
+- add src/Packages.Main/Data/data_schema.xml covering the four warehouse tables (including Product)
+- add src/Packages.Main/Data/data.xml with seed locations, products, items, and transactions
+  (Wireless Mouse is pre-linked to a seeded Nutella product record)
 - add the [Content_Types].xml OPC manifest required by the CMT package format
 - import the package into Dev and Test; export captures manual Dev records as source
 - pause after the Dev import so you can run the Warehouse Picking code app locally
@@ -120,4 +121,4 @@ Package warehouse reference data so environments stay consistent as the app move
 - code app npm run dev against Dev shows real items/locations, a successful pick updates
   quantity live, and an over-pick on Wireless Mouse surfaces the plugin's rejection message
 '@
-Write-Host "`nNext: .lab-scripts/CP12-extend-branch-policies-build-checks.ps1" -ForegroundColor Cyan
+Write-Host "`nNext: .lab-scripts/CP13-extend-branch-policies-build-checks.ps1" -ForegroundColor Cyan

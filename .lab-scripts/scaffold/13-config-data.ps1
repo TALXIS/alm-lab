@@ -3,8 +3,8 @@
 # ║             13: Configuration Data — CMT Package with Seed Records                     ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Creates the CMT data package in src/Packages.Main/Data: schema for the three warehouse
-# tables, seed records as code, and the OPC content-types manifest.
+# Creates the CMT data package in src/Packages.Main/Data: schema for the four warehouse
+# tables (including Product), seed records as code, and the OPC content-types manifest.
 # Expects: $PublisherPrefix from parent scope.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -24,7 +24,7 @@ Expand-LabTemplate -Path "13-config-data/data_schema.xml" `
     -Destination "$dataDir/data_schema.xml" `
     -Tokens @{ PREFIX = $prefix }
 
-Write-Host "  ✓ data_schema.xml (3 entities, disableplugins)" -ForegroundColor Green
+Write-Host "  ✓ data_schema.xml (4 entities, disableplugins)" -ForegroundColor Green
 
 # Seed records as code. Stable GUIDs mean re-importing is an update, not a duplicate -
 # the same package can run against any environment any number of times.
@@ -33,7 +33,7 @@ Expand-LabTemplate -Path "13-config-data/data.xml" `
     -Destination "$dataDir/data.xml" `
     -Tokens @{ PREFIX = $prefix }
 
-Write-Host "  ✓ data.xml (2 locations, 3 items, 2 transactions)" -ForegroundColor Green
+Write-Host "  ✓ data.xml (2 locations, 2 products, 3 items, 2 transactions)" -ForegroundColor Green
 
 # OPC content-types manifest — CMT packages are Open Packaging Convention archives and
 # need it next to the data files.
