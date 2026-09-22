@@ -37,6 +37,14 @@ function toBytes(data: unknown): Uint8Array | null {
   return null;
 }
 
+// A code app's CSP allows img-src 'self' data: but not blob: - render fetched image bytes as
+// a data: URI, not an object URL.
+function bytesToDataUrl(bytes: Uint8Array, mimeType: string): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return `data:${mimeType};base64,${btoa(binary)}`;
+}
+
 type BarcodeScanDialogProps = {
   itemId: string;
   /** The item's current __PREFIX___productid_value, if it's already linked to a Product. */
@@ -55,10 +63,10 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const [linking, setLinking] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [imgError, setImgError] = useState(false);
-  // The image proxied through the connector for the barcode just looked up: a same-origin
-  // blob: URL for preview, and the File it came from so linkProduct() can store it.
+  // The image proxied through the connector for the barcode just looked up: a data: URI for
+  // preview, and the bytes it came from so linkProduct() can upload them without re-fetching.
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageBytes, setImageBytes] = useState<Uint8Array | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   // A camera decode and a manual lookup can resolve in either order - once one of them has
@@ -69,6 +77,12 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   useEffect(() => {
     if (!open) return;
     productFoundRef.current = false;
+
+    // React's `muted` JSX attribute doesn't reliably set the underlying DOM property in every
+    // browser, and without that property true, autoplay of the camera stream can be blocked -
+    // the stream still decodes (zxing reads frames straight off the track), but nothing ever
+    // paints to the visible <video>. Set it directly before starting the decoder.
+    if (videoRef.current) videoRef.current.muted = true;
 
     const reader = new BrowserMultiFormatReader();
     let cancelled = false;
@@ -94,26 +108,13 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     };
   }, [open]);
 
-  // Revoke the blob: URL on unmount even if the dialog is torn down without going through
-  // resetAndClose (e.g. the parent list item disappears mid-scan). A ref, not the state
-  // value itself, so the cleanup always sees the latest URL rather than the one from
-  // whichever render this effect was set up on.
-  const previewImageUrlRef = useRef<string | null>(null);
-  useEffect(() => {
-    previewImageUrlRef.current = previewImageUrl;
-  }, [previewImageUrl]);
-  useEffect(() => {
-    return () => {
-      if (previewImageUrlRef.current) URL.revokeObjectURL(previewImageUrlRef.current);
-    };
-  }, []);
-
   const handleEan = async (barcode: string) => {
     if (!barcode) return;
     setLooking(true);
     setProduct(null);
     setImgError(false);
-    releasePreviewImage();
+    setPreviewImageUrl(null);
+    setImageBytes(null);
     try {
       const result = await OpenFoodFactsService.GetProductByBarcode(barcode);
       if (!result.success || !result.data) {
@@ -125,12 +126,12 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
 
       if (result.data.imageUrl) {
         // A code app's CSP can block an <img> pointed at an external URL - proxy the bytes
-        // through the connector instead, then render them from a same-origin blob: URL.
+        // through the connector instead, then render them from a data: URI.
         try {
-          const file = await fetchProductImageFile(result.data.imageUrl, barcode);
-          if (file) {
-            setImageFile(file);
-            setPreviewImageUrl(URL.createObjectURL(file));
+          const bytes = await fetchProductImageBytes(result.data.imageUrl);
+          if (bytes) {
+            setImageBytes(bytes);
+            setPreviewImageUrl(bytesToDataUrl(bytes, "image/jpeg"));
           } else {
             setImgError(true);
           }
@@ -147,22 +148,10 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     }
   };
 
-  const fetchProductImageFile = async (imageUrl: string, ean: string): Promise<File | null> => {
+  const fetchProductImageBytes = async (imageUrl: string): Promise<Uint8Array | null> => {
     const result = await OpenFoodFactsService.GetProductImage(imageUrl);
     if (!result.success || !result.data) return null;
-
-    const bytes = toBytes(result.data);
-    if (!bytes) return null;
-
-    return new File([bytes as BlobPart], `${ean}.jpg`, { type: "image/jpeg" });
-  };
-
-  const releasePreviewImage = () => {
-    setImageFile(null);
-    setPreviewImageUrl((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return null;
-    });
+    return toBytes(result.data);
   };
 
   const linkProduct = async () => {
@@ -210,9 +199,10 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})`,
       } as any);
 
-      if (imageFile) {
+      if (imageBytes) {
         try {
-          await __PASCAL___productsService.upload(productId, "__PREFIX___productimage", imageFile);
+          const file = new File([imageBytes as BlobPart], `${ean}.jpg`, { type: "image/jpeg" });
+          await __PASCAL___productsService.upload(productId, "__PREFIX___productimage", file);
         } catch (err) {
           // The product is linked either way - only the photo failed to save, so this is a
           // warning, not a failure of the whole action.
@@ -234,7 +224,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     setOpen(false);
     setEan("");
     setProduct(null);
-    releasePreviewImage();
+    setPreviewImageUrl(null);
+    setImageBytes(null);
   };
 
   return (
@@ -260,6 +251,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
               ref={videoRef}
               className="w-full rounded-md border bg-black aspect-video"
               muted
+              autoPlay
               playsInline
             />
 

@@ -4,6 +4,14 @@ import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo
 
 const client = getClient(dataSourcesInfo);
 
+// A code app's CSP allows img-src 'self' data: but not blob: - render downloaded bytes as a
+// data: URI, not an object URL.
+function bytesToDataUrl(bytes: Uint8Array, mimeType: string): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return `data:${mimeType};base64,${btoa(binary)}`;
+}
+
 type LinkedProductImageProps = {
   productId: string;
 };
@@ -15,7 +23,6 @@ export default function LinkedProductImage({ productId }: LinkedProductImageProp
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    let objectUrl: string | null = null;
     let cancelled = false;
     setImageUrl(null);
 
@@ -23,13 +30,11 @@ export default function LinkedProductImage({ productId }: LinkedProductImageProp
       .downloadFileFromRecord("__PREFIX___products", productId, "__PREFIX___productimage")
       .then((result) => {
         if (cancelled || !result.success || !result.data?.length) return;
-        objectUrl = URL.createObjectURL(new Blob([result.data as BlobPart]));
-        setImageUrl(objectUrl);
+        setImageUrl(bytesToDataUrl(result.data, "image/jpeg"));
       });
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [productId]);
 
