@@ -33,24 +33,34 @@ $EntitySetName   = "${PublisherPrefix}_warehouseitems"
 # There is no component template for a connection reference yet, so unlike every other
 # component in this lab it cannot be scaffolded from source - it has to exist already.
 
-Write-Info "Looking for a Dataverse connection reference..."
-$connectionsJson = txc environment connection list --connector $Connector --format json 2>$null
-$connections = if ($connectionsJson) { $connectionsJson | ConvertFrom-Json } else { @() }
-$reference = $connections | Where-Object { $_.connectionReferenceLogicalName } | Select-Object -First 1
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would look up a Dataverse connection reference with"
+    Write-Info "  'txc environment connection list'. Stubbing a logical name so the definition"
+    Write-Info "  below is still written and structurally validated."
+    $ConnectionReferenceLogicalName = "${PublisherPrefix}_dataverse_stub"
+} else {
+    Write-Info "Looking for a Dataverse connection reference..."
+    $connectionsJson = txc environment connection list --connector $Connector --format json 2>$null
+    $connections = if ($connectionsJson) { $connectionsJson | ConvertFrom-Json } else { @() }
+    $reference = $connections | Where-Object { $_.connectionReferenceLogicalName } | Select-Object -First 1
 
-if (-not $reference) {
-    Write-Err "No Dataverse connection reference found in this environment."
-    Write-Info "A flow binds to a connection reference by logical name, and one cannot be"
-    Write-Info "created from source yet. Create it once in the maker portal:"
-    Write-Info "  1. https://make.powerautomate.com → your Dev environment"
-    Write-Info "  2. Solutions → your solution → New → More → Connection reference"
-    Write-Info "  3. Pick the Microsoft Dataverse connector and an existing connection"
-    Write-Info "Then re-run this checkpoint."
-    exit 1
+    if (-not $reference) {
+        Write-Err "No Dataverse connection reference found in this environment."
+        Write-Info "A flow binds to a connection reference by logical name, and one cannot be"
+        Write-Info "created from source yet. Create it once in the maker portal:"
+        Write-Info "  1. https://make.powerautomate.com → your Dev environment"
+        Write-Info "  2. Solutions → your solution → New → More → Connection reference"
+        Write-Info "  3. Pick the Microsoft Dataverse connector and an existing connection"
+        Write-Info "Then re-run this checkpoint."
+        # 'throw', not 'exit': this file is dot-sourced by CP15, and 'exit' inside a
+        # dot-sourced script stops only this file - the caller would carry on to
+        # 'dotnet build' and report the checkpoint as a success.
+        throw "CP15: no Dataverse connection reference found in this environment."
+    }
+
+    $ConnectionReferenceLogicalName = $reference.connectionReferenceLogicalName
+    Write-Ok "Connection reference: $ConnectionReferenceLogicalName"
 }
-
-$ConnectionReferenceLogicalName = $reference.connectionReferenceLogicalName
-Write-Ok "Connection reference: $ConnectionReferenceLogicalName"
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                                   Scaffold the flow
@@ -68,7 +78,7 @@ txc workspace component create pp-flow `
 $flowJson = Get-ChildItem -Path "src/Solutions.Logic/Workflows" -Filter "*.json" |
             Where-Object { $_.Name -notlike "*.data.xml" } |
             Select-Object -First 1
-if (-not $flowJson) { Write-Err "Flow scaffold produced no .json definition"; exit 1 }
+if (-not $flowJson) { throw "CP15: flow scaffold produced no .json definition." }
 
 Write-Ok "Scaffolded $($flowJson.Name)"
 
@@ -81,11 +91,17 @@ Write-Ok "Scaffolded $($flowJson.Name)"
 # action type the definition has to declare. Read the output before looking at the JSON
 # below: every name in that JSON came from here.
 
-Write-Info "Connector operations matching 'list rows':"
-txc environment connector get $Connector --query "list rows" --format text
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would read the operation contract from the environment:"
+    Write-Info "  txc environment connector get $Connector --query 'list rows'"
+    Write-Info "  txc environment connector operation get $Connector $Operation"
+} else {
+    Write-Info "Connector operations matching 'list rows':"
+    txc environment connector get $Connector --query "list rows" --format text
 
-Write-Info "`nParameter contract for ${Operation}:"
-txc environment connector operation get $Connector $Operation --format text
+    Write-Info "`nParameter contract for ${Operation}:"
+    txc environment connector operation get $Connector $Operation --format text
+}
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Write the action into the definition
@@ -136,11 +152,19 @@ Write-Ok "Action written: Get_low_stock_items → $Operation on $EntitySetName"
 # real, every required one is present, enum values are in range, and the connection
 # reference resolves. Exit code 2 means findings - each carries a JSON pointer to the node.
 
-Write-Info "`nValidating the flow against the environment..."
-txc environment flow validate "src/Solutions.Logic/Workflows" --connection-check --format text
+if ($env:LAB_LOCAL_MODE) {
+    # --offline needs no environment and no profile, so the dry run keeps a real gate:
+    # the structural rules still run, only the metadata cross-check is skipped.
+    Write-Info "`nLAB_LOCAL_MODE: validating structure only (--offline; no --connection-check)..."
+    txc environment flow validate "src/Solutions.Logic/Workflows" --offline --format text
+} else {
+    Write-Info "`nValidating the flow against the environment..."
+    txc environment flow validate "src/Solutions.Logic/Workflows" --connection-check --format text
+}
 if ($LASTEXITCODE -ne 0) {
     Write-Err "Flow validation failed - fix the findings above before continuing"
-    exit 1
+    # 'throw', not 'exit': see the note on the connection-reference check above.
+    throw "CP15: flow validation reported findings."
 }
 Write-Ok "Flow definition valid"
 
