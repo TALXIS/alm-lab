@@ -29,7 +29,7 @@ dotnet sln add src/Tests.Plugins
 cd src/Tests.Plugins
 # Tests.Plugins targets net10.0 (FakeXrmEasy v3) but Plugins.Warehouse targets net462 -
 # the Dataverse plugin sandbox is still .NET Framework, so that side can't move (see the
-# constraint note near the top of CP14-implement-unit-tests.ps1). `dotnet add reference`
+# constraint note near the top of CP15-implement-unit-tests.ps1). `dotnet add reference`
 # refuses to link projects across that gap: it runs its own net10.0-vs-net462 compatibility
 # preflight and there is no bypass flag, not even `-f`/`--framework` (checked). The actual
 # build doesn't share that limitation - NuGet's asset target fallback resolves the net462

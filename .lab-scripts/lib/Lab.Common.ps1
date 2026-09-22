@@ -153,7 +153,7 @@ function Save-Checkpoint {
         gh pr checks $Id -R $forkRepo --watch
 
         Write-Info "Merging..."
-        # --admin asks GitHub to bypass the CP03/CP12 ruleset so the lab can merge unattended;
+        # --admin asks GitHub to bypass the CP03/CP13 ruleset so the lab can merge unattended;
         # on a real team nobody bypasses - the gate applies to everyone, automation included.
         # Note that a ruleset with no bypass actors refuses this, which is exactly why the
         # exit code below is checked: a merge that did not happen must not report success.

@@ -56,12 +56,13 @@ fork** — say yes.
 | 08 | `CP08-implement-security.ps1` | Security roles |
 | 09 | `CP09-implement-ui.ps1` | Model-driven app, sitemap, forms, views, grid PCF, warehouse picking code app |
 | 10 | `CP10-deploy-and-sync.ps1` | Deploy to Dev & pull changes back |
-| 11 | `CP11-move-configuration.ps1` | Configuration data migration (CMT) |
-| 12 | `CP12-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
-| 13 | `CP13-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |
-| 14 | `CP14-implement-unit-tests.ps1` | Plugin (FakeXrmEasy) + script (Jest) unit tests |
-| 15 | `CP15-plan-tests-with-agent.ps1` | Agent plans new `.feature` files against the existing bindings catalog |
-| 16 | `CP16-explore-blackbox-and-generate-tests.ps1` | Agent forbidden from reading source explores the running apps and proposes its own tests |
+| 11 | `CP11-integrate-external-data.ps1` | Product table + Item lookup (step 1 of external data integration — connector and UI land in later updates) |
+| 12 | `CP12-move-configuration.ps1` | Configuration data migration (CMT) |
+| 13 | `CP13-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
+| 14 | `CP14-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |
+| 15 | `CP15-implement-unit-tests.ps1` | Plugin (FakeXrmEasy) + script (Jest) unit tests |
+| 16 | `CP16-plan-tests-with-agent.ps1` | Agent plans new `.feature` files against the existing bindings catalog |
+| 17 | `CP17-explore-blackbox-and-generate-tests.ps1` | Agent forbidden from reading source explores the running apps and proposes its own tests |
 
 Run a checkpoint:
 

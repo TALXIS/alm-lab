@@ -1,10 +1,10 @@
 #!/usr/bin/env pwsh
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║                       CP14: Implement unit tests                                       ║
+# ║                       CP15: Implement unit tests                                       ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# The fast layers of the test pyramid. CP13 gave us browser UI tests - thorough but slow
+# The fast layers of the test pyramid. CP14 gave us browser UI tests - thorough but slow
 # and environment-bound. This checkpoint adds the two layers underneath, both running in
 # milliseconds with no Dataverse environment at all:
 #   - Tests.Plugins   - FakeXrmEasy fakes the whole Dataverse pipeline in memory, so the
@@ -22,7 +22,7 @@
 # the ubuntu CI runner). The scaffold only bridges the net10-to-net462 project reference -
 # see 14-tests-unit.ps1.
 #
-# Run:  .lab-scripts/CP14-implement-unit-tests.ps1
+# Run:  .lab-scripts/CP15-implement-unit-tests.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
@@ -30,7 +30,7 @@ $ErrorActionPreference = "Stop"
 $PublisherName   = Get-LabValue 'publisherName'   'ALMLab'
 $PublisherPrefix = Get-LabValue 'publisherPrefix' 'almlab'
 
-Write-Step "CP14 — Unit tests (plugins + scripts)"
+Write-Step "CP15 — Unit tests (plugins + scripts)"
 Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/14-tests-unit.ps1"
@@ -56,10 +56,10 @@ try {
     $wf = Join-Path $LabRoot ".github/workflows"
     New-Item -ItemType Directory -Path $wf -Force | Out-Null
     Copy-Item "$PSScriptRoot/workflows/unit-tests.yml" $wf -Force
-    Write-Ok "Installed unit-tests.yml (runs on every PR; CP12 shows how to make it required)"
+    Write-Ok "Installed unit-tests.yml (runs on every PR; CP13 shows how to make it required)"
 } finally { Pop-Location }
 
-Save-Checkpoint -Id "cp14" -Message "Add plugin and script unit test projects with CI workflow" -Body @'
+Save-Checkpoint -Id "cp15" -Message "Add plugin and script unit test projects with CI workflow" -Body @'
 Add the fast layers of the test pyramid so warehouse logic is verified without a Dataverse environment. Plugin logic is covered with FakeXrmEasy and the form/ribbon scripts with Jest against the built web-resource bundle.
 
 ## Changes

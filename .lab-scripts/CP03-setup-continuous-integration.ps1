@@ -10,7 +10,7 @@
 # merge. Short-lived topic branches (a day or two, named like users/<name>/<topic>) keep
 # every integration small. To protect the trunk we add a branch ruleset that:
 #   - blocks direct pushes to main (changes must come via PR)
-#   - requires the PR to be up to date and (later, CP12) pass the build check
+#   - requires the PR to be up to date and (later, CP13) pass the build check
 #
 # We work on YOUR fork, so we detect owner/repo from the git origin remote.
 #
