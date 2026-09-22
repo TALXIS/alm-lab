@@ -67,7 +67,14 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   // preview, and the bytes it came from so linkProduct() can upload them without re-fetching.
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [imageBytes, setImageBytes] = useState<Uint8Array | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // A plain useRef here raced against the dialog's own mount: the decoder could start before
+  // the <video> was actually attached, silently handed `undefined` and falling back to zxing's
+  // own hidden, unmounted video element - which still decodes fine (explaining barcodes
+  // reading correctly) but is never the element on screen (explaining the permanently black
+  // rectangle, confirmed across multiple browsers - not a per-browser autoplay quirk). A
+  // callback ref (backed by state, so it retriggers the effect) guarantees the effect only
+  // ever runs once the real element exists.
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   // A camera decode and a manual lookup can resolve in either order - once one of them has
   // already produced a product, a late/stray camera decode (e.g. a misread off a bad frame)
@@ -75,20 +82,18 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const productFoundRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !videoEl) return;
     productFoundRef.current = false;
 
     // React's `muted` JSX attribute doesn't reliably set the underlying DOM property in every
-    // browser, and without that property true, autoplay of the camera stream can be blocked -
-    // the stream still decodes (zxing reads frames straight off the track), but nothing ever
-    // paints to the visible <video>. Set it directly before starting the decoder.
-    if (videoRef.current) videoRef.current.muted = true;
+    // browser; set it directly too, since some autoplay policies check the property.
+    videoEl.muted = true;
 
     const reader = new BrowserMultiFormatReader();
     let cancelled = false;
 
     reader
-      .decodeFromVideoDevice(undefined, videoRef.current ?? undefined, (result, _err, controls) => {
+      .decodeFromVideoDevice(undefined, videoEl, (result, _err, controls) => {
         controlsRef.current = controls;
         if (cancelled || !result || productFoundRef.current) return;
         const text = result.getText();
@@ -106,7 +111,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
       controlsRef.current?.stop();
       controlsRef.current = null;
     };
-  }, [open]);
+  }, [open, videoEl]);
 
   const handleEan = async (barcode: string) => {
     if (!barcode) return;
@@ -248,7 +253,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
 
           <div className="space-y-4">
             <video
-              ref={videoRef}
+              ref={setVideoEl}
               className="w-full rounded-md border bg-black aspect-video"
               muted
               autoPlay
