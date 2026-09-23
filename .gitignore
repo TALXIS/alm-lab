@@ -20,3 +20,9 @@ TestResults/
 Thumbs.db
 
 # Lab note: .lab-state.json is intentionally committed so progress survives crashes.
+
+# Terraform (see infra/README.md — state is local-only, no remote backend)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
