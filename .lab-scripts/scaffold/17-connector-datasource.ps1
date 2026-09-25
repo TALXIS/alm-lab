@@ -10,7 +10,7 @@
 # every other live-environment step in this lab.
 #
 # Expects: Apps.WarehousePicking already scaffolded (CP09) and the connector deployed (step 2).
-# Expects: $PublisherPrefix from parent scope.
+# Expects: $PublisherPrefix, and $devUrl/$devProfile (or lab state) from parent scope.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Host "`n── Code App Data Source: Product ──" -ForegroundColor Cyan
@@ -61,6 +61,18 @@ if (-not ((Get-Content $warehouseitemModelPath -Raw) -match "${PublisherPrefix}_
 # lines, so keeping only the first occurrence of each is exactly the intended fix.
 $indexTsPath = "src/Apps.WarehousePicking/src/generated/index.ts"
 Set-Content -Path $indexTsPath -Value (Get-Content $indexTsPath | Select-Object -Unique) -Encoding UTF8
+
+# pp-app-code-data (templates 1.25.0) substitutes the placeholders *inside*
+# services/capitalizedentitylogicalnameexamplesService.ts but never renames the file, and its
+# Cleanup.ps1 only removes .template.scripts/.template.temp. The result is a second file
+# declaring the same class as the correctly-named one, which breaks the TypeScript build with
+# TS2308 as soon as anything globs that directory - which `pa app add data-source` does when it
+# regenerates index.ts. Remove it here until the template renames it itself.
+Get-ChildItem "src/Apps.WarehousePicking/src/generated/services" -Filter "capitalizedentitylogicalname*" -ErrorAction SilentlyContinue |
+    ForEach-Object {
+        Remove-Item $_.FullName -Force
+        Write-Host "  ✓ Removed stray template file: $($_.Name)" -ForegroundColor DarkGray
+    }
 
 Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouseitem (refreshed for new Product lookup)" -ForegroundColor Green
 
@@ -153,6 +165,11 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
     } finally { Pop-Location }
     Write-Host "  ✓ @zxing/browser installed" -ForegroundColor Green
 
+    # The Dataverse schema name is NOT how the connectivity API addresses a connector. That API
+    # validates against ^[a-zA-Z0-9\-\.]{1,64}$ - underscores are rejected outright - and custom
+    # connectors are addressed by a hex-escaped id built from the *display* name plus a
+    # generated suffix, e.g. shared_almlab-5fopen-20food-20facts-5f7e995f9432ef978d. That
+    # suffix cannot be derived locally, so look the connector up instead of guessing its name.
     $connectorSchemaName = "${PublisherPrefix}_connectorsopenfoodfacts"
     if ($env:LAB_LOCAL_MODE) {
         Write-Info "LAB_LOCAL_MODE: skipped — would run 'pa connection create --connector"
@@ -160,17 +177,49 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
         Write-Info "  $connectorSchemaName --connection-id <id>' from src/Apps.WarehousePicking"
         Write-Info "  to bind a real Dev connection into power.config.json."
     } else {
+        # Every `pa` call below needs the Power Platform environment id explicitly: in
+        # non-interactive mode - which is how an unattended lab run executes - pa refuses with
+        # "Missing required option --environment-id". Interactively it would prompt instead, so
+        # this only bites the automated path. The environment id is not the Dataverse
+        # organization id and is not in lab state, so resolve it from the Dev URL.
+        $devEnvUrlForPa = if ($devUrl) { $devUrl } else { Get-LabValue 'devEnvUrl' }
+        $devProfileForPa = if ($devProfile) { $devProfile } else { Get-LabValue 'devProfile' }
+        if (-not $devEnvUrlForPa -or -not $devProfileForPa) {
+            throw "Dev environment not found in lab state - run CP04 before wiring the connector into the app."
+        }
+        $environmentId = (txc env list --profile $devProfileForPa 2>$null | ConvertFrom-Json |
+            Where-Object { $_.environmentUrl.TrimEnd('/') -eq $devEnvUrlForPa.TrimEnd('/') } |
+            Select-Object -First 1).environmentId
+        if (-not $environmentId) {
+            throw "Could not resolve the environment id for $devEnvUrlForPa from 'txc env list'."
+        }
+        Write-Ok "Environment id: $environmentId"
+
         Push-Location $appRoot
         try {
+            # Resolve the id the connectivity API actually uses. `pa` prepends "shared_" itself,
+            # so hand it the name with that prefix stripped.
+            Write-Info "Resolving the connector's connectivity id..."
+            $connectorListJson = pa connector list --environment-id $environmentId --search "Open Food Facts" --json
+            if ($LASTEXITCODE -ne 0) { throw "pa connector list failed" }
+            $connectorApiName = ($connectorListJson | ConvertFrom-Json).items |
+                Where-Object { $_.displayName -eq "Open Food Facts" } |
+                Select-Object -First 1 -ExpandProperty name
+            if (-not $connectorApiName) {
+                throw "Could not find the 'Open Food Facts' connector in this environment. Deploy Solutions.Connectors (CP11 step 2) before wiring it into the app."
+            }
+            $connectorApiName = $connectorApiName -replace '^shared_', ''
+            Write-Ok "Connector id: $connectorApiName (Dataverse schema name is $connectorSchemaName)"
+
             Write-Info "Creating a connection to the Open Food Facts connector..."
-            $connectionJson = pa connection create --connector $connectorSchemaName --display-name "Open Food Facts" --json
+            $connectionJson = pa connection create --environment-id $environmentId --connector $connectorApiName --display-name "Open Food Facts" --json
             if ($LASTEXITCODE -ne 0) { throw "pa connection create failed" }
             $connectionId = ($connectionJson | ConvertFrom-Json).connectionId
             if (-not $connectionId) { throw "Could not parse connectionId from 'pa connection create' output" }
             Write-Ok "Connection created: $connectionId"
 
             Write-Info "Adding the connector as a data source..."
-            pa app add data-source --connector $connectorSchemaName --connection-id $connectionId
+            pa app add data-source --environment-id $environmentId --connector $connectorApiName --connection-id $connectionId
             if ($LASTEXITCODE -ne 0) { throw "pa app add data-source failed" }
             Write-Ok "Connector wired into power.config.json - re-run 'npm run build' to confirm"
         } finally { Pop-Location }
