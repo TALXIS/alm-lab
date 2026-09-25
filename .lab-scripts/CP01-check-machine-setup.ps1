@@ -91,6 +91,13 @@ Write-Info "Updating TALXIS DevKit templates to latest..."
 Invoke-WithRetry "TALXIS DevKit templates update" { dotnet new install TALXIS.DevKit.Templates.Dataverse }
 Write-Ok "TALXIS DevKit templates updated"
 
+# CP11 wires the custom connector into the code app with the Power Apps CLI (`pa`), which is a
+# separate npm tool - not part of txc, and not the same thing as `pac`. Without it CP11 stops
+# at "pa: command not found", four checkpoints after the last chance to notice.
+Write-Info "Updating Power Apps CLI (pa) to latest..."
+Invoke-WithRetry "Power Apps CLI update" { npm install -g @microsoft/power-apps-cli }
+Write-Ok "Power Apps CLI: $(pa --version)"
+
 if ($env:LAB_LOCAL_MODE) {
     Write-Step "Sign in 1/3 — GitHub"
     Write-Info "LAB_LOCAL_MODE: skipped sign-in for GitHub"
