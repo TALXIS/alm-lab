@@ -10,6 +10,20 @@
 TestResults/
 [Tt]est[Rr]esult*/
 
+# Reqnroll generates one <name>.feature.cs beside every .feature at build time. Scenarios do
+# not appear in an IDE's test list until that has happened, which is why they are generated
+# rather than committed.
+*.feature.cs
+
+# Node
+node_modules/
+
+# Code app build output (Vite)
+dist/
+
+# The script bundle Scripts.UI builds and the UI solution consumes at build time
+src/Scripts.UI/build/
+
 # NuGet
 *.nupkg
 **/[Pp]ackages/*
