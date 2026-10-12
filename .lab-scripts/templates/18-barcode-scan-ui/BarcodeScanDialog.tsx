@@ -23,7 +23,7 @@ import {
   tokens,
 } from "@fluentui/react-components";
 import { BarcodeScannerRegular } from "@fluentui/react-icons";
-import { useNotify } from "@/hooks/use-notify";
+import { useToast } from "@/hooks/use-toast";
 import { toBytes, bytesToDataUrl } from "@/utils/binary";
 
 const useStyles = makeStyles({
@@ -91,7 +91,7 @@ type BarcodeScanDialogProps = {
 // the camera.
 export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }: BarcodeScanDialogProps) {
   const styles = useStyles();
-  const notify = useNotify();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [ean, setEan] = useState("");
   const [looking, setLooking] = useState(false);
@@ -154,7 +154,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     try {
       const result = await OpenFoodFactsService.GetProductByBarcode(barcode);
       if (!result.success || !result.data) {
-        notify.error("No product found for this barcode");
+        toast.error("No product found for this barcode");
         return;
       }
       setProduct(result.data);
@@ -185,7 +185,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         }
       }
     } catch (err) {
-      notify.error("Lookup failed: " + String(err));
+      toast.error("Lookup failed: " + String(err));
     } finally {
       setLooking(false);
     }
@@ -233,7 +233,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
       }
 
       if (!productId) {
-        notify.error("Could not resolve a Product record to link");
+        toast.error("Could not resolve a Product record to link");
         return;
       }
 
@@ -248,15 +248,15 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         } catch (err) {
           // The product is linked either way - only the photo failed to save, so this is a
           // warning, not a failure of the whole action.
-          notify.error("Product linked, but its image failed to save: " + String(err));
+          toast.error("Product linked, but its image failed to save: " + String(err));
         }
       }
 
-      notify.success("Product linked to item");
+      toast.success("Product linked to item");
       onLinked();
       resetAndClose();
     } catch (err) {
-      notify.error("Failed to link product: " + String(err));
+      toast.error("Failed to link product: " + String(err));
     } finally {
       setLinking(false);
     }

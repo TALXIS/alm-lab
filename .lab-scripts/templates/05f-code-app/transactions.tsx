@@ -33,7 +33,7 @@ import {
 } from "@fluentui/react-components";
 import { ArrowSwapRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
 import { PageHeader } from "@/components/PageHeader";
-import { useNotify } from "@/hooks/use-notify";
+import { useToast } from "@/hooks/use-toast";
 
 const useStyles = makeStyles({
   page: {
@@ -74,7 +74,7 @@ const useStyles = makeStyles({
 
 export default function TransactionsPage() {
   const styles = useStyles();
-  const notify = useNotify();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [txName, setTxName] = useState("");
@@ -124,11 +124,11 @@ export default function TransactionsPage() {
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["allTransactions"] });
-      notify.success("Transaction created successfully");
+      toast.success("Transaction created successfully");
       resetForm();
     },
     onError: (err) => {
-      notify.error("Failed to create transaction: " + String(err));
+      toast.error("Failed to create transaction: " + String(err));
     },
   });
 
@@ -143,7 +143,7 @@ export default function TransactionsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!txName || !txQuantity || !txType || !txItemId) {
-      notify.error("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
     createMutation.mutate();

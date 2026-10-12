@@ -34,7 +34,7 @@ import {
 import { BoxRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
 import { PageHeader } from "@/components/PageHeader";
 import { RouterLink } from "@/components/RouterLink";
-import { useNotify } from "@/hooks/use-notify";
+import { useToast } from "@/hooks/use-toast";
 
 const useStyles = makeStyles({
   page: {
@@ -76,7 +76,7 @@ const useStyles = makeStyles({
 
 export default function WarehouseItemsPage() {
   const styles = useStyles();
-  const notify = useNotify();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
@@ -137,11 +137,11 @@ export default function WarehouseItemsPage() {
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseItems"] });
-      notify.success("Item created successfully");
+      toast.success("Item created successfully");
       resetForm();
     },
     onError: (err) => {
-      notify.error("Failed to create item: " + String(err));
+      toast.error("Failed to create item: " + String(err));
     },
   });
 
@@ -157,7 +157,7 @@ export default function WarehouseItemsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !sku || !quantity || !category) {
-      notify.error("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
     createMutation.mutate();

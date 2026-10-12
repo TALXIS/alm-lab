@@ -43,7 +43,7 @@ import {
   tokens,
 } from "@fluentui/react-components";
 import { ArrowLeftRegular, AddRegular, BoxRegular, ArrowSwapRegular, LocationRegular } from "@fluentui/react-icons";
-import { useNotify } from "@/hooks/use-notify";
+import { useToast } from "@/hooks/use-toast";
 
 const useStyles = makeStyles({
   page: {
@@ -129,7 +129,7 @@ const useStyles = makeStyles({
 
 export default function WarehouseItemDetailPage() {
   const styles = useStyles();
-  const notify = useNotify();
+  const toast = useToast();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -197,11 +197,11 @@ export default function WarehouseItemDetailPage() {
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["itemTransactions", id] });
       await queryClient.refetchQueries({ queryKey: ["warehouseItem", id] });
-      notify.success("Transaction created");
+      toast.success("Transaction created");
       resetForm();
     },
     onError: (err) => {
-      notify.error("Failed to create transaction: " + String(err));
+      toast.error("Failed to create transaction: " + String(err));
     },
   });
 
@@ -215,7 +215,7 @@ export default function WarehouseItemDetailPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!txName || !txQuantity || !txType) {
-      notify.error("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
     createTxMutation.mutate();

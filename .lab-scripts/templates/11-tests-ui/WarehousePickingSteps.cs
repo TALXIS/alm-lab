@@ -77,9 +77,11 @@ public sealed class WarehousePickingSteps
     {
         var requested = _startingQuantity + 1;
         var message = $"Not enough product in stock. Available: {_startingQuantity}, requested: {requested}.";
-        // Scoped to the toast itself: Fluent's Toaster also repeats the text in a screen-reader
-        // live region, so a bare GetByText would match twice and trip Playwright's strict mode.
-        var toast = Page.GetByTestId("toast-message").Filter(new() { HasText = message });
+        // Scoped to the toast's title via Fluent's static fui-ToastTitle class (public API, see
+        // toastTitleClassNames): the Toaster also repeats the text in a screen-reader live region,
+        // so a bare GetByText would match twice and trip Playwright's strict mode. A role query
+        // doesn't work either - the open New Transaction dialog hides the toast from the a11y tree.
+        var toast = Page.Locator(".fui-ToastTitle").Filter(new() { HasText = message });
         await Expect(toast).ToBeVisibleAsync(new() { Timeout = 15000 });
     }
 

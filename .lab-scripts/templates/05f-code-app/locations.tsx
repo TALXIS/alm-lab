@@ -30,7 +30,7 @@ import {
 } from "@fluentui/react-components";
 import { LocationRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
 import { PageHeader } from "@/components/PageHeader";
-import { useNotify } from "@/hooks/use-notify";
+import { useToast } from "@/hooks/use-toast";
 
 const useStyles = makeStyles({
   page: {
@@ -71,7 +71,7 @@ const useStyles = makeStyles({
 
 export default function LocationsPage() {
   const styles = useStyles();
-  const notify = useNotify();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
@@ -123,11 +123,11 @@ export default function LocationsPage() {
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseLocationsList"] });
-      notify.success("Location created successfully");
+      toast.success("Location created successfully");
       resetForm();
     },
     onError: (err) => {
-      notify.error("Failed to create location: " + String(err));
+      toast.error("Failed to create location: " + String(err));
     },
   });
 
@@ -141,7 +141,7 @@ export default function LocationsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
-      notify.error("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
     createMutation.mutate();
