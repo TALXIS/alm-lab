@@ -77,7 +77,10 @@ public sealed class WarehousePickingSteps
     {
         var requested = _startingQuantity + 1;
         var message = $"Not enough product in stock. Available: {_startingQuantity}, requested: {requested}.";
-        await Expect(Page.GetByText(message)).ToBeVisibleAsync(new() { Timeout = 15000 });
+        // Scoped to the toast itself: Fluent's Toaster also repeats the text in a screen-reader
+        // live region, so a bare GetByText would match twice and trip Playwright's strict mode.
+        var toast = Page.GetByTestId("toast-message").Filter(new() { HasText = message });
+        await Expect(toast).ToBeVisibleAsync(new() { Timeout = 15000 });
     }
 
     [Then("the quantity on hand should have decreased by {string}")]

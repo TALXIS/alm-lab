@@ -5,29 +5,73 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import {
+  Badge,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogSurface,
+  DialogTitle,
+  Field,
+  Input,
+  MessageBar,
+  MessageBarBody,
+  Skeleton,
+  SkeletonItem,
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
+  TableHeaderCell,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { MapPin, Plus, RefreshCw } from "lucide-react";
+  makeStyles,
+  tokens,
+} from "@fluentui/react-components";
+import { LocationRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
+import { PageHeader } from "@/components/PageHeader";
+import { useNotify } from "@/hooks/use-notify";
+
+const useStyles = makeStyles({
+  page: {
+    padding: tokens.spacingHorizontalXXL,
+    display: "flex",
+    flexDirection: "column",
+    gap: tokens.spacingVerticalXL,
+  },
+  tableWrapper: {
+    border: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
+    borderRadius: tokens.borderRadiusMedium,
+    overflowX: "auto",
+  },
+  numeric: {
+    textAlign: "right",
+    fontFamily: tokens.fontFamilyMonospace,
+  },
+  numericHeader: {
+    "& > *": { justifyContent: "flex-end" },
+  },
+  name: {
+    fontWeight: tokens.fontWeightSemibold,
+  },
+  muted: {
+    color: tokens.colorNeutralForeground3,
+  },
+  empty: {
+    textAlign: "center",
+    padding: `${tokens.spacingVerticalXXL} 0`,
+    color: tokens.colorNeutralForeground3,
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: tokens.spacingVerticalM,
+  },
+});
 
 export default function LocationsPage() {
+  const styles = useStyles();
+  const notify = useNotify();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
@@ -79,11 +123,11 @@ export default function LocationsPage() {
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseLocationsList"] });
-      toast.success("Location created successfully");
+      notify.success("Location created successfully");
       resetForm();
     },
     onError: (err) => {
-      toast.error("Failed to create location: " + String(err));
+      notify.error("Failed to create location: " + String(err));
     },
   });
 
@@ -97,58 +141,50 @@ export default function LocationsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
-      toast.error("Please fill all required fields");
+      notify.error("Please fill all required fields");
       return;
     }
     createMutation.mutate();
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <MapPin className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Locations
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Warehouse locations and their stock
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() =>
-              queryClient.refetchQueries({ queryKey: ["warehouseLocationsList"] })
-            }
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Location
-          </Button>
-        </div>
-      </div>
+    <div className={styles.page}>
+      <PageHeader
+        icon={<LocationRegular />}
+        title="Locations"
+        subtitle="Warehouse locations and their stock"
+        actions={
+          <>
+            <Button
+              appearance="outline"
+              icon={<ArrowClockwiseRegular />}
+              aria-label="Refresh"
+              onClick={() =>
+                queryClient.refetchQueries({ queryKey: ["warehouseLocationsList"] })
+              }
+            />
+            <Button appearance="primary" icon={<AddRegular />} onClick={() => setDialogOpen(true)}>
+              New Location
+            </Button>
+          </>
+        }
+      />
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-4 text-destructive text-sm">
-          Failed to load locations: {String(error)}
-        </div>
+        <MessageBar intent="error">
+          <MessageBarBody>Failed to load locations: {String(error)}</MessageBarBody>
+        </MessageBar>
       )}
 
-      <div className="rounded-md border">
-        <Table>
+      <div className={styles.tableWrapper}>
+        <Table aria-label="Locations">
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead className="text-right">Capacity</TableHead>
-              <TableHead className="text-right">Items</TableHead>
-              <TableHead>Active</TableHead>
+              <TableHeaderCell>Name</TableHeaderCell>
+              <TableHeaderCell>Address</TableHeaderCell>
+              <TableHeaderCell className={styles.numericHeader}>Capacity</TableHeaderCell>
+              <TableHeaderCell className={styles.numericHeader}>Items</TableHeaderCell>
+              <TableHeaderCell>Active</TableHeaderCell>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -157,7 +193,9 @@ export default function LocationsPage() {
                 <TableRow key={i}>
                   {Array.from({ length: 5 }).map((_, j) => (
                     <TableCell key={j}>
-                      <Skeleton className="h-4 w-full" />
+                      <Skeleton>
+                        <SkeletonItem />
+                      </Skeleton>
                     </TableCell>
                   ))}
                 </TableRow>
@@ -165,20 +203,23 @@ export default function LocationsPage() {
             ) : locations && locations.length > 0 ? (
               locations.map((loc: __PASCAL___warehouselocations) => (
                 <TableRow key={loc.__PREFIX___warehouselocationid}>
-                  <TableCell className="font-medium">
+                  <TableCell className={styles.name}>
                     {loc.__PREFIX___name}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className={styles.muted}>
                     {loc.__PREFIX___address || "-"}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell className={styles.numeric}>
                     {loc.__PREFIX___capacity ?? "-"}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell className={styles.numeric}>
                     {itemCounts.get(loc.__PREFIX___warehouselocationid) ?? 0}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={loc.__PREFIX___isactive ? "default" : "destructive"}>
+                    <Badge
+                      appearance="filled"
+                      color={loc.__PREFIX___isactive ? "success" : "danger"}
+                    >
                       {loc.__PREFIX___isactive ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
@@ -186,10 +227,7 @@ export default function LocationsPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center py-8 text-muted-foreground"
-                >
+                <TableCell colSpan={5} className={styles.empty}>
                   No locations found
                 </TableCell>
               </TableRow>
@@ -198,51 +236,51 @@ export default function LocationsPage() {
         </Table>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Location</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="locName">Name *</Label>
-              <Input
-                id="locName"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter location name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="locAddress">Address</Label>
-              <Input
-                id="locAddress"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter address"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="locCapacity">Capacity</Label>
-              <Input
-                id="locCapacity"
-                type="number"
-                min="0"
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                placeholder="0"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={resetForm}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create"}
-              </Button>
-            </DialogFooter>
+      <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
+        <DialogSurface>
+          {/* noValidate: the required-field check (and its toast) lives in handleSubmit */}
+          <form onSubmit={handleSubmit} noValidate>
+            <DialogBody>
+              <DialogTitle>Create New Location</DialogTitle>
+              <DialogContent className={styles.form}>
+                <Field label="Name" required>
+                  <Input
+                    id="locName"
+                    value={name}
+                    onChange={(_, data) => setName(data.value)}
+                    placeholder="Enter location name"
+                  />
+                </Field>
+                <Field label="Address">
+                  <Input
+                    id="locAddress"
+                    value={address}
+                    onChange={(_, data) => setAddress(data.value)}
+                    placeholder="Enter address"
+                  />
+                </Field>
+                <Field label="Capacity">
+                  <Input
+                    id="locCapacity"
+                    type="number"
+                    min="0"
+                    value={capacity}
+                    onChange={(_, data) => setCapacity(data.value)}
+                    placeholder="0"
+                  />
+                </Field>
+              </DialogContent>
+              <DialogActions>
+                <Button type="button" appearance="secondary" onClick={resetForm}>
+                  Cancel
+                </Button>
+                <Button type="submit" appearance="primary" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Creating..." : "Create"}
+                </Button>
+              </DialogActions>
+            </DialogBody>
           </form>
-        </DialogContent>
+        </DialogSurface>
       </Dialog>
     </div>
   );

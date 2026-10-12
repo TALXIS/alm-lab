@@ -1,0 +1,30 @@
+import { useNavigate } from "react-router-dom"
+import { Body1, Button, LargeTitle, makeStyles, tokens } from "@fluentui/react-components"
+
+const useStyles = makeStyles({
+  root: {
+    minHeight: "100dvh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacingVerticalXL,
+    textAlign: "center",
+  },
+  subtitle: {
+    color: tokens.colorNeutralForeground3,
+  },
+})
+
+export default function NotFoundPage() {
+  const styles = useStyles()
+  const navigate = useNavigate()
+
+  return (
+    <div className={styles.root}>
+      <LargeTitle as="h1">404 – Not found</LargeTitle>
+      <Body1 className={styles.subtitle}>This isn't the page you're looking for.</Body1>
+      <Button appearance="outline" onClick={() => navigate("/")}>Go home</Button>
+    </div>
+  )
+}

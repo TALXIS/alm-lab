@@ -46,7 +46,7 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
     if ($detailPage.Contains("BarcodeScanDialog")) {
         Write-Host "  ✓ warehouse-item-detail.tsx (already wired)" -ForegroundColor Green
     } else {
-        $importAnchor = 'import { ArrowLeft, Plus, Package, ArrowRightLeft, MapPin } from "lucide-react";'
+        $importAnchor = 'import { ArrowLeftRegular, AddRegular, BoxRegular, ArrowSwapRegular, LocationRegular } from "@fluentui/react-icons";'
         $importReplacement = @"
 $importAnchor
 import BarcodeScanDialog from "@/components/BarcodeScanDialog";
@@ -76,19 +76,20 @@ $mutationAnchor
         if (-not $detailPage.Contains($mutationAnchor)) { throw "warehouse-item-detail.tsx: mutation anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($mutationAnchor, $mutationReplacement)
 
-        $cardsAnchor = '      <div className="grid gap-4 md:grid-cols-4">'
+        # Reuses the page's own toolbar/inline/muted styles, so the patch needs no new makeStyles entries.
+        $cardsAnchor = '      <div className={styles.cards}>'
         $cardsReplacement = @"
-      <div className="flex items-center justify-between">
+      <div className={styles.toolbar}>
         <BarcodeScanDialog
           itemId={id!}
           currentProductId={linkedProductId}
           onLinked={() => queryClient.refetchQueries({ queryKey: ["warehouseItem", id] })}
         />
         {linkedProduct && (
-          <div className="flex items-center gap-2 text-sm" data-testid="linked-product-name">
+          <div className={styles.inline} data-testid="linked-product-name">
             <LinkedProductImage productId={linkedProductId!} />
-            <span className="text-muted-foreground">Linked product:</span>
-            <span className="font-medium">{linkedProduct.${PublisherPrefix}_name}</span>
+            <Body1 className={styles.muted}>Linked product:</Body1>
+            <Body1 className={styles.name}>{linkedProduct.${PublisherPrefix}_name}</Body1>
           </div>
         )}
       </div>

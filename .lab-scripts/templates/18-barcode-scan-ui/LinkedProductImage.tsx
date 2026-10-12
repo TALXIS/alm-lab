@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
+import { makeStyles, tokens } from "@fluentui/react-components";
 import { getClient } from "@microsoft/power-apps/data";
 import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
 import { bytesToDataUrl } from "@/utils/binary";
 
 const client = getClient(dataSourcesInfo);
+
+const useStyles = makeStyles({
+  image: {
+    width: "32px",
+    height: "32px",
+    objectFit: "contain",
+    borderRadius: tokens.borderRadiusSmall,
+  },
+});
 
 type LinkedProductImageProps = {
   productId: string;
@@ -13,6 +23,7 @@ type LinkedProductImageProps = {
 // so this goes through the low-level client directly, the same one the generated services
 // themselves are built on.
 export default function LinkedProductImage({ productId }: LinkedProductImageProps) {
+  const styles = useStyles();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,7 +48,7 @@ export default function LinkedProductImage({ productId }: LinkedProductImageProp
     <img
       src={imageUrl}
       alt=""
-      className="h-8 w-8 object-contain rounded"
+      className={styles.image}
       onError={() => setImageUrl(null)}
     />
   );
