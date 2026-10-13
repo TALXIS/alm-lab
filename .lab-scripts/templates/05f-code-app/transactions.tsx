@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { __PASCAL___warehousetransactionsService } from "@/generated/services/__PASCAL___warehousetransactionsService";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import type { __PASCAL___warehousetransactions } from "@/generated/models/__PASCAL___warehousetransactionsModel";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
-import { transactionTypeLabels, transactionTypeOptions } from "@/utils/optionSets";
+import { statusOptions, transactionTypeOptionMetadata, optionSetProperty } from "@/utils/optionSets";
 import {
-  Badge,
   Button,
   Dialog,
   DialogActions,
@@ -14,25 +13,20 @@ import {
   DialogContent,
   DialogSurface,
   DialogTitle,
-  Dropdown,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
-  Option,
   Skeleton,
   SkeletonItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
   makeStyles,
   tokens,
 } from "@fluentui/react-components";
 import { ArrowSwapRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
+import { Decimal, OptionSet, TextField, usePcfContext } from "@talxis/base-controls";
+import type { IColumn } from "@talxis/client-libraries";
 import { PageHeader } from "@/components/PageHeader";
+import { RecordGrid } from "@/components/RecordGrid";
+import { RecordLookup } from "@/components/RecordLookup";
 import { useToast } from "@/hooks/use-toast";
 
 const useStyles = makeStyles({
@@ -42,29 +36,6 @@ const useStyles = makeStyles({
     flexDirection: "column",
     gap: tokens.spacingVerticalXL,
   },
-  tableWrapper: {
-    border: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
-    borderRadius: tokens.borderRadiusMedium,
-    overflowX: "auto",
-  },
-  numeric: {
-    textAlign: "right",
-    fontFamily: tokens.fontFamilyMonospace,
-  },
-  numericHeader: {
-    "& > *": { justifyContent: "flex-end" },
-  },
-  name: {
-    fontWeight: tokens.fontWeightSemibold,
-  },
-  muted: {
-    color: tokens.colorNeutralForeground3,
-  },
-  empty: {
-    textAlign: "center",
-    padding: `${tokens.spacingVerticalXXL} 0`,
-    color: tokens.colorNeutralForeground3,
-  },
   form: {
     display: "flex",
     flexDirection: "column",
@@ -72,14 +43,27 @@ const useStyles = makeStyles({
   },
 });
 
+const transactionTypeMetadata = {
+  OptionSet: transactionTypeOptionMetadata,
+} as IColumn["metadata"];
+
+const columns: IColumn[] = [
+  { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 240 },
+  { name: "__PREFIX___quantity", displayName: "Quantity", dataType: "Whole.None", visualSizeFactor: 110 },
+  { name: "__PREFIX___transactiontype", displayName: "Type", dataType: "OptionSet", visualSizeFactor: 130, metadata: transactionTypeMetadata },
+  { name: "statecode", displayName: "Status", dataType: "OptionSet", visualSizeFactor: 110, metadata: { OptionSet: statusOptions } as IColumn["metadata"] },
+  { name: "__PREFIX___transactiondate", displayName: "Date", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
+];
+
 export default function TransactionsPage() {
   const styles = useStyles();
   const toast = useToast();
+  const context = usePcfContext();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [txName, setTxName] = useState("");
-  const [txQuantity, setTxQuantity] = useState("");
-  const [txType, setTxType] = useState("");
+  const [txQuantity, setTxQuantity] = useState<number | null>(null);
+  const [txType, setTxType] = useState<number | null>(null);
   const [txItemId, setTxItemId] = useState("");
 
   const { data: transactions, isLoading, error } = useQuery({
@@ -112,12 +96,32 @@ export default function TransactionsPage() {
     },
   });
 
+  const itemRecords = useMemo(
+    () =>
+      (items ?? []).map((item: __PASCAL___warehouseitems) => ({
+        id: item.__PREFIX___warehouseitemid,
+        name: item.__PREFIX___name ?? "",
+      })),
+    [items]
+  );
+
+  const rows = useMemo(
+    () =>
+      transactions?.map((tx: __PASCAL___warehousetransactions) => ({
+        ...tx,
+        __PREFIX___quantity: Number(tx.__PREFIX___quantity),
+        __PREFIX___transactiontype: Number(tx.__PREFIX___transactiontype),
+        statecode: Number(tx.statecode),
+      })),
+    [transactions]
+  );
+
   const createMutation = useMutation({
     mutationFn: async () => {
       return __PASCAL___warehousetransactionsService.create({
         __PREFIX___name: txName,
-        __PREFIX___quantity: txQuantity,
-        __PREFIX___transactiontype: Number(txType) as any,
+        __PREFIX___quantity: String(txQuantity),
+        __PREFIX___transactiontype: txType as any,
         __PREFIX___transactiondate: new Date().toISOString(),
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${txItemId})`,
       } as any);
@@ -135,14 +139,14 @@ export default function TransactionsPage() {
   const resetForm = () => {
     setDialogOpen(false);
     setTxName("");
-    setTxQuantity("");
-    setTxType("");
+    setTxQuantity(null);
+    setTxType(null);
     setTxItemId("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!txName || !txQuantity || !txType || !txItemId) {
+    if (!txName || txQuantity === null || txType === null || !txItemId) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -178,69 +182,19 @@ export default function TransactionsPage() {
         </MessageBar>
       )}
 
-      <div className={styles.tableWrapper}>
-        <Table aria-label="Transactions">
-          <TableHeader>
-            <TableRow>
-              <TableHeaderCell>Name</TableHeaderCell>
-              <TableHeaderCell className={styles.numericHeader}>Quantity</TableHeaderCell>
-              <TableHeaderCell>Type</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Date</TableHeaderCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton>
-                        <SkeletonItem />
-                      </Skeleton>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : transactions && transactions.length > 0 ? (
-              transactions.map((tx: __PASCAL___warehousetransactions) => (
-                <TableRow key={tx.__PREFIX___warehousetransactionid}>
-                  <TableCell className={styles.name}>{tx.__PREFIX___name}</TableCell>
-                  <TableCell className={styles.numeric}>
-                    {tx.__PREFIX___quantity}
-                  </TableCell>
-                  <TableCell>
-                    <Badge appearance="outline" color="informative">
-                      {transactionTypeLabels[
-                        tx.__PREFIX___transactiontype as keyof typeof transactionTypeLabels
-                      ] ?? tx.__PREFIX___transactiontype}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      appearance="filled"
-                      color={tx.statecode === 0 ? "success" : "danger"}
-                    >
-                      {tx.statecode === 0 ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={styles.muted}>
-                    {tx.__PREFIX___transactiondate
-                      ? new Date(tx.__PREFIX___transactiondate).toLocaleDateString()
-                      : "-"}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className={styles.empty}>
-                  No transactions found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <Skeleton>
+          <SkeletonItem size={48} />
+        </Skeleton>
+      ) : (
+        <RecordGrid
+          rows={rows}
+          columns={columns}
+          entityName="__PREFIX___warehousetransaction"
+          primaryIdAttribute="__PREFIX___warehousetransactionid"
+          primaryNameAttribute="__PREFIX___name"
+        />
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
         <DialogSurface>
@@ -250,58 +204,40 @@ export default function TransactionsPage() {
               <DialogTitle>Create New Transaction</DialogTitle>
               <DialogContent className={styles.form}>
                 <Field label="Name" required>
-                  <Input
-                    id="txName"
-                    value={txName}
-                    onChange={(_, data) => setTxName(data.value)}
-                    placeholder="Enter transaction name"
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: txName, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setTxName(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txName" })}
                   />
                 </Field>
                 <Field label="Warehouse Item" required>
-                  <Dropdown
-                    placeholder="Select item"
-                    value={
-                      (items ?? []).find(
-                        (item: __PASCAL___warehouseitems) => item.__PREFIX___warehouseitemid === txItemId
-                      )?.__PREFIX___name ?? ""
-                    }
-                    selectedOptions={txItemId ? [txItemId] : []}
-                    onOptionSelect={(_, data) => setTxItemId(data.optionValue ?? "")}
-                  >
-                    {(items ?? []).map((item: __PASCAL___warehouseitems) => (
-                      <Option
-                        key={item.__PREFIX___warehouseitemid}
-                        value={item.__PREFIX___warehouseitemid}
-                        text={item.__PREFIX___name ?? ""}
-                      >
-                        {item.__PREFIX___name}
-                      </Option>
-                    ))}
-                  </Dropdown>
+                  <RecordLookup
+                    entityName="__PREFIX___warehouseitem"
+                    displayName="Warehouse Item"
+                    records={itemRecords}
+                    value={txItemId}
+                    onChange={setTxItemId}
+                    inputId="txItem"
+                  />
                 </Field>
                 <Field label="Quantity" required>
-                  <Input
-                    id="txQuantity"
-                    type="number"
-                    min="0"
-                    value={txQuantity}
-                    onChange={(_, data) => setTxQuantity(data.value)}
-                    placeholder="0"
+                  <Decimal
+                    context={context}
+                    parameters={{ value: { raw: txQuantity, type: "Whole.None" } }}
+                    // Unparsable input arrives as the raw text: treat it as no value
+                    onNotifyOutputChanged={(outputs) =>
+                      setTxQuantity(typeof outputs.value === "number" ? outputs.value : null)
+                    }
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txQuantity" })}
                   />
                 </Field>
                 <Field label="Transaction Type" required>
-                  <Dropdown
-                    placeholder="Select transaction type"
-                    value={transactionTypeOptions.find((opt) => String(opt.value) === txType)?.label ?? ""}
-                    selectedOptions={txType ? [txType] : []}
-                    onOptionSelect={(_, data) => setTxType(data.optionValue ?? "")}
-                  >
-                    {transactionTypeOptions.map((opt) => (
-                      <Option key={opt.value} value={String(opt.value)}>
-                        {opt.label}
-                      </Option>
-                    ))}
-                  </Dropdown>
+                  <OptionSet
+                    context={context}
+                    parameters={{ value: optionSetProperty(txType, transactionTypeOptionMetadata) }}
+                    onNotifyOutputChanged={(outputs) => setTxType(outputs.value ?? null)}
+                  />
                 </Field>
               </DialogContent>
               <DialogActions>

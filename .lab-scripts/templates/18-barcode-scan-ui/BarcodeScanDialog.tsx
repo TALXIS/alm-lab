@@ -16,13 +16,13 @@ import {
   DialogSurface,
   DialogTitle,
   Field,
-  Input,
   Spinner,
   Subtitle2,
   makeStyles,
   tokens,
 } from "@fluentui/react-components";
 import { BarcodeScannerRegular } from "@fluentui/react-icons";
+import { TextField, usePcfContext } from "@talxis/base-controls";
 import { useToast } from "@/hooks/use-toast";
 import { toBytes, bytesToDataUrl } from "@/utils/binary";
 
@@ -92,6 +92,7 @@ type BarcodeScanDialogProps = {
 export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }: BarcodeScanDialogProps) {
   const styles = useStyles();
   const toast = useToast();
+  const context = usePcfContext();
   const [open, setOpen] = useState(false);
   const [ean, setEan] = useState("");
   const [looking, setLooking] = useState(false);
@@ -298,14 +299,27 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
 
               <Field label="EAN / UPC barcode">
                 <div className={styles.eanRow}>
-                  <Input
-                    id="scanEan"
-                    className={styles.eanInput}
-                    data-testid="scan-ean-input"
-                    value={ean}
-                    onChange={(_, data) => setEan(data.value)}
-                    placeholder="e.g. 3017620422003"
-                  />
+                  <div className={styles.eanInput}>
+                    <TextField
+                      context={context}
+                      parameters={{
+                        value: { raw: ean, type: "SingleLine.Text" },
+                        Placeholder: { raw: "e.g. 3017620422003" },
+                      }}
+                      onNotifyOutputChanged={(outputs) => setEan(outputs.value ?? "")}
+                      // The control reports its value on blur; mirror keystrokes too, so Look Up
+                      // enables while the barcode is still being typed
+                      onOverrideComponentProps={(props) => ({
+                        ...props,
+                        id: "scanEan",
+                        "data-testid": "scan-ean-input",
+                        onChange: (event, value) => {
+                          props.onChange?.(event, value);
+                          setEan(value ?? "");
+                        },
+                      })}
+                    />
+                  </div>
                   <Button
                     type="button"
                     appearance="primary"

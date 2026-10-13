@@ -54,7 +54,7 @@ fork** — say yes.
 | 06 | `CP06-implement-data-model.ps1` | Warehouse tables and columns |
 | 07 | `CP07-implement-backend.ps1` | Plugins + logic solution |
 | 08 | `CP08-implement-security.ps1` | Security roles |
-| 09 | `CP09-implement-ui.ps1` | Model-driven app, sitemap, forms, views, grid PCF, warehouse picking code app (Fluent UI) |
+| 09 | `CP09-implement-ui.ps1` | Model-driven app, sitemap, forms, views, grid PCF, warehouse picking code app (TALXIS base controls) |
 | 10 | `CP10-deploy-and-sync.ps1` | Deploy to Dev & pull changes back |
 | 11 | `CP11-integrate-external-data.ps1` | External data integration: Product table, custom connector, code app wiring, barcode scan UI |
 | 12 | `CP12-move-configuration.ps1` | Configuration data migration (CMT) |

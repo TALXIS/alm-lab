@@ -8,10 +8,10 @@
 # form scripts, ribbon buttons and the TALXIS Grid PCF overlaid on the items subgrid
 # (attached manifest-driven via `txc workspace control attach`, customized from Scripts.UI
 # through the control's Client API). On top of that a Power Apps code app — a fully custom
-# Vite + React SPA built with Fluent UI for warehouse picking — referenced straight into
-# this same solution, so both UI styles ship from the same repo and the same package. This
-# completes the inner loop — a working app from source. The Grid control package itself is
-# imported into the environment by CP10, before the app package.
+# Vite + React SPA built with TALXIS base controls for warehouse picking — referenced
+# straight into this same solution, so both UI styles ship from the same repo and the same
+# package. This completes the inner loop — a working app from source. The Grid control
+# package itself is imported into the environment by CP10, before the app package.
 #
 # Solutions.UI does not own the tables: it references them (Behavior=Existing) from
 # Solutions.DataModel and only layers forms, views and commands on top. A reference carries
@@ -58,7 +58,7 @@ Build the model-driven warehouse experience so users can navigate inventory data
 - add form scripts and ribbon commands for warehouse workflows
 - attach talxis_TALXIS.PCF.Grid to the Warehouse Items subgrid via txc workspace control attach (group by category, sum of quantity, low-stock highlighting from Scripts.UI)
 - add src/Apps.WarehousePicking, a Vite + React + TypeScript code app referenced directly into Solutions.UI
-- build the picking screens with Fluent UI React v9 (the pp-app-code starter's UI library), so the code app matches the Power Apps look
+- build the picking screens with TALXIS base controls (Grid, TextField, Decimal, OptionSet, Lookup) on the pp-app-code starter's Fluent UI shell, so the code app looks and behaves like Dataverse
 - register the three warehouse tables as code app data sources (typed models + services)
 - implement the code app UI: items list, item detail with its transactions, a transactions list and a locations list (with per-location item counts), all querying Dataverse through the generated services; locations also resolve the item's location lookup
 - add Node setup to the build workflow so the code app builds in CI

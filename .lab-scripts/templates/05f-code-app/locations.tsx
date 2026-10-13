@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import {
-  Badge,
   Button,
   Dialog,
   DialogActions,
@@ -14,22 +13,19 @@ import {
   DialogSurface,
   DialogTitle,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
   Skeleton,
   SkeletonItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
   makeStyles,
   tokens,
 } from "@fluentui/react-components";
 import { LocationRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
+import { Decimal, TextField, usePcfContext } from "@talxis/base-controls";
+import type { IColumn } from "@talxis/client-libraries";
 import { PageHeader } from "@/components/PageHeader";
+import { RecordGrid } from "@/components/RecordGrid";
+import { statusOptions } from "@/utils/optionSets";
 import { useToast } from "@/hooks/use-toast";
 
 const useStyles = makeStyles({
@@ -39,29 +35,6 @@ const useStyles = makeStyles({
     flexDirection: "column",
     gap: tokens.spacingVerticalXL,
   },
-  tableWrapper: {
-    border: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
-    borderRadius: tokens.borderRadiusMedium,
-    overflowX: "auto",
-  },
-  numeric: {
-    textAlign: "right",
-    fontFamily: tokens.fontFamilyMonospace,
-  },
-  numericHeader: {
-    "& > *": { justifyContent: "flex-end" },
-  },
-  name: {
-    fontWeight: tokens.fontWeightSemibold,
-  },
-  muted: {
-    color: tokens.colorNeutralForeground3,
-  },
-  empty: {
-    textAlign: "center",
-    padding: `${tokens.spacingVerticalXXL} 0`,
-    color: tokens.colorNeutralForeground3,
-  },
   form: {
     display: "flex",
     flexDirection: "column",
@@ -69,14 +42,23 @@ const useStyles = makeStyles({
   },
 });
 
+const columns: IColumn[] = [
+  { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 200 },
+  { name: "__PREFIX___address", displayName: "Address", dataType: "SingleLine.Text", visualSizeFactor: 260 },
+  { name: "__PREFIX___capacity", displayName: "Capacity", dataType: "Whole.None", visualSizeFactor: 110 },
+  { name: "itemCount", displayName: "Items", dataType: "Whole.None", visualSizeFactor: 90 },
+  { name: "active", displayName: "Active", dataType: "OptionSet", visualSizeFactor: 110, metadata: { OptionSet: statusOptions } as IColumn["metadata"] },
+];
+
 export default function LocationsPage() {
   const styles = useStyles();
   const toast = useToast();
+  const context = usePcfContext();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-  const [capacity, setCapacity] = useState("");
+  const [capacity, setCapacity] = useState<number | null>(null);
 
   const { data: locations, isLoading, error } = useQuery({
     queryKey: ["warehouseLocationsList"],
@@ -106,18 +88,28 @@ export default function LocationsPage() {
     },
   });
 
-  const itemCounts = new Map<string, number>();
-  (items ?? []).forEach((item: __PASCAL___warehouseitems) => {
-    const locId = item.___PREFIX___locationid_value;
-    if (locId) itemCounts.set(locId, (itemCounts.get(locId) ?? 0) + 1);
-  });
+  // Grid rows: per-location item counts, numeric capacity, and isactive as an Active/Inactive option
+  const rows = useMemo(() => {
+    if (!locations) return undefined;
+    const itemCounts = new Map<string, number>();
+    (items ?? []).forEach((item: __PASCAL___warehouseitems) => {
+      const locId = item.___PREFIX___locationid_value;
+      if (locId) itemCounts.set(locId, (itemCounts.get(locId) ?? 0) + 1);
+    });
+    return locations.map((loc: __PASCAL___warehouselocations) => ({
+      ...loc,
+      __PREFIX___capacity: loc.__PREFIX___capacity != null ? Number(loc.__PREFIX___capacity) : null,
+      itemCount: itemCounts.get(loc.__PREFIX___warehouselocationid) ?? 0,
+      active: loc.__PREFIX___isactive ? 0 : 1,
+    }));
+  }, [locations, items]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       return __PASCAL___warehouselocationsService.create({
         __PREFIX___name: name,
         __PREFIX___address: address,
-        __PREFIX___capacity: capacity,
+        __PREFIX___capacity: capacity !== null ? String(capacity) : undefined,
         __PREFIX___isactive: true,
       } as any);
     },
@@ -135,7 +127,7 @@ export default function LocationsPage() {
     setDialogOpen(false);
     setName("");
     setAddress("");
-    setCapacity("");
+    setCapacity(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -176,65 +168,19 @@ export default function LocationsPage() {
         </MessageBar>
       )}
 
-      <div className={styles.tableWrapper}>
-        <Table aria-label="Locations">
-          <TableHeader>
-            <TableRow>
-              <TableHeaderCell>Name</TableHeaderCell>
-              <TableHeaderCell>Address</TableHeaderCell>
-              <TableHeaderCell className={styles.numericHeader}>Capacity</TableHeaderCell>
-              <TableHeaderCell className={styles.numericHeader}>Items</TableHeaderCell>
-              <TableHeaderCell>Active</TableHeaderCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton>
-                        <SkeletonItem />
-                      </Skeleton>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : locations && locations.length > 0 ? (
-              locations.map((loc: __PASCAL___warehouselocations) => (
-                <TableRow key={loc.__PREFIX___warehouselocationid}>
-                  <TableCell className={styles.name}>
-                    {loc.__PREFIX___name}
-                  </TableCell>
-                  <TableCell className={styles.muted}>
-                    {loc.__PREFIX___address || "-"}
-                  </TableCell>
-                  <TableCell className={styles.numeric}>
-                    {loc.__PREFIX___capacity ?? "-"}
-                  </TableCell>
-                  <TableCell className={styles.numeric}>
-                    {itemCounts.get(loc.__PREFIX___warehouselocationid) ?? 0}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      appearance="filled"
-                      color={loc.__PREFIX___isactive ? "success" : "danger"}
-                    >
-                      {loc.__PREFIX___isactive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className={styles.empty}>
-                  No locations found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <Skeleton>
+          <SkeletonItem size={48} />
+        </Skeleton>
+      ) : (
+        <RecordGrid
+          rows={rows}
+          columns={columns}
+          entityName="__PREFIX___warehouselocation"
+          primaryIdAttribute="__PREFIX___warehouselocationid"
+          primaryNameAttribute="__PREFIX___name"
+        />
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
         <DialogSurface>
@@ -244,29 +190,30 @@ export default function LocationsPage() {
               <DialogTitle>Create New Location</DialogTitle>
               <DialogContent className={styles.form}>
                 <Field label="Name" required>
-                  <Input
-                    id="locName"
-                    value={name}
-                    onChange={(_, data) => setName(data.value)}
-                    placeholder="Enter location name"
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: name, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setName(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "locName" })}
                   />
                 </Field>
                 <Field label="Address">
-                  <Input
-                    id="locAddress"
-                    value={address}
-                    onChange={(_, data) => setAddress(data.value)}
-                    placeholder="Enter address"
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: address, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setAddress(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "locAddress" })}
                   />
                 </Field>
                 <Field label="Capacity">
-                  <Input
-                    id="locCapacity"
-                    type="number"
-                    min="0"
-                    value={capacity}
-                    onChange={(_, data) => setCapacity(data.value)}
-                    placeholder="0"
+                  <Decimal
+                    context={context}
+                    parameters={{ value: { raw: capacity, type: "Whole.None" } }}
+                    // Unparsable input arrives as the raw text: treat it as no value
+                    onNotifyOutputChanged={(outputs) =>
+                      setCapacity(typeof outputs.value === "number" ? outputs.value : null)
+                    }
+                    onOverrideComponentProps={(props) => ({ ...props, id: "locCapacity" })}
                   />
                 </Field>
               </DialogContent>

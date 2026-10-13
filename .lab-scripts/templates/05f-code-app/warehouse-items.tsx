@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
-import { categoryLabels, categoryOptions } from "@/utils/optionSets";
+import { categoryOptionMetadata, statusOptions, optionSetProperty } from "@/utils/optionSets";
 import {
-  Badge,
   Button,
   Dialog,
   DialogActions,
@@ -14,26 +14,20 @@ import {
   DialogContent,
   DialogSurface,
   DialogTitle,
-  Dropdown,
   Field,
-  Input,
   MessageBar,
   MessageBarBody,
-  Option,
   Skeleton,
   SkeletonItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
   makeStyles,
   tokens,
 } from "@fluentui/react-components";
 import { BoxRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
+import { Decimal, OptionSet, TextField, usePcfContext } from "@talxis/base-controls";
+import type { IColumn } from "@talxis/client-libraries";
 import { PageHeader } from "@/components/PageHeader";
-import { RouterLink } from "@/components/RouterLink";
+import { RecordGrid } from "@/components/RecordGrid";
+import { RecordLookup } from "@/components/RecordLookup";
 import { useToast } from "@/hooks/use-toast";
 
 const useStyles = makeStyles({
@@ -43,30 +37,6 @@ const useStyles = makeStyles({
     flexDirection: "column",
     gap: tokens.spacingVerticalXL,
   },
-  tableWrapper: {
-    border: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
-    borderRadius: tokens.borderRadiusMedium,
-    overflowX: "auto",
-  },
-  numeric: {
-    textAlign: "right",
-    fontFamily: tokens.fontFamilyMonospace,
-  },
-  numericHeader: {
-    "& > *": { justifyContent: "flex-end" },
-  },
-  mono: {
-    fontFamily: tokens.fontFamilyMonospace,
-    color: tokens.colorNeutralForeground3,
-  },
-  muted: {
-    color: tokens.colorNeutralForeground3,
-  },
-  empty: {
-    textAlign: "center",
-    padding: `${tokens.spacingVerticalXXL} 0`,
-    color: tokens.colorNeutralForeground3,
-  },
   form: {
     display: "flex",
     flexDirection: "column",
@@ -74,15 +44,27 @@ const useStyles = makeStyles({
   },
 });
 
+const columns: IColumn[] = [
+  { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 220 },
+  { name: "__PREFIX___sku", displayName: "SKU", dataType: "SingleLine.Text", visualSizeFactor: 130 },
+  { name: "__PREFIX___availablequantity", displayName: "Available Qty", dataType: "Whole.None", visualSizeFactor: 120 },
+  { name: "__PREFIX___category", displayName: "Category", dataType: "OptionSet", visualSizeFactor: 140, metadata: { OptionSet: categoryOptionMetadata } as IColumn["metadata"] },
+  { name: "location", displayName: "Location", dataType: "SingleLine.Text", visualSizeFactor: 150 },
+  { name: "statecode", displayName: "Status", dataType: "OptionSet", visualSizeFactor: 110, metadata: { OptionSet: statusOptions } as IColumn["metadata"] },
+  { name: "createdon", displayName: "Created", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
+];
+
 export default function WarehouseItemsPage() {
   const styles = useStyles();
   const toast = useToast();
+  const context = usePcfContext();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [category, setCategory] = useState("");
+  const [quantity, setQuantity] = useState<number | null>(null);
+  const [category, setCategory] = useState<number | null>(null);
   const [locationId, setLocationId] = useState("");
 
   const { data: items, isLoading, error } = useQuery({
@@ -116,20 +98,35 @@ export default function WarehouseItemsPage() {
     },
   });
 
-  const locationNames = new Map(
-    (locations ?? []).map((loc: __PASCAL___warehouselocations) => [
-      loc.__PREFIX___warehouselocationid,
-      loc.__PREFIX___name,
-    ])
+  const locationRecords = useMemo(
+    () =>
+      (locations ?? []).map((loc: __PASCAL___warehouselocations) => ({
+        id: loc.__PREFIX___warehouselocationid,
+        name: loc.__PREFIX___name ?? "",
+      })),
+    [locations]
   );
+
+  // Grid rows: numbers for numeric/option set columns, and the location lookup resolved to its name
+  const rows = useMemo(() => {
+    if (!items) return undefined;
+    const locationNames = new Map(locationRecords.map((loc) => [loc.id, loc.name]));
+    return items.map((item: __PASCAL___warehouseitems) => ({
+      ...item,
+      __PREFIX___availablequantity: Number(item.__PREFIX___availablequantity),
+      __PREFIX___category: Number(item.__PREFIX___category),
+      statecode: Number(item.statecode),
+      location: locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "",
+    }));
+  }, [items, locationRecords]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       return __PASCAL___warehouseitemsService.create({
         __PREFIX___name: name,
         __PREFIX___sku: sku,
-        __PREFIX___availablequantity: quantity,
-        __PREFIX___category: Number(category) as any,
+        __PREFIX___availablequantity: String(quantity),
+        __PREFIX___category: category as any,
         ...(locationId
           ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${locationId})` }
           : {}),
@@ -149,14 +146,14 @@ export default function WarehouseItemsPage() {
     setDialogOpen(false);
     setName("");
     setSku("");
-    setQuantity("");
-    setCategory("");
+    setQuantity(null);
+    setCategory(null);
     setLocationId("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !sku || !quantity || !category) {
+    if (!name || !sku || quantity === null || category === null) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -192,81 +189,21 @@ export default function WarehouseItemsPage() {
         </MessageBar>
       )}
 
-      <div className={styles.tableWrapper}>
-        <Table aria-label="Warehouse items">
-          <TableHeader>
-            <TableRow>
-              <TableHeaderCell>Name</TableHeaderCell>
-              <TableHeaderCell>SKU</TableHeaderCell>
-              <TableHeaderCell className={styles.numericHeader}>Available Qty</TableHeaderCell>
-              <TableHeaderCell>Category</TableHeaderCell>
-              <TableHeaderCell>Location</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Created</TableHeaderCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton>
-                        <SkeletonItem />
-                      </Skeleton>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : items && items.length > 0 ? (
-              items.map((item: __PASCAL___warehouseitems) => (
-                <TableRow key={item.__PREFIX___warehouseitemid} data-testid="warehouse-item-row">
-                  <TableCell>
-                    <RouterLink to={`/items/${item.__PREFIX___warehouseitemid}`}>
-                      {item.__PREFIX___name}
-                    </RouterLink>
-                  </TableCell>
-                  <TableCell className={styles.mono}>
-                    {item.__PREFIX___sku}
-                  </TableCell>
-                  <TableCell className={styles.numeric}>
-                    {item.__PREFIX___availablequantity}
-                  </TableCell>
-                  <TableCell>
-                    <Badge appearance="tint" color="informative">
-                      {categoryLabels[
-                        item.__PREFIX___category as keyof typeof categoryLabels
-                      ] ?? item.__PREFIX___category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={styles.muted}>
-                    {locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      appearance="filled"
-                      color={item.statecode === 0 ? "success" : "danger"}
-                    >
-                      {item.statecode === 0 ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={styles.muted}>
-                    {item.createdon
-                      ? new Date(item.createdon).toLocaleDateString()
-                      : "-"}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className={styles.empty}>
-                  No warehouse items found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <Skeleton>
+          <SkeletonItem size={48} />
+        </Skeleton>
+      ) : (
+        <RecordGrid
+          rows={rows}
+          columns={columns}
+          entityName="__PREFIX___warehouseitem"
+          primaryIdAttribute="__PREFIX___warehouseitemid"
+          primaryNameAttribute="__PREFIX___name"
+          rowClassName="warehouse-item-row"
+          onOpenRecord={(id) => navigate(`/items/${id}`)}
+        />
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
         <DialogSurface>
@@ -276,62 +213,48 @@ export default function WarehouseItemsPage() {
               <DialogTitle>Create New Item</DialogTitle>
               <DialogContent className={styles.form}>
                 <Field label="Name" required>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(_, data) => setName(data.value)}
-                    placeholder="Enter item name"
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: name, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setName(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "name" })}
                   />
                 </Field>
                 <Field label="SKU" required>
-                  <Input
-                    id="sku"
-                    value={sku}
-                    onChange={(_, data) => setSku(data.value)}
-                    placeholder="Enter SKU"
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: sku, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setSku(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "sku" })}
                   />
                 </Field>
                 <Field label="Available Quantity" required>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="0"
-                    value={quantity}
-                    onChange={(_, data) => setQuantity(data.value)}
-                    placeholder="0"
+                  <Decimal
+                    context={context}
+                    parameters={{ value: { raw: quantity, type: "Whole.None" } }}
+                    // Unparsable input arrives as the raw text: treat it as no value
+                    onNotifyOutputChanged={(outputs) =>
+                      setQuantity(typeof outputs.value === "number" ? outputs.value : null)
+                    }
+                    onOverrideComponentProps={(props) => ({ ...props, id: "quantity" })}
                   />
                 </Field>
                 <Field label="Category" required>
-                  <Dropdown
-                    placeholder="Select category"
-                    value={categoryOptions.find((opt) => String(opt.value) === category)?.label ?? ""}
-                    selectedOptions={category ? [category] : []}
-                    onOptionSelect={(_, data) => setCategory(data.optionValue ?? "")}
-                  >
-                    {categoryOptions.map((opt) => (
-                      <Option key={opt.value} value={String(opt.value)}>
-                        {opt.label}
-                      </Option>
-                    ))}
-                  </Dropdown>
+                  <OptionSet
+                    context={context}
+                    parameters={{ value: optionSetProperty(category, categoryOptionMetadata) }}
+                    onNotifyOutputChanged={(outputs) => setCategory(outputs.value ?? null)}
+                  />
                 </Field>
                 <Field label="Location">
-                  <Dropdown
-                    placeholder="Select location (optional)"
-                    value={locationNames.get(locationId) ?? ""}
-                    selectedOptions={locationId ? [locationId] : []}
-                    onOptionSelect={(_, data) => setLocationId(data.optionValue ?? "")}
-                  >
-                    {(locations ?? []).map((loc: __PASCAL___warehouselocations) => (
-                      <Option
-                        key={loc.__PREFIX___warehouselocationid}
-                        value={loc.__PREFIX___warehouselocationid}
-                        text={loc.__PREFIX___name ?? ""}
-                      >
-                        {loc.__PREFIX___name}
-                      </Option>
-                    ))}
-                  </Dropdown>
+                  <RecordLookup
+                    entityName="__PREFIX___warehouselocation"
+                    displayName="Location"
+                    records={locationRecords}
+                    value={locationId}
+                    onChange={setLocationId}
+                    inputId="location"
+                  />
                 </Field>
               </DialogContent>
               <DialogActions>

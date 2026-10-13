@@ -30,6 +30,10 @@ public sealed class WarehousePickingSteps
     // drifts across lab runs. Every assertion below is relative to this captured baseline.
     private int _startingQuantity;
 
+    // The items list is a TALXIS base-controls Grid (AG Grid underneath); the page marks each of its
+    // rows with this class, since the grid has no per-row test id hook.
+    private ILocator ItemRows => Page.Locator(".warehouse-item-row");
+
     public WarehousePickingSteps(ScenarioContext scenarioContext)
     {
         _scenarioContext = scenarioContext;
@@ -40,16 +44,16 @@ public sealed class WarehousePickingSteps
     {
         var baseUrl = Environment.GetEnvironmentVariable("TXC_CODEAPP_URL") ?? DefaultCodeAppUrl;
         await Page.GotoAsync(baseUrl);
-        await Page.GetByTestId("warehouse-item-row").First.WaitForAsync(
-            new LocatorWaitForOptions { Timeout = 15000 });
+        await ItemRows.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
     }
 
     [Given("I open the {string} item")]
     public async Task GivenIOpenTheItem(string itemName)
     {
-        var row = Page.GetByTestId("warehouse-item-row").Filter(new() { HasText = itemName });
+        var row = ItemRows.Filter(new() { HasText = itemName });
         await row.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
-        await row.GetByRole(AriaRole.Link).ClickAsync();
+        // The grid renders the record name as an <a> without an href, so it has no link role
+        await row.Locator("a").First.ClickAsync();
 
         var quantityLocator = Page.GetByTestId("item-detail-qty");
         await quantityLocator.WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });

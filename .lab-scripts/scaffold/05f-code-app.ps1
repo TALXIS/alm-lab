@@ -1,6 +1,6 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║      05f: Code App — Warehouse Picking (Vite + React + TypeScript + Fluent UI)         ║
+# ║    05f: Code App — Warehouse Picking (Vite + React + TypeScript + base controls)       ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Creates Apps.WarehousePicking — a Power Apps code app: a fully custom SPA hosted by Power
@@ -22,8 +22,8 @@
 # implementation (templates/05f-code-app/): an items list, an item detail with its
 # transactions, a transactions list and a locations list — all built on the typed models
 # and services that pp-app-code-data generated from the Solutions.DataModel metadata.
-# The UI is Fluent UI React v9 (@fluentui/react-components) — the same design language as
-# Power Apps and the rest of Microsoft 365 — which the pp-app-code starter ships with.
+# Lists and form fields are TALXIS base controls (@talxis/base-controls) — the same Dataverse
+# controls as PCF — on the pp-app-code starter's Fluent UI shell.
 # All three tables get their own page; locations additionally resolve the item's location
 # lookup (list column, detail card, New Item picker) and show a per-location item count.
 # Expects: $PublisherPrefix from parent scope.
@@ -104,8 +104,11 @@ Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouselocation" -Foreground
 # layout, a counter-demo home page, and providers for the Fluent theme (light/dark),
 # toasts (useToast) and react-query. We add the real warehouse screens on top of it: an
 # items list, an item detail page with its transactions, a global transactions ledger, and
-# a locations list (plus two small shared components) — then wire them into the router/nav
-# and drop the now-superseded demo page.
+# a locations list — then wire them into the router/nav and drop the now-superseded demo page.
+# Lists and form fields are TALXIS base controls (Grid, TextField, Decimal, OptionSet, Lookup),
+# which the starter already wires to a PCF context; two lab components adapt them to a code app:
+# RecordGrid feeds a Grid from rows the page loaded through the generated services, and
+# RecordLookup searches an in-memory list instead of Dataverse views.
 # Full sources: .lab-scripts/templates/05f-code-app/
 
 Write-Host "`n── Code App Pages ──" -ForegroundColor Cyan
@@ -120,6 +123,8 @@ foreach ($file in @(
     @{ Template = "optionSets.ts";             Target = "utils/optionSets.ts" },
     @{ Template = "RouterLink.tsx";            Target = "components/RouterLink.tsx" },
     @{ Template = "PageHeader.tsx";            Target = "components/PageHeader.tsx" },
+    @{ Template = "RecordGrid.tsx";            Target = "components/RecordGrid.tsx" },
+    @{ Template = "RecordLookup.tsx";          Target = "components/RecordLookup.tsx" },
     @{ Template = "router.tsx";                Target = "router.tsx" },
     @{ Template = "_layout.tsx";               Target = "pages/_layout.tsx" },
     @{ Template = "warehouse-items.tsx";       Target = "pages/warehouse-items.tsx" },
