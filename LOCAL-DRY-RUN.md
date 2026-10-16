@@ -12,8 +12,8 @@ and run the checkpoints inside, in order:
 
 ```bash
 docker run -it --rm \
-  -v "$(pwd)":/workspaces/alm-lab \
-  -w /workspaces/alm-lab \
+  -v "$(pwd)":/workspaces/lab \
+  -w /workspaces/lab \
   -e LAB_LOCAL_MODE=1 -e LAB_AUTO_MERGE=1 -e LAB_AUTO=1 \
   ghcr.io/talxis/tools-agentbox/image:latest \
   pwsh -c 'foreach ($cp in Get-ChildItem .lab-scripts/CP*.ps1 | Sort-Object Name) { & $cp.FullName }'
