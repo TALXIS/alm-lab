@@ -5,6 +5,8 @@ import WarehouseItemDetailPage from "@/pages/warehouse-item-detail"
 import TransactionsPage from "@/pages/transactions"
 import LocationsPage from "@/pages/locations"
 import NotFoundPage from "@/pages/not-found"
+import { registerEntities, setHostNavigate } from "@/providers/pcf-host"
+import { warehouseEntities } from "@/utils/entities"
 
 // IMPORTANT: Do not remove or modify the code below!
 // Normalize basename when hosted in Power Apps
@@ -28,3 +30,8 @@ export const router = createBrowserRouter([
 ], {
   basename: BASENAME // IMPORTANT: Set basename for proper routing when hosted in Power Apps
 })
+
+// What TALXIS base controls need from this app: the warehouse tables, and in-app navigation for
+// opening their records (context.navigation.openForm)
+registerEntities(...warehouseEntities)
+setHostNavigate((path) => router.navigate(path))

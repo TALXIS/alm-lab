@@ -177,8 +177,6 @@ export default function LocationsPage() {
           rows={rows}
           columns={columns}
           entityName="__PREFIX___warehouselocation"
-          primaryIdAttribute="__PREFIX___warehouselocationid"
-          primaryNameAttribute="__PREFIX___name"
         />
       )}
 

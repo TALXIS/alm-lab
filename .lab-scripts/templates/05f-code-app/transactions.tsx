@@ -191,8 +191,6 @@ export default function TransactionsPage() {
           rows={rows}
           columns={columns}
           entityName="__PREFIX___warehousetransaction"
-          primaryIdAttribute="__PREFIX___warehousetransactionid"
-          primaryNameAttribute="__PREFIX___name"
         />
       )}
 
@@ -214,7 +212,6 @@ export default function TransactionsPage() {
                 <Field label="Warehouse Item" required>
                   <RecordLookup
                     entityName="__PREFIX___warehouseitem"
-                    displayName="Warehouse Item"
                     records={itemRecords}
                     value={txItemId}
                     onChange={setTxItemId}

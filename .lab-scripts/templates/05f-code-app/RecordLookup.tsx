@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { Lookup, usePcfContext, type ILookupProperty } from "@talxis/base-controls";
+import { getEntity } from "@/providers/pcf-host";
 
 type LookupRecord = { id: string; name: string };
 
 type RecordLookupProps = {
+  /** A table registered in entities.ts (the control reads its metadata, e.g. for the placeholder). */
   entityName: string;
-  /** Entity display name, used in the control's placeholder. */
-  displayName: string;
   /** Candidate records the page already loaded; typing filters them by name. */
   records: LookupRecord[];
   /** Selected record id, or "" for none. */
@@ -16,30 +16,13 @@ type RecordLookupProps = {
   inputId?: string;
 };
 
-const displayNames = new Map<string, string>();
 const noViews = async () => [];
-
-// The Lookup reads entity metadata through Xrm.Utility.getEntityMetadata as soon as it mounts.
-// Outside a model-driven app that's the base controls' fallback Xrm, whose version throws, so it's
-// replaced by one answering from the entities registered here. PcfContextProvider (an ancestor)
-// has created window.Xrm by the time any RecordLookup renders.
-function registerEntity(entityName: string, displayName: string) {
-  displayNames.set(entityName, displayName);
-  const utility = (window as unknown as { Xrm?: { Utility: Record<string, unknown> } }).Xrm?.Utility;
-  if (utility && !utility.__recordLookupMetadata) {
-    utility.getEntityMetadata = async (name: string) => ({
-      LogicalName: name,
-      DisplayName: displayNames.get(name) ?? name,
-    });
-    utility.__recordLookupMetadata = true;
-  }
-}
 
 // A TALXIS base-controls Lookup whose search runs over an in-memory list (onSearch) rather than
 // Dataverse views and fetchXml, which a code app has no Web API for.
-export function RecordLookup({ entityName, displayName, records, value, onChange, inputId }: RecordLookupProps) {
+export function RecordLookup({ entityName, records, value, onChange, inputId }: RecordLookupProps) {
   const context = usePcfContext();
-  registerEntity(entityName, displayName);
+  const displayName = getEntity(entityName)?.displayName ?? entityName;
 
   const selected = records.find((record) => record.id === value);
   // Stable across renders: the Lookup derives its target entities from these attributes

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
@@ -58,7 +57,6 @@ export default function WarehouseItemsPage() {
   const styles = useStyles();
   const toast = useToast();
   const context = usePcfContext();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
@@ -198,10 +196,7 @@ export default function WarehouseItemsPage() {
           rows={rows}
           columns={columns}
           entityName="__PREFIX___warehouseitem"
-          primaryIdAttribute="__PREFIX___warehouseitemid"
-          primaryNameAttribute="__PREFIX___name"
           rowClassName="warehouse-item-row"
-          onOpenRecord={(id) => navigate(`/items/${id}`)}
         />
       )}
 
@@ -249,7 +244,6 @@ export default function WarehouseItemsPage() {
                 <Field label="Location">
                   <RecordLookup
                     entityName="__PREFIX___warehouselocation"
-                    displayName="Location"
                     records={locationRecords}
                     value={locationId}
                     onChange={setLocationId}

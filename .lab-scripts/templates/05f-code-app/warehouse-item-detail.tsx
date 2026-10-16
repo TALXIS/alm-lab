@@ -319,8 +319,6 @@ export default function WarehouseItemDetailPage() {
           rows={transactionRows}
           columns={transactionColumns}
           entityName="__PREFIX___warehousetransaction"
-          primaryIdAttribute="__PREFIX___warehousetransactionid"
-          primaryNameAttribute="__PREFIX___name"
         />
       )}
 

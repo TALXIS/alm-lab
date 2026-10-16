@@ -1,50 +1,38 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Grid, usePcfContext } from "@talxis/base-controls";
 import { Dataset, MemoryDataProvider, type IColumn, type IRawRecord } from "@talxis/client-libraries";
+import { getEntity } from "@/providers/pcf-host";
 
 type RecordGridProps = {
   /** Rows the page already loaded through the generated services; undefined while loading. */
   rows: IRawRecord[] | undefined;
   columns: IColumn[];
+  /** A table registered in entities.ts; its primary columns key the rows. */
   entityName: string;
-  primaryIdAttribute: string;
-  primaryNameAttribute: string;
   /** Class put on every AG Grid row, e.g. as a stable hook for UI tests. */
   rowClassName?: string;
-  /** Called with the record id when its name is clicked; without it the names aren't links. */
-  onOpenRecord?: (id: string) => void;
 };
 
 // A read-only TALXIS base-controls Grid over data the code app already has: a MemoryDataProvider
-// holds the rows (there's no Dataverse Web API behind a code app's PCF context), and opening a
-// record is routed to onOpenRecord instead of a model-driven form.
-export function RecordGrid({
-  rows,
-  columns,
-  entityName,
-  primaryIdAttribute,
-  primaryNameAttribute,
-  rowClassName,
-  onOpenRecord,
-}: RecordGridProps) {
+// holds the rows (there's no Dataverse Web API behind a code app's PCF context). Record names link
+// to the entity's page when it has one, opened like any control would: context.navigation.openForm.
+export function RecordGrid({ rows, columns, entityName, rowClassName }: RecordGridProps) {
   const context = usePcfContext();
-  const onOpenRecordRef = useRef(onOpenRecord);
-  useEffect(() => {
-    onOpenRecordRef.current = onOpenRecord;
-  });
+  const entity = getEntity(entityName);
+  if (!entity) throw new Error(`RecordGrid: '${entityName}' isn't registered in entities.ts`);
 
   const [dataset] = useState(() => {
     // LogicalName becomes the entity type of opened records (the metadata type comes from Xrm's)
     const metadata = {
-      LogicalName: entityName,
-      PrimaryIdAttribute: primaryIdAttribute,
-      PrimaryNameAttribute: primaryNameAttribute,
+      LogicalName: entity.logicalName,
+      PrimaryIdAttribute: entity.primaryIdAttribute,
+      PrimaryNameAttribute: entity.primaryNameAttribute,
     };
-    const provider = new MemoryDataProvider({ dataSource: [], metadata });
-    const dataset = new Dataset(provider);
+    const dataset = new Dataset(new MemoryDataProvider({ dataSource: [], metadata }));
     dataset.setColumns(columns);
+    // A memory provider doesn't open records itself; hand them to the context like a form would
     dataset.setInterceptor("onOpenDatasetItem", (entityReference) =>
-      onOpenRecordRef.current?.(entityReference.id.guid)
+      void context.navigation.openForm({ entityName: entity.logicalName, entityId: entityReference.id.guid })
     );
     return dataset;
   });
@@ -62,7 +50,7 @@ export function RecordGrid({
       parameters={{
         Grid: dataset,
         SelectableRows: { raw: "none" },
-        EnableNavigation: { raw: !!onOpenRecord },
+        EnableNavigation: { raw: !!entity.formPath },
         EnableOptionSetColors: { raw: true },
       }}
       onOverrideComponentProps={(props) => ({ ...props, rowClass: rowClassName })}
