@@ -8,7 +8,7 @@ block: fill in the notes column as the day goes.
 
 | Time | # | Topic | What we do | You leave with | Checkpoints | Notes |
 |---|---|---|---|---|---|---|
-| 9:00–9:35 AM | 01 | Opening and setup | Introduce the warehouse case. Everyone forks the repo and spins up a Codespace. Run the prerequisites check (CP01), then sign in to GitHub, Power Platform and Azure with device codes. | A running Codespace with all tools verified and all three services signed in | CP01 | |
+| 9:00–9:35 AM | 01 | Opening and setup | Introduce the warehouse case. Everyone forks the repo and starts a Codespace, which builds while we cover the core concepts (see below). Then run the prerequisites check (CP01) and sign in to GitHub, Power Platform and Azure with device codes. | The shared vocabulary for the day, a running Codespace with all tools verified, and all three services signed in | CP01 | |
 | 9:35–10:15 AM | 02 | Data model and security | Scaffold the monorepo layout and the Package Deployer. Add the Location, Item and Transaction tables with their columns, all as code. Then add the Warehouse Manager and Worker security roles and explain privilege depth. | Dataverse tables and solutions kept as source, plus two security roles | CP02, CP06, CP08 | |
 | 10:15–10:30 AM | | *Coffee break* | | | | |
 | 10:30–11:15 AM | 03 | Business rules on the server | Write the plugins that block illegal transactions and subtract stock. Register them as SDK message processing steps in the Logic solution. | Plugins that enforce legal transactions | CP07 | |
@@ -20,6 +20,27 @@ block: fill in the notes column as the day goes.
 | 2:40–3:00 PM | 07 | Background jobs | Show a cloud flow that runs without a user. | A flow running in the background | Pending (draft PR #40) | |
 | 3:00–3:40 PM | 08 | Automated testing | Run the plugin unit tests with FakeXrmEasy and the script tests with Jest. Run BDD scenarios with Playwright against the app. | Unit tests and BDD scenarios passing | CP14, CP15 | |
 | 3:40–3:55 PM | 09 | Wrap-up: what you hand the agent | Review what was built. Discuss what to hand to an agent and what to check yourself. | A shared view of where agents help and where you still verify | | |
+
+## Block 01 running order
+
+| Minutes | Segment |
+|---|---|
+| 9:00–9:05 | Fork the repo and start the Codespace. It builds in the background during the next segment. |
+| 9:05–9:20 | Concepts (below) |
+| 9:20–9:35 | Prerequisites check and sign-in (CP01) |
+
+### Concepts to introduce
+
+Each one is a sentence or two, tied to something attendees will touch that day.
+
+- **LLM:** the model that reads and writes text and code. It only knows what is in its context.
+- **Agent:** an LLM in a loop that can read files, run commands and call tools to reach a goal.
+- **Harness:** the program around the model that supplies the tools, permissions and context, and runs the loop. The agent is only as capable as its harness.
+- **Skills:** packaged instructions the agent loads when a task matches, such as how to add a plugin or a table in this workspace.
+- **Agent plugins:** bundles of skills, tools and commands installed into the harness, so the agent has the team's way of working.
+- **Codespaces:** the cloud dev machine with every tool preinstalled. Each attendee gets the same environment, on their own account.
+- **Power Platform resources:** environments, solutions, tables, plugins, security roles, apps and connectors. What each is, which live in source and which only in an environment.
+- **Steering agents:** how you control the work. Give the goal and constraints up front, use instructions files and skills for standing rules, and review the plan before it runs. Keep changes small in a branch and PR, and let the build and tests act as the gate. Check the diff yourself.
 
 ## Before the day (facilitator or Terraform track)
 
@@ -40,6 +61,7 @@ CP10 and CP11 need the Dev environment from CP04.
 
 ## Open items
 
+- Block 01 is tight: five minutes to start the Codespace, fifteen for concepts and fifteen for CP01 including the device-code sign-ins. If it runs over, take ten minutes from block 06 (External data), where CP11 has the most slack.
 - Block 02 is 40 minutes for three checkpoints. Security is short, but CP06 has three scaffolds.
 - Block 07 depends on the cloud flow checkpoint (draft PR #40). Until it merges, treat it as a demo.
 - Block 08 is 40 minutes for CP14 and CP15. Open PR #49 adds CP16 and CP17 (test-planning agents), which would not fit without more time.
