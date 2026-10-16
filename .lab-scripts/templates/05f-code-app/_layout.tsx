@@ -1,34 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
-import { Subtitle1, Tab, TabList, makeStyles, tokens } from "@fluentui/react-components"
+import { Subtitle1, Tab, TabList } from "@fluentui/react-components"
 import { BoxRegular, ArrowSwapRegular, LocationRegular } from "@fluentui/react-icons"
-
-const useStyles = makeStyles({
-  root: {
-    minHeight: "100dvh",
-    display: "flex",
-    flexDirection: "column",
-  },
-  header: {
-    borderBottom: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
-  },
-  headerInner: {
-    boxSizing: "border-box",
-    maxWidth: "1280px",
-    height: "56px",
-    margin: "0 auto",
-    padding: `0 ${tokens.spacingHorizontalXXL}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  main: {
-    flex: 1,
-    boxSizing: "border-box",
-    width: "100%",
-    maxWidth: "1280px",
-    margin: "0 auto",
-  },
-})
+import { useStyles } from "./_layout.styles"
 
 // The items list is the index route and also owns the /items/:id detail pages.
 function selectedTab(pathname: string) {

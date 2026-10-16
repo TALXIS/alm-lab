@@ -17,8 +17,6 @@ import {
   MessageBarBody,
   Skeleton,
   SkeletonItem,
-  makeStyles,
-  tokens,
 } from "@fluentui/react-components";
 import { LocationRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
 import { Decimal, TextField, usePcfContext } from "@talxis/base-controls";
@@ -27,20 +25,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { statusOptions } from "@/utils/optionSets";
 import { useToast } from "@/hooks/use-toast";
-
-const useStyles = makeStyles({
-  page: {
-    padding: tokens.spacingHorizontalXXL,
-    display: "flex",
-    flexDirection: "column",
-    gap: tokens.spacingVerticalXL,
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: tokens.spacingVerticalM,
-  },
-});
+import { useStyles } from "./locations.styles";
 
 const columns: IColumn[] = [
   { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 200 },

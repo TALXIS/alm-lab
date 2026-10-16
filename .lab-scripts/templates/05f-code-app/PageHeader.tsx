@@ -1,35 +1,6 @@
 import type { ReactElement, ReactNode } from "react"
-import { Body1, Title2, makeStyles, tokens } from "@fluentui/react-components"
-
-const useStyles = makeStyles({
-  root: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: tokens.spacingHorizontalL,
-    flexWrap: "wrap",
-  },
-  heading: {
-    display: "flex",
-    alignItems: "center",
-    gap: tokens.spacingHorizontalM,
-  },
-  icon: {
-    fontSize: "32px",
-    color: tokens.colorBrandForeground1,
-  },
-  text: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  subtitle: {
-    color: tokens.colorNeutralForeground3,
-  },
-  actions: {
-    display: "flex",
-    gap: tokens.spacingHorizontalS,
-  },
-})
+import { Body1, Title2 } from "@fluentui/react-components"
+import { useStyles } from "./PageHeader.styles"
 
 type PageHeaderProps = {
   icon: ReactElement

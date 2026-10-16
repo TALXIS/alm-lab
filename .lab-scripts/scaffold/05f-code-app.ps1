@@ -124,14 +124,20 @@ foreach ($file in @(
     @{ Template = "entities.ts";               Target = "utils/entities.ts" },
     @{ Template = "RouterLink.tsx";            Target = "components/RouterLink.tsx" },
     @{ Template = "PageHeader.tsx";            Target = "components/PageHeader.tsx" },
+    @{ Template = "PageHeader.styles.ts";      Target = "components/PageHeader.styles.ts" },
     @{ Template = "RecordGrid.tsx";            Target = "components/RecordGrid.tsx" },
     @{ Template = "RecordLookup.tsx";          Target = "components/RecordLookup.tsx" },
     @{ Template = "router.tsx";                Target = "router.tsx" },
     @{ Template = "_layout.tsx";               Target = "pages/_layout.tsx" },
+    @{ Template = "_layout.styles.ts";         Target = "pages/_layout.styles.ts" },
     @{ Template = "warehouse-items.tsx";       Target = "pages/warehouse-items.tsx" },
+    @{ Template = "warehouse-items.styles.ts"; Target = "pages/warehouse-items.styles.ts" },
     @{ Template = "warehouse-item-detail.tsx"; Target = "pages/warehouse-item-detail.tsx" },
+    @{ Template = "warehouse-item-detail.styles.ts"; Target = "pages/warehouse-item-detail.styles.ts" },
     @{ Template = "transactions.tsx";          Target = "pages/transactions.tsx" },
-    @{ Template = "locations.tsx";             Target = "pages/locations.tsx" }
+    @{ Template = "transactions.styles.ts";    Target = "pages/transactions.styles.ts" },
+    @{ Template = "locations.tsx";             Target = "pages/locations.tsx" },
+    @{ Template = "locations.styles.ts";       Target = "pages/locations.styles.ts" }
 )) {
     Expand-LabTemplate -Path "05f-code-app/$($file.Template)" `
         -Destination "$appSrc/$($file.Target)" `
@@ -139,7 +145,7 @@ foreach ($file in @(
     Write-Host "  ✓ $($file.Target)" -ForegroundColor Green
 }
 
-# Drop the now-superseded counter-demo home page — the router no longer references it
-Remove-Item "$appSrc/pages/home.tsx" -ErrorAction SilentlyContinue
+# Drop the now-superseded counter-demo home page (and its styles) — the router no longer references it
+Remove-Item "$appSrc/pages/home.tsx", "$appSrc/pages/home.styles.ts" -ErrorAction SilentlyContinue
 
 Write-Host "  ℹ Local preview: cd src/Apps.WarehousePicking && npm run dev" -ForegroundColor DarkGray

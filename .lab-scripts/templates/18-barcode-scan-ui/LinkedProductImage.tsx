@@ -1,19 +1,10 @@
 import { useEffect, useState } from "react";
-import { makeStyles, tokens } from "@fluentui/react-components";
 import { getClient } from "@microsoft/power-apps/data";
 import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
 import { bytesToDataUrl } from "@/utils/binary";
+import { useStyles } from "./LinkedProductImage.styles";
 
 const client = getClient(dataSourcesInfo);
-
-const useStyles = makeStyles({
-  image: {
-    width: "32px",
-    height: "32px",
-    objectFit: "contain",
-    borderRadius: tokens.borderRadiusSmall,
-  },
-});
 
 type LinkedProductImageProps = {
   productId: string;

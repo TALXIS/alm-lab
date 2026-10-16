@@ -27,15 +27,14 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         -Destination "$appSrc/utils/binary.ts"
     Write-Host "  ✓ utils/binary.ts" -ForegroundColor Green
 
-    Expand-LabTemplate -Path "18-barcode-scan-ui/BarcodeScanDialog.tsx" `
-        -Destination "$appSrc/components/BarcodeScanDialog.tsx" `
-        -Tokens $uiTokens
-    Write-Host "  ✓ components/BarcodeScanDialog.tsx" -ForegroundColor Green
-
-    Expand-LabTemplate -Path "18-barcode-scan-ui/LinkedProductImage.tsx" `
-        -Destination "$appSrc/components/LinkedProductImage.tsx" `
-        -Tokens $uiTokens
-    Write-Host "  ✓ components/LinkedProductImage.tsx" -ForegroundColor Green
+    foreach ($component in @("BarcodeScanDialog", "LinkedProductImage")) {
+        Expand-LabTemplate -Path "18-barcode-scan-ui/$component.tsx" `
+            -Destination "$appSrc/components/$component.tsx" `
+            -Tokens $uiTokens
+        Expand-LabTemplate -Path "18-barcode-scan-ui/$component.styles.ts" `
+            -Destination "$appSrc/components/$component.styles.ts"
+        Write-Host "  ✓ components/$component.tsx (+ $component.styles.ts)" -ForegroundColor Green
+    }
 
     $detailPagePath = "$appSrc/pages/warehouse-item-detail.tsx"
     if (-not (Test-Path $detailPagePath)) {
@@ -76,7 +75,8 @@ $mutationAnchor
         if (-not $detailPage.Contains($mutationAnchor)) { throw "warehouse-item-detail.tsx: mutation anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($mutationAnchor, $mutationReplacement)
 
-        # Reuses the page's own toolbar/inline/muted styles, so the patch needs no new makeStyles entries.
+        # Reuses the page's own toolbar/inline/muted/name styles (warehouse-item-detail.styles.ts),
+        # so the patch needs no new style entries.
         $cardsAnchor = '      <div className={styles.cards}>'
         $cardsReplacement = @"
       <div className={styles.toolbar}>

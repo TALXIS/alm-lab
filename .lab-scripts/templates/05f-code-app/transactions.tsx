@@ -18,8 +18,6 @@ import {
   MessageBarBody,
   Skeleton,
   SkeletonItem,
-  makeStyles,
-  tokens,
 } from "@fluentui/react-components";
 import { ArrowSwapRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
 import { Decimal, OptionSet, TextField, usePcfContext } from "@talxis/base-controls";
@@ -28,20 +26,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
 import { RecordLookup } from "@/components/RecordLookup";
 import { useToast } from "@/hooks/use-toast";
-
-const useStyles = makeStyles({
-  page: {
-    padding: tokens.spacingHorizontalXXL,
-    display: "flex",
-    flexDirection: "column",
-    gap: tokens.spacingVerticalXL,
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: tokens.spacingVerticalM,
-  },
-});
+import { useStyles } from "./transactions.styles";
 
 const transactionTypeMetadata = {
   OptionSet: transactionTypeOptionMetadata,
