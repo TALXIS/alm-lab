@@ -3,22 +3,23 @@
 Sunday, October 25 · 9:00 AM to 3:55 PM
 
 Each block is a topic with one outcome. The checkpoint column points at the exercise, so the
-scripts can change without the agenda changing.
+scripts can change without the agenda changing. "What we do" is the running record of each
+block: fill in the notes column as the day goes.
 
-| Time | # | Topic | You leave with | Checkpoints |
-|---|---|---|---|---|
-| 9:00–9:25 AM | 01 | The case and your workspace | The warehouse case, your Codespace, signed in to GitHub, Power Platform and Azure | CP01 |
-| 9:25–10:05 AM | 02 | Data model and security | Dataverse tables and solutions kept as source, plus two security roles on top | CP02, CP06, CP08 |
-| 10:05–10:15 AM | | *Coffee break* | | |
-| 10:15–11:05 AM | 03 | Business rules on the server | Plugins that block illegal transactions and subtract stock | CP07 |
-| 11:05 AM–12:00 PM | 04 | Deploy and sync | The package deployed to Dev, one role edited in Dev and pulled back to source | CP10 |
-| 12:00–12:45 PM | | *Lunch* | | |
-| 12:45–1:40 PM | 05 | Frontend | A model-driven app and a React code app for warehouse picking | CP09 |
-| 1:40–2:30 PM | 06 | External data | A custom connector and barcode lookup in the code app | CP11 |
-| 2:30–2:40 PM | | *Coffee break* | | |
-| 2:40–3:00 PM | 07 | Background jobs | A cloud flow that runs without a user | Pending (draft PR #40) |
-| 3:00–3:40 PM | 08 | Automated testing | Plugin and script unit tests, and BDD scenarios run with Playwright | CP14, CP15 |
-| 3:40–3:55 PM | 09 | Wrap-up: what you hand the agent | What to hand the agent and what to check yourself | |
+| Time | # | Topic | What we do | You leave with | Checkpoints | Notes |
+|---|---|---|---|---|---|---|
+| 9:00–9:35 AM | 01 | Opening and setup | Introduce the warehouse case. Everyone forks the repo and spins up a Codespace. Run the prerequisites check (CP01), then sign in to GitHub, Power Platform and Azure with device codes. | A running Codespace with all tools verified and all three services signed in | CP01 | |
+| 9:35–10:15 AM | 02 | Data model and security | Scaffold the monorepo layout and the Package Deployer. Add the Location, Item and Transaction tables with their columns, all as code. Then add the Warehouse Manager and Worker security roles and explain privilege depth. | Dataverse tables and solutions kept as source, plus two security roles | CP02, CP06, CP08 | |
+| 10:15–10:30 AM | | *Coffee break* | | | | |
+| 10:30–11:15 AM | 03 | Business rules on the server | Write the plugins that block illegal transactions and subtract stock. Register them as SDK message processing steps in the Logic solution. | Plugins that enforce legal transactions | CP07 | |
+| 11:15 AM–12:00 PM | 04 | Deploy and sync | Build the package and deploy it to Dev. Edit a security role in Dev and pull the change back to source. Discuss managed versus unmanaged solutions. | The package running in Dev, and the loop from source to environment and back | CP10 | |
+| 12:00–12:45 PM | | *Lunch* | | | | |
+| 12:45–1:40 PM | 05 | Frontend | Build the model-driven app with sitemap, forms, views, form scripts, ribbon and the Grid PCF. Then build the React code app for warehouse picking. | A model-driven app and a code app from the same repo | CP09 | |
+| 1:40–2:30 PM | 06 | External data | Add the Product table, a custom connector to an external product catalog, and wire both into the code app with barcode lookup. | A custom connector and barcode lookup in the code app | CP11 | |
+| 2:30–2:40 PM | | *Coffee break* | | | | |
+| 2:40–3:00 PM | 07 | Background jobs | Show a cloud flow that runs without a user. | A flow running in the background | Pending (draft PR #40) | |
+| 3:00–3:40 PM | 08 | Automated testing | Run the plugin unit tests with FakeXrmEasy and the script tests with Jest. Run BDD scenarios with Playwright against the app. | Unit tests and BDD scenarios passing | CP14, CP15 | |
+| 3:40–3:55 PM | 09 | Wrap-up: what you hand the agent | Review what was built. Discuss what to hand to an agent and what to check yourself. | A shared view of where agents help and where you still verify | | |
 
 ## Before the day (facilitator or Terraform track)
 
@@ -39,8 +40,7 @@ CP10 and CP11 need the Dev environment from CP04.
 
 ## Open items
 
-- Block 02 is 40 minutes for two checkpoints. Security is short, but CP06 has three scaffolds.
-- Block 04 is long on purpose: the package build and import take minutes of waiting, and it carries the managed versus unmanaged explanation.
+- Block 02 is 40 minutes for three checkpoints. Security is short, but CP06 has three scaffolds.
 - Block 07 depends on the cloud flow checkpoint (draft PR #40). Until it merges, treat it as a demo.
 - Block 08 is 40 minutes for CP14 and CP15. Open PR #49 adds CP16 and CP17 (test-planning agents), which would not fit without more time.
 - There is no custom API block because there is no script for it yet.
