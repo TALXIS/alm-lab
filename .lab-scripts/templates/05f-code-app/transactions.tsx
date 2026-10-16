@@ -181,29 +181,29 @@ export default function TransactionsPage() {
 
       <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
         <DialogSurface>
-          {/* noValidate: the required-field check (and its toast) lives in handleSubmit */}
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit}>
             <DialogBody>
               <DialogTitle>Create New Transaction</DialogTitle>
               <DialogContent className={styles.form}>
-                <Field label="Name" required>
+                <Field label={{ children: "Name", htmlFor: "txName" }} required>
                   <TextField
                     context={context}
                     parameters={{ value: { raw: txName, type: "SingleLine.Text" } }}
                     onNotifyOutputChanged={(outputs) => setTxName(outputs.value ?? "")}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "txName" })}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txName", "aria-required": true })}
                   />
                 </Field>
-                <Field label="Warehouse Item" required>
+                <Field label={{ children: "Warehouse Item", htmlFor: "txItem" }} required>
                   <RecordLookup
                     entityName="__PREFIX___warehouseitem"
                     records={itemRecords}
                     value={txItemId}
                     onChange={setTxItemId}
                     inputId="txItem"
+                    required
                   />
                 </Field>
-                <Field label="Quantity" required>
+                <Field label={{ children: "Quantity", htmlFor: "txQuantity" }} required>
                   <Decimal
                     context={context}
                     parameters={{ value: { raw: txQuantity, type: "Whole.None" } }}
@@ -211,14 +211,15 @@ export default function TransactionsPage() {
                     onNotifyOutputChanged={(outputs) =>
                       setTxQuantity(typeof outputs.value === "number" ? outputs.value : null)
                     }
-                    onOverrideComponentProps={(props) => ({ ...props, id: "txQuantity" })}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txQuantity", "aria-required": true })}
                   />
                 </Field>
-                <Field label="Transaction Type" required>
+                <Field label={{ children: "Transaction Type", htmlFor: "txType-input" }} required>
                   <OptionSet
                     context={context}
                     parameters={{ value: optionSetProperty(txType, transactionTypeOptionMetadata) }}
                     onNotifyOutputChanged={(outputs) => setTxType(outputs.value ?? null)}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txType", required: true })}
                   />
                 </Field>
               </DialogContent>

@@ -187,28 +187,27 @@ export default function WarehouseItemsPage() {
 
       <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
         <DialogSurface>
-          {/* noValidate: the required-field check (and its toast) lives in handleSubmit */}
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit}>
             <DialogBody>
               <DialogTitle>Create New Item</DialogTitle>
               <DialogContent className={styles.form}>
-                <Field label="Name" required>
+                <Field label={{ children: "Name", htmlFor: "name" }} required>
                   <TextField
                     context={context}
                     parameters={{ value: { raw: name, type: "SingleLine.Text" } }}
                     onNotifyOutputChanged={(outputs) => setName(outputs.value ?? "")}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "name" })}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "name", "aria-required": true })}
                   />
                 </Field>
-                <Field label="SKU" required>
+                <Field label={{ children: "SKU", htmlFor: "sku" }} required>
                   <TextField
                     context={context}
                     parameters={{ value: { raw: sku, type: "SingleLine.Text" } }}
                     onNotifyOutputChanged={(outputs) => setSku(outputs.value ?? "")}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "sku" })}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "sku", "aria-required": true })}
                   />
                 </Field>
-                <Field label="Available Quantity" required>
+                <Field label={{ children: "Available Quantity", htmlFor: "quantity" }} required>
                   <Decimal
                     context={context}
                     parameters={{ value: { raw: quantity, type: "Whole.None" } }}
@@ -216,17 +215,18 @@ export default function WarehouseItemsPage() {
                     onNotifyOutputChanged={(outputs) =>
                       setQuantity(typeof outputs.value === "number" ? outputs.value : null)
                     }
-                    onOverrideComponentProps={(props) => ({ ...props, id: "quantity" })}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "quantity", "aria-required": true })}
                   />
                 </Field>
-                <Field label="Category" required>
+                <Field label={{ children: "Category", htmlFor: "category-input" }} required>
                   <OptionSet
                     context={context}
                     parameters={{ value: optionSetProperty(category, categoryOptionMetadata) }}
                     onNotifyOutputChanged={(outputs) => setCategory(outputs.value ?? null)}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "category", required: true })}
                   />
                 </Field>
-                <Field label="Location">
+                <Field label={{ children: "Location", htmlFor: "location" }}>
                   <RecordLookup
                     entityName="__PREFIX___warehouselocation"
                     records={locationRecords}

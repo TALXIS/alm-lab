@@ -167,20 +167,19 @@ export default function LocationsPage() {
 
       <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
         <DialogSurface>
-          {/* noValidate: the required-field check (and its toast) lives in handleSubmit */}
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit}>
             <DialogBody>
               <DialogTitle>Create New Location</DialogTitle>
               <DialogContent className={styles.form}>
-                <Field label="Name" required>
+                <Field label={{ children: "Name", htmlFor: "locName" }} required>
                   <TextField
                     context={context}
                     parameters={{ value: { raw: name, type: "SingleLine.Text" } }}
                     onNotifyOutputChanged={(outputs) => setName(outputs.value ?? "")}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "locName" })}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "locName", "aria-required": true })}
                   />
                 </Field>
-                <Field label="Address">
+                <Field label={{ children: "Address", htmlFor: "locAddress" }}>
                   <TextField
                     context={context}
                     parameters={{ value: { raw: address, type: "SingleLine.Text" } }}
@@ -188,7 +187,7 @@ export default function LocationsPage() {
                     onOverrideComponentProps={(props) => ({ ...props, id: "locAddress" })}
                   />
                 </Field>
-                <Field label="Capacity">
+                <Field label={{ children: "Capacity", htmlFor: "locCapacity" }}>
                   <Decimal
                     context={context}
                     parameters={{ value: { raw: capacity, type: "Whole.None" } }}

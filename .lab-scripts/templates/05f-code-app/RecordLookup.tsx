@@ -14,13 +14,15 @@ type RecordLookupProps = {
   onChange: (id: string) => void;
   /** id of the control's input, for labels and UI tests. */
   inputId?: string;
+  /** Marks the input aria-required (the page validates on submit). */
+  required?: boolean;
 };
 
 const noViews = async () => [];
 
 // A TALXIS base-controls Lookup whose search runs over an in-memory list (onSearch) rather than
 // Dataverse views and fetchXml, which a code app has no Web API for.
-export function RecordLookup({ entityName, records, value, onChange, inputId }: RecordLookupProps) {
+export function RecordLookup({ entityName, records, value, onChange, inputId, required }: RecordLookupProps) {
   const context = usePcfContext();
   const displayName = getEntity(entityName)?.displayName ?? entityName;
 
@@ -52,7 +54,7 @@ export function RecordLookup({ entityName, records, value, onChange, inputId }: 
       onNotifyOutputChanged={(outputs) => onChange(outputs.value?.[0]?.id ?? "")}
       onOverrideComponentProps={(props) => ({
         ...props,
-        inputProps: { ...props.inputProps, id: inputId },
+        inputProps: { ...props.inputProps, id: inputId, "aria-required": required || undefined },
         // Picking a record clears the input, and the control's typing debounce then reopens the
         // suggestions resolveDelay later, after the selected tag has replaced the input, so they
         // float at the page's top-left. With one record allowed, suggestions only belong to the

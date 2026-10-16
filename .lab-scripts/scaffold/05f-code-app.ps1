@@ -122,7 +122,6 @@ $uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
 foreach ($file in @(
     @{ Template = "optionSets.ts";             Target = "utils/optionSets.ts" },
     @{ Template = "entities.ts";               Target = "utils/entities.ts" },
-    @{ Template = "RouterLink.tsx";            Target = "components/RouterLink.tsx" },
     @{ Template = "PageHeader.tsx";            Target = "components/PageHeader.tsx" },
     @{ Template = "PageHeader.styles.ts";      Target = "components/PageHeader.styles.ts" },
     @{ Template = "RecordGrid.tsx";            Target = "components/RecordGrid.tsx" },
