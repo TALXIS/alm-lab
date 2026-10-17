@@ -130,7 +130,7 @@ $solutions = @("Solutions.Security")  # The one we asked them to modify
 foreach ($sol in $solutions) {
     $solPath = Join-Path $LabRoot "src/$sol"
     if (Test-Path $solPath) {
-        txc env solution pull --folder $solPath --profile $devProfile
+        txc env solution pull $solPath --profile $devProfile
         if ($LASTEXITCODE -ne 0) { Write-Warn2 "Pull for $sol returned non-zero (may be OK if no changes)" }
     }
 }
