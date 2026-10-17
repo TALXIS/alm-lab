@@ -21,13 +21,6 @@ $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 $Global:LabDefaultPublisherName   = "TALXISLab"
 $Global:LabDefaultPublisherPrefix = "lab"
 
-# The agentbox image bakes a pinned, older txc into /usr/local/bin for fast startup and relies
-# on the devcontainer's remoteEnv/postStartCommand to shadow it with a freshly-updated global
-# tool on every container start - but that only happens under the actual devcontainer/Codespaces
-# lifecycle. Running the image directly (this repo's LOCAL-DRY-RUN.md, CI) never triggers it, so
-# every checkpoint has to assert the same PATH precedence itself, in its own process, rather than
-# relying on a single earlier checkpoint (or the devcontainer) having already done it.
-$env:PATH = "$HOME/.dotnet/tools$([IO.Path]::PathSeparator)$env:PATH"
 
 # Codespaces injects a GITHUB_TOKEN into every terminal, and gh prefers it over your own login.
 # Once you've signed in with lab-signin.ps1, use your login instead.
