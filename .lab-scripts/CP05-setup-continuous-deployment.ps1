@@ -39,7 +39,7 @@ if ($env:LAB_LOCAL_MODE) {
 $tenantId = Get-LabValue 'tenantId'
 if (-not $tenantId) {
     $tenantId = az account show --query tenantId -o tsv 2>$null
-    if (-not $tenantId) { Write-Err "Not signed in to Azure — run CP01 first"; exit 1 }
+    if (-not $tenantId) { Stop-LabNeedsPerson "Not signed in to Azure." }
     Set-LabValue 'tenantId' $tenantId
 }
 Write-Ok "Azure: tenant $tenantId"
@@ -129,7 +129,9 @@ if ($env:LAB_LOCAL_MODE) {
 }
 
 # Step 7: Install workflows. Pushing files under .github/workflows needs the 'workflow' scope.
-if (-not $env:LAB_LOCAL_MODE -and -not ((gh auth status 2>&1) -match 'workflow')) {
+# Only a gh login lists its scopes; a token injected by the environment is used as-is.
+if (-not $env:LAB_LOCAL_MODE -and $Global:LabGitHubSource -eq 'login' -and -not ((gh auth status -h github.com 2>&1) -match 'workflow')) {
+    if (-not (Test-LabInteractive)) { Stop-LabNeedsPerson "GitHub needs the 'workflow' scope, and that has to be approved by you." }
     Write-Info "Granting GitHub CLI the 'workflow' scope (needed to push Actions)..."
     gh auth refresh -h github.com -s workflow
 }
