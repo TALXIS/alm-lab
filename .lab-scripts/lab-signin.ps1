@@ -16,10 +16,12 @@ if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: run .lab
 # A GH_TOKEN your environment provides (e.g. a cloud agent sandbox) is used as is.
 Write-Step "Sign in 1/4 — GitHub"
 Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
-if (-not $env:GH_TOKEN -and -not (gh auth status 2>&1 | Select-String 'workflow')) {
-    gh auth login -h github.com -p https -s workflow --web
+if (-not $env:GH_TOKEN) {
+    gh auth setup-git --hostname github.com --force   # git pushes with your gh login
+    if (-not (gh auth status 2>&1 | Select-String 'workflow')) {
+        gh auth login -h github.com -p https -s workflow --web
+    }
 }
-gh auth setup-git
 Write-Ok "GitHub: $(gh api user -q .login)"
 
 # ── 2. Power Platform (txc) ───────────────────────────────────────────────────────────────
