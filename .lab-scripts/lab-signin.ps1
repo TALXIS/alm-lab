@@ -22,18 +22,13 @@ gh auth setup-git
 Write-Ok "GitHub: $(gh api user -q .login)"
 
 # ── 2. Power Platform (txc) ───────────────────────────────────────────────────────────────
+# One credential named "lab"; CP04 binds your Dev and Test environments to it.
 Write-Step "Sign in 2/4 — Power Platform"
-$auth = Get-LabValue 'txcAuth' (txc config auth list --format json | ConvertFrom-Json | Select-Object -First 1).id
-if ($auth) { txc config auth get $auth --check-token *> $null }
-if (-not $auth -or $LASTEXITCODE -ne 0) {
-    $before = (txc config auth list --format json | ConvertFrom-Json).id
-    txc config auth login
-    $new = (txc config auth list --format json | ConvertFrom-Json).id | Where-Object { $_ -notin $before }
-    if ($new) { $auth = $new }
-}
-$tenantId = (txc config auth get $auth --format json | ConvertFrom-Json).tenantId
-Set-LabValue 'txcAuth' $auth
-Write-Ok "Power Platform: $auth (tenant $tenantId)"
+txc config auth get lab --check-token *> $null
+if ($LASTEXITCODE -ne 0) { txc config auth login --alias lab }
+$tenantId = (txc config auth get lab --format json | ConvertFrom-Json).tenantId
+Set-LabValue 'txcAuth' 'lab'
+Write-Ok "Power Platform: tenant $tenantId"
 
 # ── 3. Azure (az) ─────────────────────────────────────────────────────────────────────────
 # Same account and tenant as Power Platform: CP05 uses it to call your Test environment.
@@ -42,15 +37,14 @@ Write-Step "Sign in 3/4 — Azure"
 if ((az account get-access-token --query tenant -o tsv 2>$null) -ne $tenantId) {
     az login --tenant $tenantId --allow-no-subscriptions --use-device-code | Out-Null
 }
-$azUser = az account show --query user.name -o tsv
-if ($azUser -ne $auth) { Write-Warn2 "Azure is signed in as $azUser, Power Platform as $auth - use the same account." }
+$account = az account show --query user.name -o tsv
 Set-LabValue 'tenantId' $tenantId
-Write-Ok "Azure: $azUser (tenant $tenantId)"
+Write-Ok "Azure: $account (tenant $tenantId)"
 
 # ── 4. Power Apps (pa) ────────────────────────────────────────────────────────────────────
 # Used by the code app (CP11). Same account as Power Platform.
 Write-Step "Sign in 4/4 — Power Apps"
 if (-not (pa auth status --json | ConvertFrom-Json).signedIn) {
-    pa auth login --device-code --account $auth
+    pa auth login --device-code --account $account
 }
 Write-Ok "Power Apps: signed in"
