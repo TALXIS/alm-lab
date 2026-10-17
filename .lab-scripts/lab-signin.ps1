@@ -36,13 +36,16 @@ Set-LabValue 'txcAuth' $auth
 Write-Ok "Power Platform: $auth (tenant $tenantId)"
 
 # ── 3. Azure (az) ─────────────────────────────────────────────────────────────────────────
-# Same account and tenant as Power Platform.
+# Same account and tenant as Power Platform: CP05 uses it to call your Test environment.
+# Piping the output away also skips az's subscription picker - the lab only needs the tenant.
 Write-Step "Sign in 3/4 — Azure"
 if ((az account get-access-token --query tenant -o tsv 2>$null) -ne $tenantId) {
     az login --tenant $tenantId --allow-no-subscriptions --use-device-code | Out-Null
 }
+$azUser = az account show --query user.name -o tsv
+if ($azUser -ne $auth) { Write-Warn2 "Azure is signed in as $azUser, Power Platform as $auth - use the same account." }
 Set-LabValue 'tenantId' $tenantId
-Write-Ok "Azure: $(az account show --query user.name -o tsv) (tenant $tenantId)"
+Write-Ok "Azure: $azUser (tenant $tenantId)"
 
 # ── 4. Power Apps (pa) ────────────────────────────────────────────────────────────────────
 # Used by the code app (CP11). Same account as Power Platform.
