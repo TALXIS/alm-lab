@@ -31,9 +31,8 @@ Push-Location $LabRoot
 try {
     $solutionName = "WarehouseManagement"
     Set-LabValue 'slnxName'       $solutionName
-    # Seed once: re-running CP02 must not change the prefix of a lab that already has one.
-    if (-not (Get-LabValue 'publisherName'))   { Set-LabValue 'publisherName'   $LabDefaultPublisherName }
-    if (-not (Get-LabValue 'publisherPrefix')) { Set-LabValue 'publisherPrefix' $LabDefaultPublisherPrefix }
+    Set-LabValue 'publisherName'   $LabDefaultPublisherName
+    Set-LabValue 'publisherPrefix' $LabDefaultPublisherPrefix
 
     # Step 1: NuGet feed (TALXIS DevKit build SDK + templates come from nuget.org)
     Copy-Item "$PSScriptRoot/workflows/NuGet.config" "NuGet.config" -Force

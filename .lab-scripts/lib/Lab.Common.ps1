@@ -17,10 +17,7 @@
 $Global:LabRoot      = (Resolve-Path "$PSScriptRoot/../..").Path
 $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 
-# Dataverse publisher defaults for NEW labs. CP02 writes them into .lab-state.json and every later
-# checkpoint reads them back from there, so a lab started earlier keeps whatever it was created with
-# (e.g. the legacy "almlab" prefix) - these only apply when the state has no value yet. Never change
-# the prefix of an existing lab: it is baked into every table, column and generated file.
+# Dataverse publisher defaults. CP02 writes them into .lab-state.json; later checkpoints read them back.
 $Global:LabDefaultPublisherName   = "TalxisLab"
 $Global:LabDefaultPublisherPrefix = "lab"
 
