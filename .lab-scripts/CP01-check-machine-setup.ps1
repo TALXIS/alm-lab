@@ -9,10 +9,11 @@
 # sanity check. We also seed a random identifier so your environment/app names won't clash
 # with other attendees in the shared training tenant.
 #
-# We then sign in to all three services at once so you are not interrupted later:
+# We then sign in to all four services at once so you are not interrupted later:
 #   1. GitHub CLI          — branch rules, PRs, secrets, Actions
 #   2. TALXIS CLI (txc)    — Power Platform environments and deploy
 #   3. Azure CLI (az)      — Entra app registrations and OIDC federation
+#   4. Power Apps CLI (pa) — code app connections
 #
 # Auth hygiene: stale credentials are how deployments end up in the wrong tenant or the
 # wrong environment. That is why we use your own GitHub login instead of the injected token,
@@ -91,7 +92,7 @@ Write-Info "Updating TALXIS DevKit templates to latest..."
 Invoke-WithRetry "TALXIS DevKit templates update" { dotnet new install TALXIS.DevKit.Templates.Dataverse }
 Write-Ok "TALXIS DevKit templates updated"
 
-# ── 2. Sign in to GitHub, Power Platform and Azure ───────────────────────────────────────
+# ── 2. Sign in to GitHub, Power Platform, Azure and Power Apps ───────────────────────────
 . "$PSScriptRoot/lab-signin.ps1"
 
 Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab credentials" -Body @'
