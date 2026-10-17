@@ -1,0 +1,12 @@
+{
+  // Extensions that make this repo's three test suites show up in the Testing panel.
+  // Without C# Dev Kit there is no .NET test provider at all; without the Jest extension the
+  // src/Tests.Scripts suite is invisible, because that project's tests are Jest, not .NET.
+  "recommendations": [
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
+    "Orta.vscode-jest",
+    "cucumberopen.cucumber-official",
+    "ms-playwright.playwright"
+  ]
+}
