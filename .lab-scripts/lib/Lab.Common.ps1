@@ -147,25 +147,21 @@ function Save-Checkpoint {
         # Always target the fork's origin repo explicitly (avoids gh resolving upstream instead)
         $forkRepo = (git remote get-url origin) -replace 'https://github.com/',''-replace '\.git$',''
         $prBody = if ([string]::IsNullOrWhiteSpace($Body)) { "## Summary`n$Message" } else { $Body }
-        $url = gh pr create -R $forkRepo --base main --head $Id --title "$Id`: $Message" --body $prBody 2>&1
-        if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
+        # gh api (REST) rather than gh pr, which uses GitHub's GraphQL API - blocked in some sandboxes.
+        $pr = gh api "repos/$forkRepo/pulls" -f base=main -f head=$Id -f title="$Id`: $Message" -f body=$prBody | ConvertFrom-Json
+        if (-not $pr.number) { Write-Err "PR failed"; exit 1 }
+        Write-Ok "PR opened: $($pr.html_url)"
         if ([Console]::IsInputRedirected -and -not $env:LAB_AUTO_MERGE) {
             # No terminal (e.g. an agent runs this): a person reviews and merges on GitHub.
-            Write-Info "Review and merge the PR on GitHub: $url"
-            while (($state = gh pr view $Id -R $forkRepo --json state -q .state) -eq 'OPEN') { Start-Sleep 15 }
-            if ($state -ne 'MERGED') { Write-Err "PR was closed without merging"; exit 1 }
-            git switch main --quiet; git pull --quiet
-            git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
-            Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
-            return
+            Write-Info "Review and merge the PR on GitHub: $($pr.html_url)"
+            while ((gh api "repos/$forkRepo/pulls/$($pr.number)" -q .state) -eq 'open') { Start-Sleep 15 }
+            if ((gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged) -ne 'true') { Write-Err "PR was closed without merging"; exit 1 }
+        } else {
+            if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
+            # Once CP13 requires the 'build' check, GitHub refuses the merge until it passes.
+            Write-Info "Merging (waits for required checks)..."
+            while ($true) { gh api -X PUT "repos/$forkRepo/pulls/$($pr.number)/merge" -f merge_method=squash --silent 2>$null; if ($LASTEXITCODE -eq 0) { break }; Start-Sleep 15 }
         }
-        if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
-        Write-Info "Waiting for build checks..."
-        gh pr checks $Id -R $forkRepo --watch
-        Write-Info "Merging..."
-        # --admin bypasses the CP03/CP13 ruleset so the lab can merge unattended; on a real
-        # team nobody bypasses - the gate applies to everyone, automation included.
-        gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
         git switch main --quiet; git pull --quiet
         git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
         Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
