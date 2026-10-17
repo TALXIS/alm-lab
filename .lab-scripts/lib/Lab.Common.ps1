@@ -21,7 +21,6 @@ $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 $Global:LabDefaultPublisherName   = "TALXISLab"
 $Global:LabDefaultPublisherPrefix = "lab"
 
-
 # Codespaces injects a GITHUB_TOKEN into every terminal, and gh prefers it over your own login.
 # Once you've signed in with lab-signin.ps1, use your login instead.
 $injectedToken = $env:GITHUB_TOKEN; $env:GITHUB_TOKEN = $null

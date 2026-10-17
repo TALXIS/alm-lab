@@ -116,7 +116,7 @@ if ($env:LAB_LOCAL_MODE) {
 } else {
     gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) { Write-Ok "GitHub Actions enabled on the fork" }
-    else { Write-Warn2 "Enable Actions yourself: open https://github.com/$repo/actions and click the green button." }
+    else { Write-Warn2 "If Actions are off on your fork, open https://github.com/$repo/actions and click the green button." }
 }
 
 # Step 6: Install workflows, with your app's client id, tenant id and Test URL written into
