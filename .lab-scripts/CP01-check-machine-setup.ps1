@@ -15,9 +15,8 @@
 #   3. Azure CLI (az)      — Entra app registrations and OIDC federation
 #
 # Auth hygiene: stale credentials are how deployments end up in the wrong tenant or the
-# wrong environment. That is why every credential is checked by using it, txc and az must
-# agree on the tenant, and each CLI keeps exactly one explicit sign-in for the lab. The
-# sign-in steps live in lib/Lab.Auth.ps1; re-run just them any time with lab-signin.ps1.
+# wrong environment. That is why we use your own GitHub login instead of the injected token,
+# and keep Power Platform and Azure on the same account and tenant (lab-signin.ps1).
 #
 # Run:  .lab-scripts/CP01-check-machine-setup.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -92,10 +91,8 @@ Write-Info "Updating TALXIS DevKit templates to latest..."
 Invoke-WithRetry "TALXIS DevKit templates update" { dotnet new install TALXIS.DevKit.Templates.Dataverse }
 Write-Ok "TALXIS DevKit templates updated"
 
-# ── 2. Sign in: GitHub (gh), Power Platform (txc), Azure (az) ───────────────────────────
-# GitHub needs admin rights, Actions secrets and the 'workflow' scope on your fork (the
-# Codespaces-injected token has none of those). txc signs in first and az follows its tenant.
-Invoke-LabSignIn
+# ── 2. Sign in to GitHub, Power Platform and Azure ───────────────────────────────────────
+. "$PSScriptRoot/lab-signin.ps1"
 
 Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab credentials" -Body @'
 Verify the local toolchain and sign in to the services required to build and deploy the warehouse app. This seeds shared lab state so later checkpoints can reuse the same identities and environment metadata.

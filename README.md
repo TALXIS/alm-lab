@@ -25,31 +25,12 @@ trunk-based development, PR quality gates and GitHub Actions deployments.
 ### Signing in (CP01)
 
 `CP01` signs you in to everything up front: **GitHub** (`gh`), **Power Platform** (`txc`) and
-**Azure** (`az`). Where no browser can open on this machine (Codespaces, Docker, SSH) you get
-a **code** instead — open the printed URL, paste the code, and approve.
+**Azure** (`az`). Two of these use a **device code** — the terminal prints a code and a URL;
+open it, paste the code, and approve. When prompted, allow the `workflow` scope for `gh` so
+later checkpoints can install GitHub Actions on your fork. Use the same account for Power
+Platform and Azure.
 
-- Use your **lab account** for both Power Platform and Azure — the same account. Azure is
-  signed in to the tenant Power Platform uses, and CP01 stops if the two don't match.
-- For GitHub, use the account that owns your fork and allow the `workflow` scope, so later
-  checkpoints can install GitHub Actions. In Codespaces this replaces the token Codespaces
-  provides, which can't manage your fork's rulesets, Actions settings or secrets.
-
-Need to sign in again (a new Codespace, an expired sign-in, a different machine)? Run just the
-sign-in steps — they skip anything that already works:
-
-```powershell
-.lab-scripts/lab-signin.ps1
-```
-
-Instructors can pin the training tenant for everyone by setting `LAB_TENANT` (tenant id or
-domain) before running it.
-
-### Using a coding agent (Copilot, Claude)
-
-Agents can run the checkpoints for you, with two things left to you: **signing in** and
-**merging each checkpoint's PR**. When a sign-in is needed the checkpoint stops and the agent
-asks you to run `.lab-scripts/lab-signin.ps1` in your own terminal. When an agent runs a
-checkpoint, it opens the PR and waits until you review and merge it on GitHub.
+To sign in again later (new Codespace, expired sign-in), run `.lab-scripts/lab-signin.ps1`.
 
 ## How each checkpoint works (PR flow)
 
@@ -115,8 +96,8 @@ To pick up the lab on a fresh Codespace, VM, or after a crash:
    `.lab-state.json` and git tags, and whether this machine's own `gh`/`txc`/`az` sessions
    actually match what lab-state expects (a mismatch here is the most common reason a
    checkpoint fails partway through instead of at the top with a clear message).
-4. Run `.lab-scripts/lab-signin.ps1` if `lab-status.ps1` flags missing/mismatched auth, then
-   continue with whichever checkpoint it names as next.
+4. Run `.lab-scripts/lab-signin.ps1` if `lab-status.ps1` flags missing/mismatched auth, then continue with
+   whichever checkpoint it names as next.
 
 ## Developing this lab
 

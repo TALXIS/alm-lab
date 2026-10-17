@@ -10,8 +10,6 @@
 #     survive terminal/Codespaces crashes and you can resume from any checkpoint.
 #   - A random identifier so attendees don't clash on names in the shared training tenant.
 #   - Logging helpers and a Save-Checkpoint function that commits, pushes and tags.
-#   - Sign-in helpers (Lab.Auth.ps1), including picking the right GitHub credential in
-#     every process.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
@@ -25,7 +23,12 @@ $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 # lifecycle. Running the image directly (this repo's LOCAL-DRY-RUN.md, CI) never triggers it, so
 # every checkpoint has to assert the same PATH precedence itself, in its own process, rather than
 # relying on a single earlier checkpoint (or the devcontainer) having already done it.
-$env:PATH = "$(Join-Path $HOME '.dotnet' 'tools')$([IO.Path]::PathSeparator)$env:PATH"
+$env:PATH = "$HOME/.dotnet/tools$([IO.Path]::PathSeparator)$env:PATH"
+
+# Codespaces injects a GITHUB_TOKEN into every terminal, and gh prefers it over your own login.
+# Once you've signed in with lab-signin.ps1, use your login instead.
+$injectedToken = $env:GITHUB_TOKEN; $env:GITHUB_TOKEN = $null
+if ($injectedToken -and -not (gh auth token 2>$null)) { $env:GITHUB_TOKEN = $injectedToken }
 
 # ── Logging ────────────────────────────────────────────────────────────────────────────────
 function Write-Step  { param([string]$m) Write-Host "`n── $m ──" -ForegroundColor Cyan }
@@ -142,37 +145,27 @@ function Save-Checkpoint {
         $prBody = if ([string]::IsNullOrWhiteSpace($Body)) { "## Summary`n$Message" } else { $Body }
         $url = gh pr create -R $forkRepo --base main --head $Id --title "$Id`: $Message" --body $prBody 2>&1
         if ($url -match 'github.com') { Write-Ok "PR opened: $url" } else { Write-Err "PR failed: $url"; exit 1 }
-        $mergedByReviewer = $false
-        if (-not $env:LAB_AUTO_MERGE) {
-            if (Test-LabInteractive) {
-                Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge"
-            } else {
-                # Without a terminal Read-Host returns at once, which would merge unreviewed - so
-                # when an agent runs the checkpoint, a person reviews and merges on GitHub instead.
-                Write-Host "  [LAB-ACTION] Review and merge this PR on GitHub (no terminal to confirm here): $url" -ForegroundColor Yellow
-                do {
-                    Start-Sleep 15
-                    $state = gh pr view $Id -R $forkRepo --json state -q .state 2>$null
-                } while ($state -ne 'MERGED' -and $state -ne 'CLOSED')
-                if ($state -ne 'MERGED') { Write-Err "PR $Id was closed without merging"; exit 1 }
-                $mergedByReviewer = $true
-            }
+        if ([Console]::IsInputRedirected -and -not $env:LAB_AUTO_MERGE) {
+            # No terminal (e.g. an agent runs this): a person reviews and merges on GitHub.
+            Write-Info "Review and merge the PR on GitHub: $url"
+            while (($state = gh pr view $Id -R $forkRepo --json state -q .state) -eq 'OPEN') { Start-Sleep 15 }
+            if ($state -ne 'MERGED') { Write-Err "PR was closed without merging"; exit 1 }
+            git switch main --quiet; git pull --quiet
+            git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
+            Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
+            return
         }
-        if (-not $mergedByReviewer) {
-            Write-Info "Waiting for build checks..."
-            gh pr checks $Id -R $forkRepo --watch
-            Write-Info "Merging..."
-            # --admin bypasses the CP03/CP13 ruleset so the lab can merge unattended; on a real
-            # team nobody bypasses - the gate applies to everyone, automation included.
-            gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
-        }
+        if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
+        Write-Info "Waiting for build checks..."
+        gh pr checks $Id -R $forkRepo --watch
+        Write-Info "Merging..."
+        # --admin bypasses the CP03/CP13 ruleset so the lab can merge unattended; on a real
+        # team nobody bypasses - the gate applies to everyone, automation included.
+        gh pr merge $Id -R $forkRepo --squash --delete-branch --admin 2>&1 | Out-Null
         git switch main --quiet; git pull --quiet
         git tag -f $Id 2>&1 | Out-Null; git push -f origin $Id --quiet 2>&1 | Out-Null
         Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
     } finally { Pop-Location }
 }
 
-. "$PSScriptRoot/Lab.Auth.ps1"
-
 Import-LabState | Out-Null
-if (-not $env:LAB_LOCAL_MODE) { Select-LabGitHubCredential }

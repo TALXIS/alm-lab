@@ -61,7 +61,8 @@ if ($env:LAB_LOCAL_MODE) {
 $auth = Get-LabValue 'txcAuth'
 $liveAuth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Where-Object { $_.id -eq $auth } | Select-Object -First 1)
 if (-not $auth -or -not $liveAuth) {
-    Stop-LabNeedsPerson "Not signed in to Power Platform on this machine (lab-state auth '$auth' not found locally)."
+    Write-Err "Not signed in on this machine (lab-state auth '$auth' not found locally) — run .lab-scripts/lab-signin.ps1."
+    exit 1
 }
 Write-Ok "Authenticated as $auth"
 
