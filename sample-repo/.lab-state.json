@@ -1,0 +1,12 @@
+{
+  "txcAuth": "aleksander.zekelin@networg.com",
+  "randomIdentifier": 3761,
+  "tenantId": "67266d43-8de7-494d-9ed8-3d1bd3b3a764",
+  "slnxName": "WarehouseManagement",
+  "publisherName": "ALMLab",
+  "publisherPrefix": "almlab",
+  "packageDeployerScaffolded": true,
+  "dataModelScaffolded": true,
+  "securityScaffolded": true,
+  "uiSolutionScaffolded": true
+}
