@@ -61,6 +61,8 @@ fork** — say yes.
 | 13 | `CP13-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
 | 14 | `CP14-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |
 | 15 | `CP15-implement-unit-tests.ps1` | Plugin (FakeXrmEasy) + script (Jest) unit tests |
+| 16 | `CP16-plan-tests-with-agent.ps1` | Agent plans new `.feature` files against the existing bindings catalog |
+| 17 | `CP17-explore-blackbox-and-generate-tests.ps1` | Agent that may not read the source explores the running apps and proposes its own tests |
 
 Run a checkpoint:
 
