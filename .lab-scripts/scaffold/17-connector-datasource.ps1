@@ -16,7 +16,7 @@
 Write-Host "`n── Code App Data Source: Product ──" -ForegroundColor Cyan
 
 # txc's codegen title-cases just the first character of the publisher prefix (matches
-# scaffold/05f-code-app.ps1's own $prefixPascal), e.g. almlab -> Almlab_productsService.
+# scaffold/05f-code-app.ps1's own $prefixPascal), e.g. lab -> Lab_productsService.
 $prefixPascal = [char]::ToUpper($PublisherPrefix[0]) + $PublisherPrefix.Substring(1)
 
 # The Product table (CP11 step 1) needs its own typed data source in the code app, exactly

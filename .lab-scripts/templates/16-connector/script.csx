@@ -22,7 +22,7 @@ using Newtonsoft.Json.Linq;
 
 public class Script : ScriptBase
 {
-    private const string UserAgent = "TALXIS-ALM-Lab-WarehousePicking/1.0 (+https://github.com/TALXIS/lab)";
+    private const string UserAgent = "TALXIS-Lab-WarehousePicking/1.0 (+https://github.com/TALXIS/lab)";
 
     public override async Task<HttpResponseMessage> ExecuteAsync()
     {

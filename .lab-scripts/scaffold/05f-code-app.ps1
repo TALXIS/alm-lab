@@ -107,7 +107,7 @@ Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouselocation" -Foreground
 
 Write-Host "`n── Code App Pages ──" -ForegroundColor Cyan
 
-# Pascal-cased prefix for generated identifiers (Almlab_warehouseitemsService etc.) —
+# Pascal-cased prefix for generated identifiers (Lab_warehouseitemsService etc.) —
 # txc's codegen title-cases just the first character of the publisher prefix.
 $prefixPascal = [char]::ToUpper($PublisherPrefix[0]) + $PublisherPrefix.Substring(1)
 $appSrc = "src/Apps.WarehousePicking/src"

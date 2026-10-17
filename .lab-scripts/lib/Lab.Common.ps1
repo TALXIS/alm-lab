@@ -17,6 +17,13 @@
 $Global:LabRoot      = (Resolve-Path "$PSScriptRoot/../..").Path
 $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 
+# Dataverse publisher defaults for NEW labs. CP02 writes them into .lab-state.json and every later
+# checkpoint reads them back from there, so a lab started earlier keeps whatever it was created with
+# (e.g. the legacy "almlab" prefix) - these only apply when the state has no value yet. Never change
+# the prefix of an existing lab: it is baked into every table, column and generated file.
+$Global:LabDefaultPublisherName   = "TalxisLab"
+$Global:LabDefaultPublisherPrefix = "lab"
+
 # The agentbox image bakes a pinned, older txc into /usr/local/bin for fast startup and relies
 # on the devcontainer's remoteEnv/postStartCommand to shadow it with a freshly-updated global
 # tool on every container start - but that only happens under the actual devcontainer/Codespaces
@@ -106,7 +113,7 @@ function Save-Checkpoint {
         if (-not (git config user.email)) {
             if ($env:LAB_LOCAL_MODE) {
                 git config user.email "agent@local.test"
-                git config user.name  "alm-lab-agent"
+                git config user.name  "lab-agent"
             } else {
                 git config user.email "$(gh api user -q .id)+$(gh api user -q .login)@users.noreply.github.com"
                 git config user.name (gh api user -q .login)

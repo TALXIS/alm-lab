@@ -9,7 +9,7 @@
 # template needed) — then customizes the grid at runtime from our own Scripts.UI
 # web resource through the control's Client API bridge:
 #
-#   FormXml:  ClientApiWebresourceName = almlab_main.js
+#   FormXml:  ClientApiWebresourceName = lab_main.js
 #             ClientApiFunctionName    = WarehouseScripts.GridApi.onDatasetControlInitialized
 #   The PCF calls that function once its dataset exists; our script registers
 #   interceptors (rename a column) and record expressions (paint low-stock cells red).
@@ -87,7 +87,7 @@ if (-not (Select-String -Path $indexPath -Pattern "GridCustomizer" -Quiet)) {
 Write-Host "  ✓ GridCustomizer.ts (GridApi bridge + LocationForm)" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#              Register onLoad handler (also adds almlab_main.js to the form)
+#              Register onLoad handler (also adds lab_main.js to the form)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 # The template's post-scripts add the Library to <formLibraries> — required, because

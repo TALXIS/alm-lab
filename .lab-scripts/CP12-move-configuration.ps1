@@ -24,7 +24,7 @@
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
-$PublisherPrefix = Get-LabValue 'publisherPrefix' 'almlab'
+$PublisherPrefix = Get-LabValue 'publisherPrefix' $LabDefaultPublisherPrefix
 
 Write-Step "CP12 — Configuration data (CMT)"
 Push-Location $LabRoot

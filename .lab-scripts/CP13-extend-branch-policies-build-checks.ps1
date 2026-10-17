@@ -25,8 +25,12 @@ Set-LabValue 'repo' $repo
 
 $id = Get-LabValue 'mainRulesetId'
 if (-not $id) {
-    $rulesetName = Get-LabValue 'mainRulesetName' 'alm-lab-main-protection'
-    $id = gh api "repos/$repo/rulesets" -q ".[] | select(.name==`"$rulesetName`") | .id"
+    # Labs created before the rename have the ruleset under its old name; accept either.
+    $rulesetNames = @((Get-LabValue 'mainRulesetName'), 'lab-main-protection', 'alm-lab-main-protection') | Where-Object { $_ }
+    foreach ($rulesetName in $rulesetNames) {
+        $id = gh api "repos/$repo/rulesets" -q ".[] | select(.name==`"$rulesetName`") | .id"
+        if ($id) { break }
+    }
     if ($id) { Set-LabValue 'mainRulesetId' $id }
 }
 if (-not $id) { Write-Err "Main ruleset not found on $repo — run CP03-setup-continuous-integration.ps1 first (it must actually complete at least once, not just be skipped)."; exit 1 }

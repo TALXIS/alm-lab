@@ -1,5 +1,5 @@
 {
-  "name": "Power Platform ALM Lab",
+  "name": "TALXIS Lab",
   "image": "ghcr.io/talxis/tools-agentbox/image:latest",
   "features": {
     "ghcr.io/devcontainers/features/sshd:1": {}

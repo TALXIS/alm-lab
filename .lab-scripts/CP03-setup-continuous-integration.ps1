@@ -24,7 +24,7 @@ Write-Step "CP03 — Continuous Integration (branch protection)"
 
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would resolve the origin repo and create the"
-    Write-Info "  'alm-lab-main-protection' ruleset (deletion/non_fast_forward/pull_request rules)"
+    Write-Info "  'lab-main-protection' ruleset (deletion/non_fast_forward/pull_request rules)"
     Write-Info "  via 'gh api repos/<owner>/<repo>/rulesets'."
 } else {
 
@@ -36,7 +36,7 @@ Set-LabValue 'repo' $repo
 Write-Ok "Repository: $repo"
 
 # Step 2: Create a ruleset requiring pull requests into main (no direct pushes).
-$rulesetName = "alm-lab-main-protection"
+$rulesetName = "lab-main-protection"
 $ruleset = @{
     name        = $rulesetName
     target      = "branch"
@@ -92,7 +92,7 @@ Save-Checkpoint -Id "cp03" -Message "Add main branch protection for pull request
 Protect the main branch so warehouse app changes land through pull requests instead of direct pushes. This establishes the review loop before the first functional features are added.
 
 ## Changes
-- create the alm-lab-main-protection GitHub ruleset for main
+- create the lab-main-protection GitHub ruleset for main
 - require pull requests and up-to-date branches before merge
 - seed a setup/runtime topic branch for the next implementation step
 ## Testing

@@ -23,8 +23,8 @@
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
-$PublisherName   = Get-LabValue 'publisherName'   'ALMLab'
-$PublisherPrefix = Get-LabValue 'publisherPrefix' 'almlab'
+$PublisherName   = Get-LabValue 'publisherName'   $LabDefaultPublisherName
+$PublisherPrefix = Get-LabValue 'publisherPrefix' $LabDefaultPublisherPrefix
 
 Write-Step "CP09 — UI"
 Push-Location $LabRoot
