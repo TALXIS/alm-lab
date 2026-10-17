@@ -1,5 +1,5 @@
 {
-  "name": "TALXIS Lab",
+  "name": "TALXIS Lab - Agentic Power Platform Development",
   "image": "ghcr.io/talxis/tools-agentbox/image:latest",
   "features": {
     "ghcr.io/devcontainers/features/sshd:1": {}

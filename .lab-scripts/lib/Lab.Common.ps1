@@ -18,7 +18,7 @@ $Global:LabRoot      = (Resolve-Path "$PSScriptRoot/../..").Path
 $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 
 # Dataverse publisher defaults. CP02 writes them into .lab-state.json; later checkpoints read them back.
-$Global:LabDefaultPublisherName   = "TalxisLab"
+$Global:LabDefaultPublisherName   = "TALXISLab"
 $Global:LabDefaultPublisherPrefix = "lab"
 
 # The agentbox image bakes a pinned, older txc into /usr/local/bin for fast startup and relies
