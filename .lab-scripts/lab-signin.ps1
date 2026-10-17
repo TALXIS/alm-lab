@@ -19,7 +19,8 @@ Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
 if (-not $env:GH_TOKEN) {
     gh auth setup-git --hostname github.com --force   # git pushes with your gh login
     if (-not (gh auth status 2>&1 | Select-String 'workflow')) {
-        gh auth login -h github.com -p https -s workflow --web
+        # Piping input in makes gh print the link and code instead of waiting for Enter.
+        '' | gh auth login -h github.com -p https -s workflow --web
     }
 }
 Write-Ok "GitHub: $(gh api user -q .login)"
