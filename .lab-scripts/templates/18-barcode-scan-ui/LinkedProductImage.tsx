@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getClient } from "@microsoft/power-apps/data";
 import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
 import { bytesToDataUrl } from "@/utils/binary";
+import { useStyles } from "./LinkedProductImage.styles";
 
 const client = getClient(dataSourcesInfo);
 
@@ -13,6 +14,7 @@ type LinkedProductImageProps = {
 // so this goes through the low-level client directly, the same one the generated services
 // themselves are built on.
 export default function LinkedProductImage({ productId }: LinkedProductImageProps) {
+  const styles = useStyles();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function LinkedProductImage({ productId }: LinkedProductImageProp
     <img
       src={imageUrl}
       alt=""
-      className="h-8 w-8 object-contain rounded"
+      className={styles.image}
       onError={() => setImageUrl(null)}
     />
   );

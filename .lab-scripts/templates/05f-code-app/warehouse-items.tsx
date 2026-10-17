@@ -1,48 +1,53 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
-import { categoryLabels, categoryOptions } from "@/utils/optionSets";
+import { categoryOptionMetadata, statusOptions, optionSetProperty } from "@/utils/optionSets";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
+  Button,
   Dialog,
+  DialogActions,
+  DialogBody,
   DialogContent,
-  DialogHeader,
+  DialogSurface,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { Package, Plus, RefreshCw } from "lucide-react";
+  Field,
+  MessageBar,
+  MessageBarBody,
+  Skeleton,
+  SkeletonItem,
+} from "@fluentui/react-components";
+import { BoxRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
+import { Decimal, OptionSet, TextField, usePcfContext } from "@talxis/base-controls";
+import type { IColumn } from "@talxis/client-libraries";
+import { PageHeader } from "@/components/PageHeader";
+import { RecordGrid } from "@/components/RecordGrid";
+import { RecordLookup } from "@/components/RecordLookup";
+import { useToast } from "@/hooks/use-toast";
+import { useStyles } from "./warehouse-items.styles";
+
+const columns: IColumn[] = [
+  { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 220 },
+  { name: "__PREFIX___sku", displayName: "SKU", dataType: "SingleLine.Text", visualSizeFactor: 130 },
+  { name: "__PREFIX___availablequantity", displayName: "Available Qty", dataType: "Whole.None", visualSizeFactor: 120 },
+  { name: "__PREFIX___category", displayName: "Category", dataType: "OptionSet", visualSizeFactor: 140, metadata: { OptionSet: categoryOptionMetadata } as IColumn["metadata"] },
+  { name: "location", displayName: "Location", dataType: "SingleLine.Text", visualSizeFactor: 150 },
+  { name: "statecode", displayName: "Status", dataType: "OptionSet", visualSizeFactor: 110, metadata: { OptionSet: statusOptions } as IColumn["metadata"] },
+  { name: "createdon", displayName: "Created", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
+];
 
 export default function WarehouseItemsPage() {
+  const styles = useStyles();
+  const toast = useToast();
+  const context = usePcfContext();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [category, setCategory] = useState("");
+  const [quantity, setQuantity] = useState<number | null>(null);
+  const [category, setCategory] = useState<number | null>(null);
   const [locationId, setLocationId] = useState("");
 
   const { data: items, isLoading, error } = useQuery({
@@ -76,20 +81,35 @@ export default function WarehouseItemsPage() {
     },
   });
 
-  const locationNames = new Map(
-    (locations ?? []).map((loc: __PASCAL___warehouselocations) => [
-      loc.__PREFIX___warehouselocationid,
-      loc.__PREFIX___name,
-    ])
+  const locationRecords = useMemo(
+    () =>
+      (locations ?? []).map((loc: __PASCAL___warehouselocations) => ({
+        id: loc.__PREFIX___warehouselocationid,
+        name: loc.__PREFIX___name ?? "",
+      })),
+    [locations]
   );
+
+  // Grid rows: numbers for numeric/option set columns, and the location lookup resolved to its name
+  const rows = useMemo(() => {
+    if (!items) return undefined;
+    const locationNames = new Map(locationRecords.map((loc) => [loc.id, loc.name]));
+    return items.map((item: __PASCAL___warehouseitems) => ({
+      ...item,
+      __PREFIX___availablequantity: Number(item.__PREFIX___availablequantity),
+      __PREFIX___category: Number(item.__PREFIX___category),
+      statecode: Number(item.statecode),
+      location: locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "",
+    }));
+  }, [items, locationRecords]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       return __PASCAL___warehouseitemsService.create({
         __PREFIX___name: name,
         __PREFIX___sku: sku,
-        __PREFIX___availablequantity: quantity,
-        __PREFIX___category: Number(category) as any,
+        __PREFIX___availablequantity: String(quantity),
+        __PREFIX___category: category as any,
         ...(locationId
           ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${locationId})` }
           : {}),
@@ -109,14 +129,14 @@ export default function WarehouseItemsPage() {
     setDialogOpen(false);
     setName("");
     setSku("");
-    setQuantity("");
-    setCategory("");
+    setQuantity(null);
+    setCategory(null);
     setLocationId("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !sku || !quantity || !category) {
+    if (!name || !sku || quantity === null || category === null) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -124,202 +144,109 @@ export default function WarehouseItemsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Package className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Warehouse Items
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage your warehouse inventory
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() =>
-              queryClient.invalidateQueries({ queryKey: ["warehouseItems"] })
-            }
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Item
-          </Button>
-        </div>
-      </div>
+    <div className={styles.page}>
+      <PageHeader
+        icon={<BoxRegular />}
+        title="Warehouse Items"
+        subtitle="Manage your warehouse inventory"
+        actions={
+          <>
+            <Button
+              appearance="outline"
+              icon={<ArrowClockwiseRegular />}
+              aria-label="Refresh"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["warehouseItems"] })
+              }
+            />
+            <Button appearance="primary" icon={<AddRegular />} onClick={() => setDialogOpen(true)}>
+              New Item
+            </Button>
+          </>
+        }
+      />
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-4 text-destructive text-sm">
-          Failed to load items: {String(error)}
-        </div>
+        <MessageBar intent="error">
+          <MessageBarBody>Failed to load items: {String(error)}</MessageBarBody>
+        </MessageBar>
       )}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead className="text-right">Available Qty</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : items && items.length > 0 ? (
-              items.map((item: __PASCAL___warehouseitems) => (
-                <TableRow key={item.__PREFIX___warehouseitemid} data-testid="warehouse-item-row">
-                  <TableCell>
-                    <Link
-                      to={`/items/${item.__PREFIX___warehouseitemid}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {item.__PREFIX___name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="font-mono text-muted-foreground">
-                    {item.__PREFIX___sku}
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {item.__PREFIX___availablequantity}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {categoryLabels[
-                        item.__PREFIX___category as keyof typeof categoryLabels
-                      ] ?? item.__PREFIX___category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        item.statecode === 0 ? "default" : "destructive"
-                      }
-                    >
-                      {item.statecode === 0 ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {item.createdon
-                      ? new Date(item.createdon).toLocaleDateString()
-                      : "-"}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No warehouse items found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <Skeleton>
+          <SkeletonItem size={48} />
+        </Skeleton>
+      ) : (
+        <RecordGrid
+          rows={rows}
+          columns={columns}
+          entityName="__PREFIX___warehouseitem"
+          rowClassName="warehouse-item-row"
+        />
+      )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Item</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter item name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU *</Label>
-              <Input
-                id="sku"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="Enter SKU"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Available Quantity *</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="0"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Category *</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={String(opt.value)}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Location</Label>
-              <Select value={locationId} onValueChange={setLocationId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(locations ?? []).map((loc: __PASCAL___warehouselocations) => (
-                    <SelectItem
-                      key={loc.__PREFIX___warehouselocationid}
-                      value={loc.__PREFIX___warehouselocationid}
-                    >
-                      {loc.__PREFIX___name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetForm}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create"}
-              </Button>
-            </DialogFooter>
+      <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
+        <DialogSurface>
+          <form onSubmit={handleSubmit}>
+            <DialogBody>
+              <DialogTitle>Create New Item</DialogTitle>
+              <DialogContent className={styles.form}>
+                <Field label={{ children: "Name", htmlFor: "name" }} required>
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: name, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setName(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "name", "aria-required": true })}
+                  />
+                </Field>
+                <Field label={{ children: "SKU", htmlFor: "sku" }} required>
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: sku, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setSku(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "sku", "aria-required": true })}
+                  />
+                </Field>
+                <Field label={{ children: "Available Quantity", htmlFor: "quantity" }} required>
+                  <Decimal
+                    context={context}
+                    parameters={{ value: { raw: quantity, type: "Whole.None" } }}
+                    // Unparsable input arrives as the raw text: treat it as no value
+                    onNotifyOutputChanged={(outputs) =>
+                      setQuantity(typeof outputs.value === "number" ? outputs.value : null)
+                    }
+                    onOverrideComponentProps={(props) => ({ ...props, id: "quantity", "aria-required": true })}
+                  />
+                </Field>
+                <Field label={{ children: "Category", htmlFor: "category-input" }} required>
+                  <OptionSet
+                    context={context}
+                    parameters={{ value: optionSetProperty(category, categoryOptionMetadata) }}
+                    onNotifyOutputChanged={(outputs) => setCategory(outputs.value ?? null)}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "category", required: true })}
+                  />
+                </Field>
+                <Field label={{ children: "Location", htmlFor: "location" }}>
+                  <RecordLookup
+                    entityName="__PREFIX___warehouselocation"
+                    records={locationRecords}
+                    value={locationId}
+                    onChange={setLocationId}
+                    inputId="location"
+                  />
+                </Field>
+              </DialogContent>
+              <DialogActions>
+                <Button type="button" appearance="secondary" onClick={resetForm}>
+                  Cancel
+                </Button>
+                <Button type="submit" appearance="primary" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Creating..." : "Create"}
+                </Button>
+              </DialogActions>
+            </DialogBody>
           </form>
-        </DialogContent>
+        </DialogSurface>
       </Dialog>
     </div>
   );

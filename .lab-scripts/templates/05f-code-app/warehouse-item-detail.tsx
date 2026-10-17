@@ -1,54 +1,64 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import { __PASCAL___warehousetransactionsService } from "@/generated/services/__PASCAL___warehousetransactionsService";
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehousetransactions } from "@/generated/models/__PASCAL___warehousetransactionsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
+import { categoryLabels, transactionTypeOptionMetadata, optionSetProperty } from "@/utils/optionSets";
 import {
-  categoryLabels,
-  transactionTypeLabels,
-  transactionTypeOptions,
-} from "@/utils/optionSets";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
+  Badge,
+  Body1,
+  Button,
+  Card,
+  Caption1,
   Dialog,
+  DialogActions,
+  DialogBody,
   DialogContent,
-  DialogHeader,
+  DialogSurface,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { ArrowLeft, Plus, Package, ArrowRightLeft, MapPin } from "lucide-react";
+  Field,
+  LargeTitle,
+  Skeleton,
+  SkeletonItem,
+  Subtitle1,
+  Subtitle2,
+  Title2,
+  mergeClasses,
+} from "@fluentui/react-components";
+import { ArrowLeftRegular, AddRegular, BoxRegular, ArrowSwapRegular, LocationRegular } from "@fluentui/react-icons";
+import { Decimal, OptionSet, TextField, usePcfContext } from "@talxis/base-controls";
+import type { IColumn } from "@talxis/client-libraries";
+import { RecordGrid } from "@/components/RecordGrid";
+import { useToast } from "@/hooks/use-toast";
+import { useStyles } from "./warehouse-item-detail.styles";
+
+const transactionColumns: IColumn[] = [
+  { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 240 },
+  { name: "__PREFIX___quantity", displayName: "Quantity", dataType: "Whole.None", visualSizeFactor: 110 },
+  {
+    name: "__PREFIX___transactiontype",
+    displayName: "Type",
+    dataType: "OptionSet",
+    visualSizeFactor: 130,
+    metadata: { OptionSet: transactionTypeOptionMetadata } as IColumn["metadata"],
+  },
+  { name: "__PREFIX___transactiondate", displayName: "Date", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
+];
 
 export default function WarehouseItemDetailPage() {
+  const styles = useStyles();
+  const toast = useToast();
+  const context = usePcfContext();
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [txName, setTxName] = useState("");
-  const [txQuantity, setTxQuantity] = useState("");
-  const [txType, setTxType] = useState("");
+  const [txQuantity, setTxQuantity] = useState<number | null>(null);
+  const [txType, setTxType] = useState<number | null>(null);
 
   const { data: item, isLoading: itemLoading } = useQuery({
     queryKey: ["warehouseItem", id],
@@ -89,6 +99,16 @@ export default function WarehouseItemDetailPage() {
     },
   });
 
+  const transactionRows = useMemo(
+    () =>
+      transactions?.map((tx: __PASCAL___warehousetransactions) => ({
+        ...tx,
+        __PREFIX___quantity: Number(tx.__PREFIX___quantity),
+        __PREFIX___transactiontype: Number(tx.__PREFIX___transactiontype),
+      })),
+    [transactions]
+  );
+
   const locationNames = new Map(
     (locations ?? []).map((loc: __PASCAL___warehouselocations) => [
       loc.__PREFIX___warehouselocationid,
@@ -100,8 +120,8 @@ export default function WarehouseItemDetailPage() {
     mutationFn: async () => {
       return __PASCAL___warehousetransactionsService.create({
         __PREFIX___name: txName,
-        __PREFIX___quantity: txQuantity,
-        __PREFIX___transactiontype: Number(txType) as any,
+        __PREFIX___quantity: String(txQuantity),
+        __PREFIX___transactiontype: txType as any,
         __PREFIX___transactiondate: new Date().toISOString(),
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${id})`,
       } as any);
@@ -120,13 +140,13 @@ export default function WarehouseItemDetailPage() {
   const resetForm = () => {
     setDialogOpen(false);
     setTxName("");
-    setTxQuantity("");
-    setTxType("");
+    setTxQuantity(null);
+    setTxType(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!txName || !txQuantity || !txType) {
+    if (!txName || txQuantity === null || txType === null) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -135,226 +155,157 @@ export default function WarehouseItemDetailPage() {
 
   if (itemLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
+      <Skeleton className={styles.page}>
+        <SkeletonItem className={styles.skeletonTitle} />
+        <SkeletonItem className={styles.skeletonCards} />
+        <SkeletonItem className={styles.skeletonTable} />
+      </Skeleton>
     );
   }
 
   if (!item) {
     return (
-      <div className="p-6">
-        <p className="text-muted-foreground">Item not found.</p>
-        <Link to="/">
-          <Button variant="link" className="mt-2">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to items
+      <div className={styles.page}>
+        <Body1 className={styles.muted}>Item not found.</Body1>
+        <div>
+          <Button appearance="transparent" icon={<ArrowLeftRegular />} onClick={() => navigate("/")}>
+            Back to items
           </Button>
-        </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Link to="/">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {item.__PREFIX___name}
-          </h1>
-          <p className="text-sm text-muted-foreground font-mono">
+    <div className={styles.page}>
+      <div className={styles.heading}>
+        <Button
+          appearance="subtle"
+          icon={<ArrowLeftRegular />}
+          aria-label="Back to items"
+          onClick={() => navigate("/")}
+        />
+        <div className={styles.headingText}>
+          <Title2 as="h1">{item.__PREFIX___name}</Title2>
+          <Body1 className={mergeClasses(styles.muted, styles.mono)}>
             {item.__PREFIX___sku}
-          </p>
+          </Body1>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className={styles.cards}>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Available Quantity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold" data-testid="item-detail-qty">
-              {item.__PREFIX___availablequantity}
-            </div>
-          </CardContent>
+          <Caption1 className={styles.muted}>Available Quantity</Caption1>
+          <LargeTitle data-testid="item-detail-qty">
+            {item.__PREFIX___availablequantity}
+          </LargeTitle>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Category
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-muted-foreground" />
-              <span className="text-lg font-medium">
-                {categoryLabels[
-                  item.__PREFIX___category as keyof typeof categoryLabels
-                ] ?? item.__PREFIX___category}
-              </span>
-            </div>
-          </CardContent>
+          <Caption1 className={styles.muted}>Category</Caption1>
+          <div className={styles.inline}>
+            <BoxRegular className={styles.icon} />
+            <Subtitle1>
+              {categoryLabels[
+                item.__PREFIX___category as keyof typeof categoryLabels
+              ] ?? item.__PREFIX___category}
+            </Subtitle1>
+          </div>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Location
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <span className="text-lg font-medium">
-                {locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "-"}
-              </span>
-            </div>
-          </CardContent>
+          <Caption1 className={styles.muted}>Location</Caption1>
+          <div className={styles.inline}>
+            <LocationRegular className={styles.icon} />
+            <Subtitle1>
+              {locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "-"}
+            </Subtitle1>
+          </div>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant={item.statecode === 0 ? "default" : "destructive"}>
+          <Caption1 className={styles.muted}>Status</Caption1>
+          <div>
+            <Badge appearance="filled" color={item.statecode === 0 ? "success" : "danger"}>
               {item.statecode === 0 ? "Active" : "Inactive"}
             </Badge>
-          </CardContent>
+          </div>
         </Card>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ArrowRightLeft className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">Transactions</h2>
-          </div>
-          <Button size="sm" data-testid="new-transaction-button" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Transaction
-          </Button>
+      <div className={styles.toolbar}>
+        <div className={styles.inline}>
+          <ArrowSwapRegular className={styles.icon} />
+          <Subtitle2 as="h2">Transactions</Subtitle2>
         </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {txLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : transactions && transactions.length > 0 ? (
-                transactions.map((tx: __PASCAL___warehousetransactions) => (
-                  <TableRow key={tx.__PREFIX___warehousetransactionid}>
-                    <TableCell className="font-medium">
-                      {tx.__PREFIX___name}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {tx.__PREFIX___quantity}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {transactionTypeLabels[
-                          tx.__PREFIX___transactiontype as keyof typeof transactionTypeLabels
-                        ] ?? tx.__PREFIX___transactiontype}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {tx.__PREFIX___transactiondate
-                        ? new Date(tx.__PREFIX___transactiondate).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    No transactions yet
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <Button
+          appearance="primary"
+          size="small"
+          icon={<AddRegular />}
+          data-testid="new-transaction-button"
+          onClick={() => setDialogOpen(true)}
+        >
+          New Transaction
+        </Button>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Transaction for {item.__PREFIX___name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="txName">Transaction Name *</Label>
-              <Input
-                id="txName"
-                value={txName}
-                onChange={(e) => setTxName(e.target.value)}
-                placeholder="Enter transaction name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="txQuantity">Quantity *</Label>
-              <Input
-                id="txQuantity"
-                type="number"
-                min="0"
-                value={txQuantity}
-                onChange={(e) => setTxQuantity(e.target.value)}
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Transaction Type *</Label>
-              <Select value={txType} onValueChange={setTxType}>
-                <SelectTrigger data-testid="tx-type-trigger">
-                  <SelectValue placeholder="Select transaction type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {transactionTypeOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={String(opt.value)}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={resetForm}>
-                Cancel
-              </Button>
-              <Button type="submit" data-testid="submit-transaction" disabled={createTxMutation.isPending}>
-                {createTxMutation.isPending ? "Creating..." : "Create"}
-              </Button>
-            </DialogFooter>
+      {txLoading ? (
+        <SkeletonItem className={styles.skeletonTable} />
+      ) : (
+        <RecordGrid
+          rows={transactionRows}
+          columns={transactionColumns}
+          entityName="__PREFIX___warehousetransaction"
+        />
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
+        <DialogSurface>
+          <form onSubmit={handleSubmit}>
+            <DialogBody>
+              <DialogTitle>New Transaction for {item.__PREFIX___name}</DialogTitle>
+              <DialogContent className={styles.form}>
+                <Field label={{ children: "Transaction Name", htmlFor: "txName" }} required>
+                  <TextField
+                    context={context}
+                    parameters={{ value: { raw: txName, type: "SingleLine.Text" } }}
+                    onNotifyOutputChanged={(outputs) => setTxName(outputs.value ?? "")}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txName", "aria-required": true })}
+                  />
+                </Field>
+                <Field label={{ children: "Quantity", htmlFor: "txQuantity" }} required>
+                  <Decimal
+                    context={context}
+                    parameters={{ value: { raw: txQuantity, type: "Whole.None" } }}
+                    // Unparsable input arrives as the raw text: treat it as no value
+                    onNotifyOutputChanged={(outputs) =>
+                      setTxQuantity(typeof outputs.value === "number" ? outputs.value : null)
+                    }
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txQuantity", "aria-required": true })}
+                  />
+                </Field>
+                <Field label={{ children: "Transaction Type", htmlFor: "txType-input" }} required>
+                  <OptionSet
+                    context={context}
+                    parameters={{ value: optionSetProperty(txType, transactionTypeOptionMetadata) }}
+                    onNotifyOutputChanged={(outputs) => setTxType(outputs.value ?? null)}
+                    onOverrideComponentProps={(props) => ({ ...props, id: "txType", required: true, "data-testid": "tx-type-trigger" } as typeof props)}
+                  />
+                </Field>
+              </DialogContent>
+              <DialogActions>
+                <Button type="button" appearance="secondary" onClick={resetForm}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  appearance="primary"
+                  data-testid="submit-transaction"
+                  disabled={createTxMutation.isPending}
+                >
+                  {createTxMutation.isPending ? "Creating..." : "Create"}
+                </Button>
+              </DialogActions>
+            </DialogBody>
           </form>
-        </DialogContent>
+        </DialogSurface>
       </Dialog>
     </div>
   );

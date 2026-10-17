@@ -5,20 +5,25 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
 import type { Product } from "@/generated/models/OpenFoodFactsModel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
+  Button,
+  Card,
+  Caption1,
   Dialog,
+  DialogActions,
+  DialogBody,
   DialogContent,
-  DialogHeader,
+  DialogSurface,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
-import { ScanLine, Loader2 } from "lucide-react";
+  Field,
+  Spinner,
+  Subtitle2,
+} from "@fluentui/react-components";
+import { BarcodeScannerRegular } from "@fluentui/react-icons";
+import { TextField, usePcfContext } from "@talxis/base-controls";
+import { useToast } from "@/hooks/use-toast";
 import { toBytes, bytesToDataUrl } from "@/utils/binary";
+import { useStyles } from "./BarcodeScanDialog.styles";
 
 type BarcodeScanDialogProps = {
   itemId: string;
@@ -33,6 +38,9 @@ type BarcodeScanDialogProps = {
 // test hook types into the scan-ean-input and clicks scan-lookup-button directly, skipping
 // the camera.
 export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }: BarcodeScanDialogProps) {
+  const styles = useStyles();
+  const toast = useToast();
+  const context = usePcfContext();
   const [open, setOpen] = useState(false);
   const [ean, setEan] = useState("");
   const [looking, setLooking] = useState(false);
@@ -214,94 +222,107 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
+        appearance="outline"
+        size="small"
+        icon={<BarcodeScannerRegular />}
         data-testid="scan-barcode-button"
         onClick={() => setOpen(true)}
       >
-        <ScanLine className="h-4 w-4 mr-2" />
         {currentProductId ? "Rescan Barcode" : "Scan Barcode"}
       </Button>
 
-      <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : resetAndClose())}>
-        <DialogContent>
-          <DialogHeader>
+      <Dialog open={open} onOpenChange={(_, data) => (data.open ? setOpen(true) : resetAndClose())}>
+        <DialogSurface>
+          <DialogBody>
             <DialogTitle>Scan Product Barcode</DialogTitle>
-          </DialogHeader>
 
-          <div className="space-y-4">
-            <video
-              ref={setVideoEl}
-              className="w-full rounded-md border bg-black aspect-video"
-              muted
-              autoPlay
-              playsInline
-            />
+            <DialogContent className={styles.content}>
+              <video
+                ref={setVideoEl}
+                className={styles.video}
+                muted
+                autoPlay
+                playsInline
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="scanEan">EAN / UPC barcode</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="scanEan"
-                  data-testid="scan-ean-input"
-                  value={ean}
-                  onChange={(e) => setEan(e.target.value)}
-                  placeholder="e.g. 3017620422003"
-                />
-                <Button
-                  type="button"
-                  data-testid="scan-lookup-button"
-                  disabled={!ean || looking}
-                  onClick={() => void handleEan(ean)}
-                >
-                  {looking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Look Up"}
-                </Button>
-              </div>
-            </div>
+              <Field label="EAN / UPC barcode">
+                <div className={styles.eanRow}>
+                  <div className={styles.eanInput}>
+                    <TextField
+                      context={context}
+                      parameters={{
+                        value: { raw: ean, type: "SingleLine.Text" },
+                        Placeholder: { raw: "e.g. 3017620422003" },
+                      }}
+                      onNotifyOutputChanged={(outputs) => setEan(outputs.value ?? "")}
+                      // The control reports its value on blur; mirror keystrokes too, so Look Up
+                      // enables while the barcode is still being typed
+                      onOverrideComponentProps={(props) => ({
+                        ...props,
+                        id: "scanEan",
+                        "data-testid": "scan-ean-input",
+                        onChange: (event, value) => {
+                          props.onChange?.(event, value);
+                          setEan(value ?? "");
+                        },
+                      })}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    appearance="primary"
+                    data-testid="scan-lookup-button"
+                    disabled={!ean || looking}
+                    onClick={() => void handleEan(ean)}
+                  >
+                    {looking ? <Spinner size="tiny" /> : "Look Up"}
+                  </Button>
+                </div>
+              </Field>
 
-            {product && (
-              <Card>
-                <CardContent className="pt-4 flex items-center gap-4">
+              {product && (
+                <Card className={styles.product}>
                   {imageLoading && (
-                    <div className="h-16 w-16 rounded bg-muted flex items-center justify-center shrink-0">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <div className={styles.imagePlaceholder}>
+                      <Spinner size="tiny" />
                     </div>
                   )}
                   {previewImageUrl && !imgError && (
                     <img
                       src={previewImageUrl}
                       alt={product.name ?? ean}
-                      className="h-16 w-16 object-contain rounded"
+                      className={styles.image}
                       onError={() => setImgError(true)}
                     />
                   )}
-                  <div>
-                    <div className="font-medium" data-testid="scan-product-name">
+                  <div className={styles.productText}>
+                    <Subtitle2 data-testid="scan-product-name">
                       {product.name ?? "Unknown product"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
+                    </Subtitle2>
+                    <Caption1 className={styles.muted}>
                       {[product.brand, product.quantity].filter(Boolean).join(" · ")}
-                    </div>
+                    </Caption1>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                </Card>
+              )}
+            </DialogContent>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={resetAndClose}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              data-testid="scan-link-button"
-              disabled={!product || linking}
-              onClick={() => void linkProduct()}
-            >
-              {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Link to Item"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+            <DialogActions>
+              <Button type="button" appearance="secondary" onClick={resetAndClose}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                appearance="primary"
+                data-testid="scan-link-button"
+                disabled={!product || linking}
+                onClick={() => void linkProduct()}
+              >
+                {linking ? <Spinner size="tiny" /> : "Link to Item"}
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
       </Dialog>
     </>
   );

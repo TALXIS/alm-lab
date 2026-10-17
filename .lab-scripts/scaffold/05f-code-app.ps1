@@ -1,6 +1,6 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║           05f: Code App — Warehouse Picking (Vite + React + TypeScript)                ║
+# ║    05f: Code App — Warehouse Picking (Vite + React + TypeScript + base controls)       ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Creates Apps.WarehousePicking — a Power Apps code app: a fully custom SPA hosted by Power
@@ -22,6 +22,8 @@
 # implementation (templates/05f-code-app/): an items list, an item detail with its
 # transactions, a transactions list and a locations list — all built on the typed models
 # and services that pp-app-code-data generated from the Solutions.DataModel metadata.
+# Lists and form fields are TALXIS base controls (@talxis/base-controls) — the same Dataverse
+# controls as PCF — on the pp-app-code starter's Fluent UI shell.
 # All three tables get their own page; locations additionally resolve the item's location
 # lookup (list column, detail card, New Item picker) and show a per-location item count.
 # Expects: $PublisherPrefix from parent scope.
@@ -98,11 +100,15 @@ Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouselocation" -Foreground
 #                                    Pages (picking UI)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #
-# The base pp-app-code template already scaffolds a working starter (router, layout, a
-# counter-demo home page, providers for theme/toast/react-query). We add the real
-# warehouse screens on top of it: an items list, an item detail page with its
-# transactions, a global transactions ledger, and a locations list — then wire them into
-# the router/nav and drop the now-superseded demo page.
+# The base pp-app-code template already scaffolds a working Fluent UI starter: router,
+# layout, a counter-demo home page, and providers for the Fluent theme (light/dark),
+# toasts (useToast) and react-query. We add the real warehouse screens on top of it: an
+# items list, an item detail page with its transactions, a global transactions ledger, and
+# a locations list — then wire them into the router/nav and drop the now-superseded demo page.
+# Lists and form fields are TALXIS base controls (Grid, TextField, Decimal, OptionSet, Lookup),
+# which the starter already wires to a PCF context; two lab components adapt them to a code app:
+# RecordGrid feeds a Grid from rows the page loaded through the generated services, and
+# RecordLookup searches an in-memory list instead of Dataverse views.
 # Full sources: .lab-scripts/templates/05f-code-app/
 
 Write-Host "`n── Code App Pages ──" -ForegroundColor Cyan
@@ -115,12 +121,22 @@ $uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
 
 foreach ($file in @(
     @{ Template = "optionSets.ts";             Target = "utils/optionSets.ts" },
+    @{ Template = "entities.ts";               Target = "utils/entities.ts" },
+    @{ Template = "PageHeader.tsx";            Target = "components/PageHeader.tsx" },
+    @{ Template = "PageHeader.styles.ts";      Target = "components/PageHeader.styles.ts" },
+    @{ Template = "RecordGrid.tsx";            Target = "components/RecordGrid.tsx" },
+    @{ Template = "RecordLookup.tsx";          Target = "components/RecordLookup.tsx" },
     @{ Template = "router.tsx";                Target = "router.tsx" },
     @{ Template = "_layout.tsx";               Target = "pages/_layout.tsx" },
+    @{ Template = "_layout.styles.ts";         Target = "pages/_layout.styles.ts" },
     @{ Template = "warehouse-items.tsx";       Target = "pages/warehouse-items.tsx" },
+    @{ Template = "warehouse-items.styles.ts"; Target = "pages/warehouse-items.styles.ts" },
     @{ Template = "warehouse-item-detail.tsx"; Target = "pages/warehouse-item-detail.tsx" },
+    @{ Template = "warehouse-item-detail.styles.ts"; Target = "pages/warehouse-item-detail.styles.ts" },
     @{ Template = "transactions.tsx";          Target = "pages/transactions.tsx" },
-    @{ Template = "locations.tsx";             Target = "pages/locations.tsx" }
+    @{ Template = "transactions.styles.ts";    Target = "pages/transactions.styles.ts" },
+    @{ Template = "locations.tsx";             Target = "pages/locations.tsx" },
+    @{ Template = "locations.styles.ts";       Target = "pages/locations.styles.ts" }
 )) {
     Expand-LabTemplate -Path "05f-code-app/$($file.Template)" `
         -Destination "$appSrc/$($file.Target)" `
@@ -128,7 +144,7 @@ foreach ($file in @(
     Write-Host "  ✓ $($file.Target)" -ForegroundColor Green
 }
 
-# Drop the now-superseded counter-demo home page — the router no longer references it
-Remove-Item "$appSrc/pages/home.tsx" -ErrorAction SilentlyContinue
+# Drop the now-superseded counter-demo home page (and its styles) — the router no longer references it
+Remove-Item "$appSrc/pages/home.tsx", "$appSrc/pages/home.styles.ts" -ErrorAction SilentlyContinue
 
 Write-Host "  ℹ Local preview: cd src/Apps.WarehousePicking && npm run dev" -ForegroundColor DarkGray
