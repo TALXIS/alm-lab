@@ -40,6 +40,11 @@ $rules = @(
 ) | ConvertTo-Json -Depth 10
 $tmp = New-TemporaryFile; "{`"rules`":$rules}" | Set-Content $tmp -Encoding UTF8
 gh api -X PUT "repos/$repo/rulesets/$id" --input $tmp 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    # Some sandboxes can't change repository settings - then you add the rule yourself.
+    Write-Warn2 "Add it yourself: https://github.com/$repo/settings/rules/$id → Require status checks to pass → add 'build'."
+    while (-not (gh api "repos/$repo/rulesets/$id" -q '.rules[] | select(.type=="required_status_checks") | .type')) { Start-Sleep 15 }
+}
 Remove-Item $tmp
 Set-LabValue 'mainRulesetId' $id
 Write-Ok "Ruleset now requires 'build' to pass"

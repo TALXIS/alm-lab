@@ -27,7 +27,7 @@ Write-Step "Lab status"
 # lab-state keys that checkpoint is expected to have populated (if any — several
 # checkpoints only scaffold files under src/ and don't add new lab-state).
 $checkpoints = @(
-    @{ Id = "cp01"; Keys = @("txcAuth", "tenantId", "randomIdentifier") }
+    @{ Id = "cp01"; Keys = @("tenantId", "randomIdentifier") }
     @{ Id = "cp02"; Keys = @("slnxName", "publisherName", "publisherPrefix") }
     @{ Id = "cp03"; Keys = @("repo", "mainRulesetId", "mainRulesetName") }
     @{ Id = "cp04"; Keys = @("devEnvUrl", "testEnvUrl", "devProfile", "testProfile") }
@@ -76,14 +76,8 @@ $ghUser = $null
 try { $ghUser = (gh api user -q .login 2>$null) } catch { $ghUser = $null }
 if ($ghUser) { Write-Ok "gh: signed in as $ghUser" } else { Write-Warn2 "gh: not signed in (or gh unavailable) — run lab-signin.ps1" }
 
-$txcAuth = Get-LabValue 'txcAuth'
-if ($txcAuth) {
-    $liveTxcAuth = $null
-    try { $liveTxcAuth = (txc config auth list --format json 2>$null | ConvertFrom-Json -ErrorAction Stop | Where-Object { $_.id -eq $txcAuth } | Select-Object -First 1) } catch { $liveTxcAuth = $null }
-    if ($liveTxcAuth) { Write-Ok "txc: auth '$txcAuth' present" } else { Write-Warn2 "txc: lab-state auth '$txcAuth' NOT found locally (or txc unavailable) — run lab-signin.ps1" }
-} else {
-    Write-Info "txc: no auth recorded in lab-state yet"
-}
+try { txc config auth get lab *> $null; $txcSignedIn = $LASTEXITCODE -eq 0 } catch { $txcSignedIn = $false }
+if ($txcSignedIn) { Write-Ok "txc: signed in ('lab')" } else { Write-Warn2 "txc: not signed in (or txc unavailable) — run lab-signin.ps1" }
 
 $tenantId = Get-LabValue 'tenantId'
 if ($tenantId) {

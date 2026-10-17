@@ -24,9 +24,9 @@ jobs:
 
       - name: Configure txc WIF auth
         env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          DATAVERSE_TEST_URL: ${{ secrets.DATAVERSE_TEST_URL }}
+          AZURE_CLIENT_ID: __AZURE_CLIENT_ID__
+          AZURE_TENANT_ID: __AZURE_TENANT_ID__
+          DATAVERSE_TEST_URL: __DATAVERSE_TEST_URL__
         run: |
           txc config auth add-federated --alias ci --tenant $AZURE_TENANT_ID --application-id $AZURE_CLIENT_ID
           txc config connection create test --provider Dataverse --url $DATAVERSE_TEST_URL

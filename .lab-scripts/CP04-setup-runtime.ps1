@@ -54,17 +54,10 @@ if ($env:LAB_LOCAL_MODE) {
     }
 } else {
 
-# Step 1: Verify Power Platform sign-in (done in CP01). Lab-state only remembers WHICH
-# auth profile to use — it can't guarantee that profile still exists in this machine's own
-# txc session (e.g. a fresh Codespace, or a .lab-state.json inherited from another machine),
-# so re-check live rather than trusting the cached value blindly.
-$auth = Get-LabValue 'txcAuth'
-$liveAuth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Where-Object { $_.id -eq $auth } | Select-Object -First 1)
-if (-not $auth -or -not $liveAuth) {
-    Write-Err "Not signed in on this machine (lab-state auth '$auth' not found locally) — run .lab-scripts/lab-signin.ps1."
-    exit 1
-}
-Write-Ok "Authenticated as $auth"
+# Step 1: Verify Power Platform sign-in - the 'lab' credential created by lab-signin.ps1.
+txc config auth get lab *> $null
+if ($LASTEXITCODE -ne 0) { Write-Err "Not signed in to Power Platform — run .lab-scripts/lab-signin.ps1."; exit 1 }
+Write-Ok "Signed in to Power Platform"
 
 # Step 2: Create Dev + Test sandbox environments (unique domains via $rid).
 $envs = [ordered]@{ dev = "wm-dev-$rid"; test = "wm-test-$rid" }
@@ -98,7 +91,7 @@ foreach ($key in $envs.Keys) {
     }
 
     if (-not ($profiles | Where-Object { $_.id -eq $key })) {
-        txc config profile create --name $key --auth $auth --connection $key 2>&1 | Out-Null
+        txc config profile create --name $key --auth lab --connection $key 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key profile"; exit 1 }
         $profiles = @(txc config profile list --format json | ConvertFrom-Json)
     } else {

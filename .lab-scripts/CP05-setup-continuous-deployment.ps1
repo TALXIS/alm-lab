@@ -110,33 +110,23 @@ Write-Ok "Service principal added to Test environment as application user (Syste
 
 }
 
-# Step 5: GitHub secrets.
-if ($env:LAB_LOCAL_MODE) {
-    Write-Info "LAB_LOCAL_MODE: skipped — would run 'gh secret set AZURE_CLIENT_ID/AZURE_TENANT_ID/DATAVERSE_TEST_URL'"
-} else {
-    gh secret set AZURE_CLIENT_ID    --repo $repo --body $appId
-    gh secret set AZURE_TENANT_ID    --repo $repo --body $tenantId
-    gh secret set DATAVERSE_TEST_URL --repo $repo --body $testUrl
-    Write-Ok "Secrets set: AZURE_CLIENT_ID, AZURE_TENANT_ID, DATAVERSE_TEST_URL"
-}
-
-# Step 6: Enable GitHub Actions on the fork (forks have them disabled by default).
+# Step 5: Enable GitHub Actions on the fork (forks have them disabled by default).
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would run 'gh api -X PUT repos/<repo>/actions/permissions'"
 } else {
     gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1 | Out-Null
-    Write-Ok "GitHub Actions enabled on the fork"
+    if ($LASTEXITCODE -eq 0) { Write-Ok "GitHub Actions enabled on the fork" }
+    else { Write-Warn2 "If Actions are off on your fork, open https://github.com/$repo/actions and click the green button." }
 }
 
-# Step 7: Install workflows. Pushing files under .github/workflows needs the 'workflow' scope.
-if (-not $env:LAB_LOCAL_MODE -and -not ((gh auth status 2>&1) -match 'workflow')) {
-    Write-Info "Granting GitHub CLI the 'workflow' scope (needed to push Actions)..."
-    gh auth refresh -h github.com -s workflow
-}
+# Step 6: Install workflows, with your app's client id, tenant id and Test URL written into
+# deploy.yml. These are identifiers, not secrets: the federated credential only trusts this
+# repo's main branch, so knowing them grants nothing.
 $wf = Join-Path $LabRoot ".github/workflows"
 New-Item -ItemType Directory -Path $wf -Force | Out-Null
-Copy-Item "$PSScriptRoot/workflows/build.yml"  $wf -Force
-Copy-Item "$PSScriptRoot/workflows/deploy.yml" $wf -Force
+Copy-Item "$PSScriptRoot/workflows/build.yml" $wf -Force
+Expand-LabTemplate -Path "../workflows/deploy.yml" -Destination "$wf/deploy.yml" `
+    -Tokens @{ AZURE_CLIENT_ID = $appId; AZURE_TENANT_ID = $tenantId; DATAVERSE_TEST_URL = $testUrl }
 Write-Ok "Installed build.yml + deploy.yml"
 
 Save-Checkpoint -Id "cp05" -Message "Configure OIDC deployment identity and GitHub workflows" -Body @'
@@ -144,9 +134,8 @@ Set up GitHub Actions deployment for the warehouse app without long-lived secret
 
 ## Changes
 - create an Entra app registration, service principal, and OIDC credential
-- store deployment settings in GitHub repository secrets
-- install build.yml and deploy.yml under .github/workflows
+- install build.yml and deploy.yml under .github/workflows, with the deployment identifiers written into deploy.yml
 ## Testing
-- repository secrets are configured and GitHub Actions is enabled for CI/CD runs
+- GitHub Actions is enabled and deploy.yml names the app registration, tenant and Test environment
 '@
 Write-Host "`nNext: .lab-scripts/CP06-implement-data-model.ps1" -ForegroundColor Cyan

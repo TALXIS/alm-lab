@@ -12,13 +12,17 @@ if ($env:LAB_LOCAL_MODE) { Write-Info "LAB_LOCAL_MODE: skipped sign-in"; return 
 if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: run .lab-scripts/lab-signin.ps1 in your terminal."; exit 1 }
 
 # ── 1. GitHub ─────────────────────────────────────────────────────────────────────────────
-# Your own login - the token Codespaces provides can't manage rulesets, secrets or workflows.
+# Your own login - the GITHUB_TOKEN Codespaces provides can't manage rulesets or workflows.
+# A GH_TOKEN your environment provides (e.g. a cloud agent sandbox) is used as is.
 Write-Step "Sign in 1/4 — GitHub"
-Remove-Item Env:GITHUB_TOKEN, Env:GH_TOKEN -ErrorAction SilentlyContinue
-if (-not (gh auth status 2>&1 | Select-String 'workflow')) {
-    gh auth login -h github.com -p https -s workflow --web
+Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
+if (-not $env:GH_TOKEN) {
+    gh auth setup-git --hostname github.com --force   # git pushes with your gh login
+    if (-not (gh auth status 2>&1 | Select-String 'workflow')) {
+        # Piping input in makes gh print the link and code instead of waiting for Enter.
+        '' | gh auth login -h github.com -p https -s workflow --web
+    }
 }
-gh auth setup-git
 Write-Ok "GitHub: $(gh api user -q .login)"
 
 # ── 2. Power Platform (txc) ───────────────────────────────────────────────────────────────
@@ -27,7 +31,6 @@ Write-Step "Sign in 2/4 — Power Platform"
 $health = (txc config auth get lab --check-token --format json 2>$null | ConvertFrom-Json).tokenHealth.status
 if (-not $health -or $health -eq 'failed') { txc config auth login --alias lab }
 $tenantId = (txc config auth get lab --format json | ConvertFrom-Json).tenantId
-Set-LabValue 'txcAuth' 'lab'
 Write-Ok "Power Platform: tenant $tenantId"
 
 # ── 3. Azure (az) ─────────────────────────────────────────────────────────────────────────

@@ -5,7 +5,6 @@
     "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "remoteEnv": {
-    "TXC_PLAINTEXT_FALLBACK": "1",
     // Global dotnet tools must win over the image's baked-in /usr/local/bin copies so that
     // the postStartCommand updates below are actually visible on PATH (prepend, not append).
     "PATH": "${containerEnv:HOME}/.dotnet/tools:${containerEnv:PATH}"
@@ -16,6 +15,8 @@
   // don't have that problem, so this is how attendees pick up a mid-workshop hotfix just by
   // restarting their Codespace/container, without waiting for the next scheduled image rebuild.
   "postStartCommand": {
+    // Sign-ins are stored in the keyring; its daemons don't survive a container restart.
+    "start-keyring": "agentbox-keyring-init >/dev/null || true",
     "update-pac": "dotnet tool update --global Microsoft.PowerApps.CLI.Tool 2>/dev/null || true",
     "update-txc": "dotnet tool update --global TALXIS.CLI 2>/dev/null || true",
     "update-devkit-templates": "dotnet new install TALXIS.DevKit.Templates.Dataverse 2>/dev/null || dotnet new install TALXIS.DevKit.Templates.Dataverse 2>/dev/null || true"

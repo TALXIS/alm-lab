@@ -69,9 +69,12 @@ if ($LASTEXITCODE -eq 0 -and $existingRuleset) {
         $rulesetRecord = $createdRuleset | ConvertFrom-Json
         Write-Ok "Ruleset created — main now requires PRs"
     } else {
-        Write-Err "Ruleset creation failed"
-        Remove-Item $tmp -ErrorAction SilentlyContinue
-        exit 1
+        # Some sandboxes can't change repository settings - then you create the ruleset yourself.
+        Write-Warn2 "Create it yourself: https://github.com/$repo/settings/rules/new?target=branch"
+        Write-Info "  Name '$rulesetName', Active, target the default branch, restrict deletions, require a pull request, block force pushes."
+        while (-not ($existingRuleset = gh api "repos/$repo/rulesets" --jq ".[] | select(.name==`"$rulesetName`")")) { Start-Sleep 15 }
+        $rulesetRecord = $existingRuleset | ConvertFrom-Json
+        Write-Ok "Ruleset found — main now requires PRs"
     }
 }
 Remove-Item $tmp -ErrorAction SilentlyContinue
