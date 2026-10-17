@@ -24,8 +24,8 @@ Write-Ok "GitHub: $(gh api user -q .login)"
 # ── 2. Power Platform (txc) ───────────────────────────────────────────────────────────────
 # One credential named "lab"; CP04 binds your Dev and Test environments to it.
 Write-Step "Sign in 2/4 — Power Platform"
-txc config auth get lab --check-token *> $null
-if ($LASTEXITCODE -ne 0) { txc config auth login --alias lab }
+$health = (txc config auth get lab --check-token --format json 2>$null | ConvertFrom-Json).tokenHealth.status
+if (-not $health -or $health -eq 'failed') { txc config auth login --alias lab }
 $tenantId = (txc config auth get lab --format json | ConvertFrom-Json).tenantId
 Set-LabValue 'txcAuth' 'lab'
 Write-Ok "Power Platform: tenant $tenantId"
