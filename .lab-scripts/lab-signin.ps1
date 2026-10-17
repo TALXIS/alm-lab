@@ -35,7 +35,7 @@ Write-Ok "Power Platform: tenant $tenantId"
 # Piping the output away also skips az's subscription picker - the lab only needs the tenant.
 Write-Step "Sign in 3/4 — Azure"
 if ((az account get-access-token --query tenant -o tsv 2>$null) -ne $tenantId) {
-    az login --tenant $tenantId --allow-no-subscriptions --use-device-code | Out-Null
+    az login --tenant $tenantId --allow-no-subscriptions | Out-Null
 }
 $account = az account show --query user.name -o tsv
 Set-LabValue 'tenantId' $tenantId
@@ -44,7 +44,9 @@ Write-Ok "Azure: $account (tenant $tenantId)"
 # ── 4. Power Apps (pa) ────────────────────────────────────────────────────────────────────
 # Used by the code app (CP11). Same account as Power Platform.
 Write-Step "Sign in 4/4 — Power Apps"
+# Unlike txc and az, pa can't tell when no browser can open here (Codespaces, containers).
+$deviceCode = if ($IsLinux -and -not $env:DISPLAY) { '--device-code' }
 if (-not (pa auth status --json | ConvertFrom-Json).signedIn) {
-    pa auth login --device-code --account $account
+    pa auth login $deviceCode --account $account
 }
 Write-Ok "Power Apps: signed in"
