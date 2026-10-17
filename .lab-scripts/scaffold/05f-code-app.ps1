@@ -32,6 +32,8 @@
 
 Write-Host "`n── Code App: Warehouse Picking ──" -ForegroundColor Cyan
 
+if (-not (Get-LabValue 'codeAppScaffolded')) {
+
 # Pin AppName so the CanvasApp schema name doesn't depend on the project folder name.
 $appName = "warehousepicking"
 
@@ -132,3 +134,11 @@ foreach ($file in @(
 Remove-Item "$appSrc/pages/home.tsx" -ErrorAction SilentlyContinue
 
 Write-Host "  ℹ Local preview: cd src/Apps.WarehousePicking && npm run dev" -ForegroundColor DarkGray
+
+# Marks the whole block done — checked instead of Test-Path on the project csproj so a
+# re-run after a partial failure (e.g. scaffold succeeded but a page/patch step didn't)
+# retries everything rather than silently skipping the missing work.
+Set-LabValue 'codeAppScaffolded' $true
+} else {
+    Write-Host "  ✓ Apps.WarehousePicking (exists)" -ForegroundColor Green
+}

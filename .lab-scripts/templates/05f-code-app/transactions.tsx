@@ -57,7 +57,10 @@ export default function TransactionsPage() {
         ],
         orderBy: ["__PREFIX___transactiondate desc"],
       });
-      return result.data ?? [];
+      // getAll() resolves an IOperationResult, it never throws — a failed Dataverse call
+      // would otherwise look identical to "zero transactions" without this check.
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load transactions");
+      return result.data;
     },
   });
 
@@ -69,27 +72,35 @@ export default function TransactionsPage() {
         filter: "statecode eq 0",
         orderBy: ["__PREFIX___name asc"],
       });
-      return result.data ?? [];
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse items");
+      return result.data;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      return __PASCAL___warehousetransactionsService.create({
+      const result = await __PASCAL___warehousetransactionsService.create({
         __PREFIX___name: txName,
-        __PREFIX___quantity: txQuantity,
+        // quantity is typed as string on Base, but Dataverse's Web API expects a real JSON
+        // number for a Whole Number field — Number() avoids a silent type mismatch.
+        __PREFIX___quantity: Number(txQuantity),
         __PREFIX___transactiontype: Number(txType) as any,
         __PREFIX___transactiondate: new Date().toISOString(),
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${txItemId})`,
       } as any);
+      // create() resolves an IOperationResult, it never throws — this is the one place the
+      // ValidateWarehouseTransactionPlugin's "Not enough product in stock" rejection on an
+      // over-pick would otherwise be silently swallowed and reported as a success.
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to create transaction");
+      return result.data;
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["allTransactions"] });
       toast.success("Transaction created successfully");
       resetForm();
     },
-    onError: (err) => {
-      toast.error("Failed to create transaction: " + String(err));
+    onError: (err: Error) => {
+      toast.error("Failed to create transaction: " + err.message);
     },
   });
 

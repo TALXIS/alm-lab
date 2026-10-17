@@ -5,7 +5,7 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
-import { categoryLabels, categoryOptions } from "@/utils/optionSets";
+import { categoryLabels, categoryOptions, isLowStock } from "@/utils/optionSets";
 import {
   Table,
   TableBody,
@@ -54,6 +54,7 @@ export default function WarehouseItemsPage() {
           "__PREFIX___name",
           "__PREFIX___sku",
           "__PREFIX___availablequantity",
+          "__PREFIX___reorderpoint",
           "__PREFIX___category",
           "___PREFIX___locationid_value",
           "createdon",
@@ -61,7 +62,10 @@ export default function WarehouseItemsPage() {
         ],
         orderBy: ["__PREFIX___name asc"],
       });
-      return result.data ?? [];
+      // getAll() resolves an IOperationResult, it never throws — a failed Dataverse call
+      // would otherwise look identical to "zero items" without this check.
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse items");
+      return result.data;
     },
   });
 
@@ -72,7 +76,8 @@ export default function WarehouseItemsPage() {
         select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
         orderBy: ["__PREFIX___name asc"],
       });
-      return result.data ?? [];
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse locations");
+      return result.data;
     },
   });
 
@@ -85,23 +90,27 @@ export default function WarehouseItemsPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      return __PASCAL___warehouseitemsService.create({
+      const result = await __PASCAL___warehouseitemsService.create({
         __PREFIX___name: name,
         __PREFIX___sku: sku,
-        __PREFIX___availablequantity: quantity,
+        // availablequantity is typed as string on Base, but Dataverse's Web API expects a
+        // real JSON number for a Whole Number field — Number() avoids a silent type mismatch.
+        __PREFIX___availablequantity: Number(quantity || "0"),
         __PREFIX___category: Number(category) as any,
         ...(locationId
           ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${locationId})` }
           : {}),
       } as any);
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to create item");
+      return result.data;
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseItems"] });
       toast.success("Item created successfully");
       resetForm();
     },
-    onError: (err) => {
-      toast.error("Failed to create item: " + String(err));
+    onError: (err: Error) => {
+      toast.error("Failed to create item: " + err.message);
     },
   });
 
@@ -141,6 +150,8 @@ export default function WarehouseItemsPage() {
           <Button
             variant="outline"
             size="icon"
+            aria-label="Refresh warehouse items"
+            data-testid="refresh-items"
             onClick={() =>
               queryClient.invalidateQueries({ queryKey: ["warehouseItems"] })
             }
@@ -198,7 +209,9 @@ export default function WarehouseItemsPage() {
                   <TableCell className="font-mono text-muted-foreground">
                     {item.__PREFIX___sku}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell
+                    className={`text-right font-mono ${isLowStock(item.__PREFIX___availablequantity, item.__PREFIX___reorderpoint) ? "text-destructive font-semibold" : ""}`}
+                  >
                     {item.__PREFIX___availablequantity}
                   </TableCell>
                   <TableCell>

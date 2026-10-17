@@ -48,7 +48,10 @@ export default function LocationsPage() {
         ],
         orderBy: ["__PREFIX___name asc"],
       });
-      return result.data ?? [];
+      // getAll() resolves an IOperationResult, it never throws — a failed Dataverse call
+      // would otherwise look identical to "zero locations" without this check.
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse locations");
+      return result.data;
     },
   });
 
@@ -58,7 +61,8 @@ export default function LocationsPage() {
       const result = await __PASCAL___warehouseitemsService.getAll({
         select: ["__PREFIX___warehouseitemid", "___PREFIX___locationid_value"],
       });
-      return result.data ?? [];
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to load warehouse items");
+      return result.data;
     },
   });
 
@@ -70,20 +74,24 @@ export default function LocationsPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      return __PASCAL___warehouselocationsService.create({
+      const result = await __PASCAL___warehouselocationsService.create({
         __PREFIX___name: name,
         __PREFIX___address: address,
-        __PREFIX___capacity: capacity,
+        // capacity is typed as string on Base, but Dataverse's Web API expects a real JSON
+        // number for a Whole Number field — Number() avoids a silent type mismatch.
+        __PREFIX___capacity: capacity ? Number(capacity) : undefined,
         __PREFIX___isactive: true,
       } as any);
+      if (!result.success) throw new Error(result.error?.message ?? "Failed to create location");
+      return result.data;
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseLocationsList"] });
       toast.success("Location created successfully");
       resetForm();
     },
-    onError: (err) => {
-      toast.error("Failed to create location: " + String(err));
+    onError: (err: Error) => {
+      toast.error("Failed to create location: " + err.message);
     },
   });
 
