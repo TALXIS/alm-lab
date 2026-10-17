@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import type { IScannerControls } from "@zxing/browser";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
+import { getClient } from "@microsoft/power-apps/data";
+import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
 import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
 import type { Product } from "@/generated/models/OpenFoodFactsModel";
@@ -184,8 +186,15 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
 
       if (imageBytes) {
         try {
-          const file = new File([imageBytes as BlobPart], `${ean}.jpg`, { type: "image/jpeg" });
-          await __PASCAL___productsService.upload(productId, "__PREFIX___productimage", file);
+          // The generated services cover create/update/get but emit nothing for file columns -
+          // the runtime client does, and it takes the bytes directly, so no File wrapper.
+          await getClient(dataSourcesInfo).uploadFileToRecord(
+            "__PREFIX___products",
+            productId,
+            "__PREFIX___productimage",
+            `${ean}.jpg`,
+            imageBytes
+          );
         } catch (err) {
           // The product is linked either way - only the photo failed to save, so this is a
           // warning, not a failure of the whole action.
